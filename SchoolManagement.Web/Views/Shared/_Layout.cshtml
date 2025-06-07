@@ -12,8 +12,24 @@
 
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
-        <div class="container-fluid">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
             <span class="navbar-brand">School Management</span>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                var pictureUrl = ViewData["ProfilePictureUrl"] as string;
+
+                <div class="d-flex align-items-center gap-2">
+                    @if (!string.IsNullOrEmpty(pictureUrl))
+                    {
+                        <img src="@pictureUrl" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
+                    }
+                    <span class="text-white">@User.Identity.Name</span>
+                    <form method="post" asp-controller="Account" asp-action="Logout">
+                        <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+                    </form>
+                </div>
+            }
         </div>
     </nav>
 
@@ -21,10 +37,6 @@
     <div class="sidebar">
         <a asp-controller="Home" asp-action="Index">Dashboard</a>
         <a asp-controller="Students" asp-action="Index">Students</a>
-        <a asp-controller="Teachers" asp-action="Index">Teachers</a>
-        <a asp-controller="Classes" asp-action="Index">Classes</a>
-        <a asp-controller="Subjects" asp-action="Index">Subjects</a>
-        <a asp-controller="Grades" asp-action="Index">Grades</a>
     </div>
 
     <!-- Page Content -->
@@ -33,5 +45,6 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

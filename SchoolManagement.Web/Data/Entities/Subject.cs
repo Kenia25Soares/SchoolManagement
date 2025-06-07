@@ -1,6 +1,6 @@
 ﻿namespace SchoolManagement.Web.Data.Entities
 {
-    public class Discipline
+    public class Subject
     {
         public int Id { get; set; }
         public string Name { get; set; }

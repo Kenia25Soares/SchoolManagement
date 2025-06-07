@@ -1,0 +1,91 @@
+﻿@model SchoolManagement.Web.Models.EditUserViewModel
+
+@{
+    ViewData["Title"] = "Edit User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Edit User</h2>
+
+            <form asp-action="EditUser" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Role" class="form-label"></label>
+                        <select asp-for="Role" asp-items="new SelectList(Model.Roles)" class="form-select" id="Role"></select>
+                        <span asp-validation-for="Role" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProfilePictureUrl" class="form-label"></label>
+                        <input asp-for="ProfilePictureUrl" class="form-control" />
+                        <span asp-validation-for="ProfilePictureUrl" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div id="studentFields" class="row" style="display: none;">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Contact" class="form-label"></label>
+                        <input asp-for="Contact" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Contact" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="OfficialPhotoUrl" class="form-label"></label>
+                        <input asp-for="OfficialPhotoUrl" class="form-control" />
+                        <span asp-validation-for="OfficialPhotoUrl" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Users" class="btn btn-secondary">Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const roleDropdown = document.getElementById("Role");
+        const studentFields = document.getElementById("studentFields");
+
+        function toggleStudentFields() {
+            studentFields.style.display = roleDropdown.value === "Student" ? "flex" : "none";
+        }
+
+        roleDropdown.addEventListener("change", toggleStudentFields);
+        toggleStudentFields(); // Run on load
+    </script>
+}

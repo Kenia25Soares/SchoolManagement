@@ -12,14 +12,36 @@ namespace SchoolManagement.Web.Data
             _context = context;
         }
 
-        public Task<IEnumerable<Student>> GetAllAsync()
+        public async Task<IEnumerable<Student>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Students
+                .Include(s => s.User) // Se quiser incluir dados do ApplicationUser
+                .ToListAsync();
         }
 
-        public Task<Student> GetByIdAsync(int id)
+        public async Task<Student> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.Students
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        public async Task AddAsync(Student student)
+        {
+            await _context.Students.AddAsync(student);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<Student?> GetByUserIdAsync(string userId)
+        {
+            return await _context.Students
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
+        public async Task UpdateAsync(Student student)
+        {
+            _context.Students.Update(student);
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -12,11 +12,21 @@ namespace SchoolManagement.Web.Data
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Student>()
+                        .HasOne(s => s.User)
+                        .WithOne()
+                        .HasForeignKey<Student>(s => s.UserId);
+
+        }
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
-        public DbSet<Discipline> Disciplines { get; set; }
-        public DbSet<Note> Notes { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Grid> Grids { get; set; }
 
     }
 }

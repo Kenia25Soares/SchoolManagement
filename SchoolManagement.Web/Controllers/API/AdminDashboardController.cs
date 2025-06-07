@@ -1,0 +1,244 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
+using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Helpers;
+using SchoolManagement.Web.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace SchoolManagement.Web.Controllers.API
+{
+    [Authorize(Roles = "Admin")]
+    public class AdminDashboardController : Controller
+    {
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IStudentRepository _studentRepository;
+        private readonly IMailHelper _mailHelper;
+
+        public AdminDashboardController(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IStudentRepository studentRepository,
+            IMailHelper mailHelper)
+        {
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _studentRepository = studentRepository;
+            _mailHelper = mailHelper;
+        }
+
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            await SetUserProfilePictureAsync();
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Users()
+        {
+            await SetUserProfilePictureAsync();
+
+            var users = await _userManager.Users.ToListAsync();
+            var model = new List<UserListViewModel>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                model.Add(new UserListViewModel
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    Role = roles.FirstOrDefault() ?? "N/A"
+                });
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
+            return RedirectToAction("Users");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateUser()
+        {
+            await SetUserProfilePictureAsync();
+
+            var model = new CreateUserViewModel
+            {
+                Roles = new List<string> { "Admin", "Employee", "Student" }
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateUser(CreateUserViewModel model)
+        {
+            model.Roles = new List<string> { "Admin", "Employee", "Student" };
+
+            await SetUserProfilePictureAsync();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                ProfilePictureUrl = model.ProfilePictureUrl
+            };
+
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+
+                return View(model);
+            }
+
+            await _userManager.AddToRoleAsync(user, model.Role);
+
+            if (model.Role == "Student")
+            {
+                var student = new Student
+                {
+                    UserId = user.Id,
+                    Contact = model.Contact,
+                    DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
+                    Address = model.Address,
+                    OfficialPhotoUrl = model.OfficialPhotoUrl,
+                    Absences = 0,
+                    IsExcludedDueToAbsences = false
+                };
+
+                await _studentRepository.AddAsync(student);
+            }
+
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            string resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, protocol: HttpContext.Request.Scheme);
+
+            var response = _mailHelper.SendEmail(user.Email, "Defina a sua password", $@"
+                <h1>Bem-vindo ao School Management!</h1>
+                <p>Para definir a sua password clique no link abaixo:</p>
+                <p><a href='{resetLink}'>Definir Password</a></p>
+            ");
+
+            if (!response.IsSuccess)
+            {
+                ModelState.AddModelError(string.Empty, "Não foi possível enviar o email.");
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "User created successfully!";
+            return RedirectToAction("Users");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditUser(string id)
+        {
+            await SetUserProfilePictureAsync();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var student = await _studentRepository.GetByUserIdAsync(user.Id);
+
+            var model = new EditUserViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Role = roles.FirstOrDefault(),
+                Roles = new List<string> { "Admin", "Employee", "Student" },
+
+                Contact = student?.Contact,
+                DateOfBirth = student?.DateOfBirth,
+                Address = student?.Address,
+                OfficialPhotoUrl = student?.OfficialPhotoUrl
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditUser(EditUserViewModel model)
+        {
+            model.Roles = new List<string> { "Admin", "Employee", "Student" };
+
+            await SetUserProfilePictureAsync();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null)
+                return NotFound();
+
+            user.FullName = model.FullName;
+            user.Email = model.Email;
+            user.UserName = model.Email;
+            user.ProfilePictureUrl = model.ProfilePictureUrl;
+
+            if (model.Role == "Student")
+            {
+                var student = await _studentRepository.GetByUserIdAsync(user.Id);
+                if (student == null)
+                {
+                    student = new Student
+                    {
+                        UserId = user.Id
+                    };
+                    await _studentRepository.AddAsync(student);
+                }
+
+                student.Contact = model.Contact!;
+                student.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
+                student.Address = model.Address;
+                student.OfficialPhotoUrl = model.OfficialPhotoUrl;
+
+                await _studentRepository.UpdateAsync(student);
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError("", error.Description);
+
+                return View(model);
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, model.Role);
+
+            TempData["SuccessMessage"] = "User updated successfully!";
+            return RedirectToAction("Users");
+        }
+    }
+}

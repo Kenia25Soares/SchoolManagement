@@ -1,0 +1,41 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; // o layout cinza com sidebar
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid">
+    <h1 class="mt-4">Painel do Administrador</h1>
+    <p>Bem-vindo ao painel de controlo.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Utilizadores</h5>
+                    <p class="card-text">Gerir admins, funcionários e alunos.</p>
+                    <a asp-controller="AdminDashboard" asp-action="Users" class="btn btn-primary">Gerir Utilizadores</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Cursos</h5>
+                    <p class="card-text">Adicionar ou editar cursos disponíveis.</p>
+                    <a asp-controller="Courses" asp-action="Index" class="btn btn-primary">Gerir Cursos</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Disciplinas</h5>
+                    <p class="card-text">Gerir as disciplinas oferecidas.</p>
+                    <a asp-controller="Disciplines" asp-action="Index" class="btn btn-primary">Ver Disciplinas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

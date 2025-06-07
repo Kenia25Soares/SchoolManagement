@@ -6,6 +6,10 @@ namespace SchoolManagement.Web.Data
     {
         Task<IEnumerable<Student>> GetAllAsync();
         Task<Student> GetByIdAsync(int id);
-  
+        Task AddAsync(Student student);
+
+        Task<Student?> GetByUserIdAsync(string userId);
+        Task UpdateAsync(Student student);
+
     }
 }
