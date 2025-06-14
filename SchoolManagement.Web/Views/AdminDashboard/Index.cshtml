@@ -1,19 +1,19 @@
 ﻿@{
-    Layout = "~/Views/Shared/_Layout.cshtml"; // o layout cinza com sidebar
+    Layout = "~/Views/Shared/_Layout.cshtml"; // the gray layout with sidebar
     ViewData["Title"] = "Admin Dashboard";
 }
 
 <div class="container-fluid">
-    <h1 class="mt-4">Painel do Administrador</h1>
-    <p>Bem-vindo ao painel de controlo.</p>
+    <h1 class="mt-4">Admin Dashboard</h1>
+    <p>Welcome to the control panel.</p>
 
     <div class="row mt-4">
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">Utilizadores</h5>
-                    <p class="card-text">Gerir admins, funcionários e alunos.</p>
-                    <a asp-controller="AdminDashboard" asp-action="Users" class="btn btn-primary">Gerir Utilizadores</a>
+                    <h5 class="card-title">Users</h5>
+                    <p class="card-text">Manage admins, staff, and students.</p>
+                    <a asp-controller="AdminDashboard" asp-action="Users" class="btn btn-primary">Manage Users</a>
                 </div>
             </div>
         </div>
@@ -21,9 +21,9 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">Cursos</h5>
-                    <p class="card-text">Adicionar ou editar cursos disponíveis.</p>
-                    <a asp-controller="Courses" asp-action="Index" class="btn btn-primary">Gerir Cursos</a>
+                    <h5 class="card-title">Courses</h5>
+                    <p class="card-text">Add or edit available courses.</p>
+                    <a href="/AdminDashboard/Courses" class="btn btn-primary">Manage Courses</a>
                 </div>
             </div>
         </div>

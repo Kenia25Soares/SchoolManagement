@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +38,7 @@ builder.Services.AddRazorPages(); // se usares Razor também
 builder.Services.AddTransient<SeedDb>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 
 var app = builder.Build();
 
