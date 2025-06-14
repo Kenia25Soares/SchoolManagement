@@ -1,6 +1,6 @@
 ﻿using SchoolManagement.Web.Data.Entities;
 
-namespace SchoolManagement.Web.Data
+namespace SchoolManagement.Web.Data.Repository
 {
     public interface IStudentRepository
     {

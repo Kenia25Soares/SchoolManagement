@@ -1,4 +1,4 @@
-﻿namespace SchoolManagement.Web.Models
+﻿namespace SchoolManagement.Web.Models.ViewModels
 {
     public class UserListViewModel
     {

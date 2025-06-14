@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
 
-namespace SchoolManagement.Web.Data
+namespace SchoolManagement.Web.Data.Repository
 {
     public class StudentRepository : IStudentRepository
     {
