@@ -1,14 +1,14 @@
-﻿@model SchoolManagement.Web.Models.CourseViewModel
+﻿@model SchoolManagement.Web.Models.SubjectViewModel
 
 @{
-    ViewData["Title"] = "Create Course";
+    ViewData["Title"] = "Create Subject";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5">
     <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
         <div class="card-body">
-            <h2 class="card-title text-center mb-4">Create New Course</h2>
+            <h2 class="card-title text-center mb-4">Create New Subject</h2>
 
             <form asp-action="Create" method="post">
                 <div asp-validation-summary="All" class="text-danger"></div>
@@ -21,19 +21,9 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="AcademicYear" class="form-label"></label>
-                        <input asp-for="AcademicYear" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="AcademicYear" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Shift" class="form-label"></label>
-                        <select asp-for="Shift" class="form-select">
-                            <option value="">-- Select Shift --</option>
-                            <option value="Daytime">Daytime</option>
-                            <option value="Evening">Evening</option>
-                        </select>
-                        <span asp-validation-for="Shift" class="text-danger"></span>
+                        <label asp-for="Workload" class="form-label"></label>
+                        <input asp-for="Workload" type="number" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Workload" class="text-danger"></span>
                     </div>
                 </div>
 

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SchoolManagement.Web.Data.Entities
+namespace SchoolManagement.Web.Models
 {
-    public class Subject
+    public class SubjectViewModel
     {
         public int Id { get; set; }
 
@@ -12,6 +12,7 @@ namespace SchoolManagement.Web.Data.Entities
 
         [Required]
         [Display(Name = "Workload (hours)")]
+        [Range(1, 500, ErrorMessage = "Please enter a valid workload in hours.")]
         public int Workload { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using SchoolManagement.Web.Models.ViewModels;
+
 
 namespace SchoolManagement.Web.Controllers.API
 {
@@ -66,6 +66,14 @@ namespace SchoolManagement.Web.Controllers.API
             var user = await _userManager.FindByIdAsync(id);
             if (user != null)
             {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Contains("Student"))
+                {
+                    var student = await _studentRepository.GetByUserIdAsync(user.Id);
+                    if (student != null)
+                        await _studentRepository.DeleteAsync(student.Id);
+                }
+
                 await _userManager.DeleteAsync(user);
             }
 

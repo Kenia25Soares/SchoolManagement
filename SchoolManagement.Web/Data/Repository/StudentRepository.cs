@@ -43,5 +43,16 @@ namespace SchoolManagement.Web.Data.Repository
             _context.Students.Update(student);
             await _context.SaveChangesAsync();
         }
+
+
+        public async Task DeleteAsync(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student != null)
+            {
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

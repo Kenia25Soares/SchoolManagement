@@ -11,5 +11,6 @@ namespace SchoolManagement.Web.Data.Repository
         Task<Student?> GetByUserIdAsync(string userId);
         Task UpdateAsync(Student student);
 
+        Task DeleteAsync(int id);
     }
 }

@@ -26,7 +26,6 @@ namespace SchoolManagement.Web.Data
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Subject> Subjects { get; set; }
-        public DbSet<Grid> Grids { get; set; }
 
     }
 }

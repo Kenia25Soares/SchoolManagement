@@ -39,6 +39,7 @@ builder.Services.AddTransient<SeedDb>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 
 var app = builder.Build();
 

@@ -2,23 +2,23 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Models.ViewModels;
+using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Controllers
 {
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Courses")]
-    public class CourseController : Controller
+    public class CoursesController : Controller
     {
         private readonly ICourseRepository _courseRepository;
 
-        public CourseController(ICourseRepository courseRepository)
+        public CoursesController(ICourseRepository courseRepository)
         {
             _courseRepository = courseRepository;
         }
 
         // GET: Index
-        [HttpGet("")]
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var courses = await _courseRepository.GetAllAsync();
