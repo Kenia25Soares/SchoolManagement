@@ -36,8 +36,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(); // se usares Razor também
 builder.Services.AddTransient<SeedDb>();
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+
+builder.Services.AddScoped<IBlobHelper, BlobHelper>();
+builder.Services.AddScoped<IUserHelper, UserHelper>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
+builder.Services.AddScoped<IConverterHelper, ConverterHelper>();
+
+// Repositories
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

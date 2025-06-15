@@ -9,19 +9,25 @@ namespace SchoolManagement.Web.Controllers.API
     [Authorize(Roles = "Admin")]
     public class AdminDashboardController : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+       
+        private readonly IUserHelper _userHelper;
+        private readonly IBlobHelper _blobHelper;
 
-        public AdminDashboardController(UserManager<ApplicationUser> userManager)
+        public AdminDashboardController(IUserHelper userHelper, IBlobHelper blobHelper)
         {
-            _userManager = userManager;
+            _userHelper = userHelper;
+            _blobHelper = blobHelper;
         }
 
         private async Task SetUserProfilePictureAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
+            
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
+
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();

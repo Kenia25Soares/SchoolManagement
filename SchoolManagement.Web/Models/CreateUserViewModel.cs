@@ -16,6 +16,10 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
+
+        [Display(Name = "Profile Picture")]
+        public IFormFile? ProfilePicture { get; set; }
+
         public string? ProfilePictureUrl { get; set; }
 
         [Required]

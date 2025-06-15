@@ -15,15 +15,18 @@ namespace SchoolManagement.Web.Controllers.API
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IMailHelper _mailHelper;
+        private readonly IBlobHelper _blobHelper;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IMailHelper mailHelper)
+            IMailHelper mailHelper,
+            IBlobHelper blobHelper)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _mailHelper = mailHelper;
+            _blobHelper = blobHelper;
         }
 
         private async Task SetUserProfilePictureAsync()
@@ -32,7 +35,7 @@ namespace SchoolManagement.Web.Controllers.API
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
-        [HttpGet("")]
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
@@ -82,11 +85,17 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
             model.Roles = new List<string> { "Admin", "Employee", "Student" };
-
             await SetUserProfilePictureAsync();
 
             if (!ModelState.IsValid)
                 return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+
+            // UPLOAD DA FOTO (caso o admin envie imagem)
+            Guid blobId = Guid.Empty;
+            if (model.ProfilePicture != null)
+            {
+                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projectspictures");
+            }
 
             ApplicationUser user;
 
@@ -98,7 +107,7 @@ namespace SchoolManagement.Web.Controllers.API
                     Email = model.Email,
                     FullName = model.FullName,
                     PhoneNumber = model.PhoneNumber,
-                    ProfilePictureUrl = model.ProfilePictureUrl,
+                    ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString(),
                     DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
                     Address = model.Address,
                     OfficialPhotoUrl = model.OfficialPhotoUrl,
@@ -114,7 +123,7 @@ namespace SchoolManagement.Web.Controllers.API
                     Email = model.Email,
                     FullName = model.FullName,
                     PhoneNumber = model.PhoneNumber,
-                    ProfilePictureUrl = model.ProfilePictureUrl
+                    ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString()
                 };
             }
 
@@ -184,7 +193,6 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
             model.Roles = new List<string> { "Admin", "Employee", "Student" };
-
             await SetUserProfilePictureAsync();
 
             if (!ModelState.IsValid)
@@ -197,7 +205,8 @@ namespace SchoolManagement.Web.Controllers.API
             user.Email = model.Email;
             user.UserName = model.Email;
             user.PhoneNumber = model.PhoneNumber;
-            user.ProfilePictureUrl = model.ProfilePictureUrl;
+
+            
 
             if (model.Role == "Student")
             {
@@ -207,10 +216,6 @@ namespace SchoolManagement.Web.Controllers.API
                     student.Address = model.Address;
                     student.OfficialPhotoUrl = model.OfficialPhotoUrl;
                     student.CourseId = model.CourseId;
-                }
-                else
-                {
-                    // Aqui podes lançar uma exceção ou fazer conversão se necessário
                 }
             }
 
