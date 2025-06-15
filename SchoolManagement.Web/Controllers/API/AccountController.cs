@@ -36,11 +36,11 @@ namespace SchoolManagement.Web.Controllers.API
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
                     return RedirectToAction("Index", "AdminDashboard");
 
-                if (await _userManager.IsInRoleAsync(user, "Funcionario"))
-                    return RedirectToAction("Index", "FuncionarioDashboard");
+                if (await _userManager.IsInRoleAsync(user, "Employee"))
+                    return RedirectToAction("Index", "EmployeeDashboard");
 
-                if (await _userManager.IsInRoleAsync(user, "Aluno"))
-                    return RedirectToAction("Index", "AlunoDashboard");
+                if (await _userManager.IsInRoleAsync(user, "Student"))
+                    return RedirectToAction("Index", "StudentDashboard");
 
                 return RedirectToAction("Public", "Home");
             }
