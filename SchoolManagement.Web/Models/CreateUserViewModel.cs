@@ -10,31 +10,27 @@ namespace SchoolManagement.Web.Models
 
         [Required]
         [EmailAddress]
-        [Display(Name = "Email Address")]
         public string Email { get; set; }
 
-        [Required]
-        [Display(Name = "User Role")]
-        public string Role { get; set; }
+        [Phone]
+        [Display(Name = "Phone Number")]
+        public string? PhoneNumber { get; set; }
 
-        [Display(Name = "Profile Picture URL")]
         public string? ProfilePictureUrl { get; set; }
 
-        // Student-specific fields
-        [Display(Name = "Contact Number")]
-        public string? Contact { get; set; }
+        [Required]
+        public string Role { get; set; }
 
-        [DataType(DataType.Date)]
+        public List<string>? Roles { get; set; }
+
+        // Apenas para Student
         [Display(Name = "Date of Birth")]
         public DateTime? DateOfBirth { get; set; }
 
-        [Display(Name = "Home Address")]
         public string? Address { get; set; }
 
-        [Display(Name = "Official Student Photo URL")]
         public string? OfficialPhotoUrl { get; set; }
 
-        // Role list
-        public List<string> Roles { get; set; } = new();
+        public int? CourseId { get; set; }
     }
 }

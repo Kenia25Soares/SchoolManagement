@@ -4,13 +4,10 @@ namespace SchoolManagement.Web.Data.Repository
 {
     public interface IStudentRepository
     {
-        Task<IEnumerable<Student>> GetAllAsync();
-        Task<Student> GetByIdAsync(int id);
-        Task AddAsync(Student student);
-
-        Task<Student?> GetByUserIdAsync(string userId);
-        Task UpdateAsync(Student student);
-
-        Task DeleteAsync(int id);
+        Task<IEnumerable<StudentUser>> GetAllAsync();
+        Task<StudentUser?> GetByIdAsync(string userId);
+        Task AddAsync(StudentUser student);
+        Task UpdateAsync(StudentUser student);
+        Task DeleteAsync(string userId);
     }
 }

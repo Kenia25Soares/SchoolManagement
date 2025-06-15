@@ -12,45 +12,40 @@ namespace SchoolManagement.Web.Data.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Student>> GetAllAsync()
+        public async Task<IEnumerable<StudentUser>> GetAllAsync()
         {
-            return await _context.Students
-                .Include(s => s.User) // Se quiser incluir dados do ApplicationUser
+            return await _context.Users
+                .OfType<StudentUser>()
+                .Include(s => s.Course)
                 .ToListAsync();
         }
 
-        public async Task<Student> GetByIdAsync(int id)
+        public async Task<StudentUser?> GetByIdAsync(string userId)
         {
-            return await _context.Students
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            return await _context.Users
+                .OfType<StudentUser>()
+                .Include(s => s.Course)
+                .FirstOrDefaultAsync(s => s.Id == userId);
         }
 
-        public async Task AddAsync(Student student)
+        public async Task AddAsync(StudentUser student)
         {
-            await _context.Students.AddAsync(student);
+            _context.Users.Add(student);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Student?> GetByUserIdAsync(string userId)
+        public async Task UpdateAsync(StudentUser student)
         {
-            return await _context.Students
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-        }
-
-        public async Task UpdateAsync(Student student)
-        {
-            _context.Students.Update(student);
+            _context.Users.Update(student);
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(string userId)
         {
-            var student = await _context.Students.FindAsync(id);
+            var student = await GetByIdAsync(userId);
             if (student != null)
             {
-                _context.Students.Remove(student);
+                _context.Users.Remove(student);
                 await _context.SaveChangesAsync();
             }
         }

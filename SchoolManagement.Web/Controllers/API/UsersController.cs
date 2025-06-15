@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-
 
 namespace SchoolManagement.Web.Controllers.API
 {
@@ -16,18 +14,15 @@ namespace SchoolManagement.Web.Controllers.API
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IStudentRepository _studentRepository;
         private readonly IMailHelper _mailHelper;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IStudentRepository studentRepository,
             IMailHelper mailHelper)
         {
             _userManager = userManager;
             _roleManager = roleManager;
-            _studentRepository = studentRepository;
             _mailHelper = mailHelper;
         }
 
@@ -66,17 +61,8 @@ namespace SchoolManagement.Web.Controllers.API
             var user = await _userManager.FindByIdAsync(id);
             if (user != null)
             {
-                var roles = await _userManager.GetRolesAsync(user);
-                if (roles.Contains("Student"))
-                {
-                    var student = await _studentRepository.GetByUserIdAsync(user.Id);
-                    if (student != null)
-                        await _studentRepository.DeleteAsync(student.Id);
-                }
-
                 await _userManager.DeleteAsync(user);
             }
-
             return RedirectToAction("Index");
         }
 
@@ -102,13 +88,35 @@ namespace SchoolManagement.Web.Controllers.API
             if (!ModelState.IsValid)
                 return View("/Views/AdminDashboard/Users/Create.cshtml", model);
 
-            var user = new ApplicationUser
+            ApplicationUser user;
+
+            if (model.Role == "Student")
             {
-                UserName = model.Email,
-                Email = model.Email,
-                FullName = model.FullName,
-                ProfilePictureUrl = model.ProfilePictureUrl
-            };
+                user = new StudentUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber,
+                    ProfilePictureUrl = model.ProfilePictureUrl,
+                    DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
+                    Address = model.Address,
+                    OfficialPhotoUrl = model.OfficialPhotoUrl,
+                    IsExcludedDueToAbsences = false,
+                    CourseId = model.CourseId
+                };
+            }
+            else
+            {
+                user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.PhoneNumber,
+                    ProfilePictureUrl = model.ProfilePictureUrl
+                };
+            }
 
             var result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
@@ -120,22 +128,6 @@ namespace SchoolManagement.Web.Controllers.API
             }
 
             await _userManager.AddToRoleAsync(user, model.Role);
-
-            if (model.Role == "Student")
-            {
-                var student = new Student
-                {
-                    UserId = user.Id,
-                    Contact = model.Contact,
-                    DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
-                    Address = model.Address,
-                    OfficialPhotoUrl = model.OfficialPhotoUrl,
-                    Absences = 0,
-                    IsExcludedDueToAbsences = false
-                };
-
-                await _studentRepository.AddAsync(student);
-            }
 
             string token = await _userManager.GeneratePasswordResetTokenAsync(user);
             string resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, protocol: HttpContext.Request.Scheme);
@@ -162,11 +154,9 @@ namespace SchoolManagement.Web.Controllers.API
             await SetUserProfilePictureAsync();
 
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             var roles = await _userManager.GetRolesAsync(user);
-            var student = await _studentRepository.GetByUserIdAsync(user.Id);
 
             var model = new EditUserViewModel
             {
@@ -174,14 +164,18 @@ namespace SchoolManagement.Web.Controllers.API
                 FullName = user.FullName,
                 Email = user.Email,
                 ProfilePictureUrl = user.ProfilePictureUrl,
+                PhoneNumber = user.PhoneNumber,
                 Role = roles.FirstOrDefault(),
-                Roles = new List<string> { "Admin", "Employee", "Student" },
-
-                Contact = student?.Contact,
-                DateOfBirth = student?.DateOfBirth,
-                Address = student?.Address,
-                OfficialPhotoUrl = student?.OfficialPhotoUrl
+                Roles = new List<string> { "Admin", "Employee", "Student" }
             };
+
+            if (user is StudentUser student)
+            {
+                model.DateOfBirth = student.DateOfBirth;
+                model.Address = student.Address;
+                model.OfficialPhotoUrl = student.OfficialPhotoUrl;
+                model.CourseId = student.CourseId;
+            }
 
             return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
         }
@@ -197,32 +191,27 @@ namespace SchoolManagement.Web.Controllers.API
                 return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
 
             var user = await _userManager.FindByIdAsync(model.Id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             user.FullName = model.FullName;
             user.Email = model.Email;
             user.UserName = model.Email;
+            user.PhoneNumber = model.PhoneNumber;
             user.ProfilePictureUrl = model.ProfilePictureUrl;
 
             if (model.Role == "Student")
             {
-                var student = await _studentRepository.GetByUserIdAsync(user.Id);
-                if (student == null)
+                if (user is StudentUser student)
                 {
-                    student = new Student
-                    {
-                        UserId = user.Id
-                    };
-                    await _studentRepository.AddAsync(student);
+                    student.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
+                    student.Address = model.Address;
+                    student.OfficialPhotoUrl = model.OfficialPhotoUrl;
+                    student.CourseId = model.CourseId;
                 }
-
-                student.Contact = model.Contact!;
-                student.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
-                student.Address = model.Address;
-                student.OfficialPhotoUrl = model.OfficialPhotoUrl;
-
-                await _studentRepository.UpdateAsync(student);
+                else
+                {
+                    // Aqui podes lançar uma exceção ou fazer conversão se necessário
+                }
             }
 
             var result = await _userManager.UpdateAsync(user);

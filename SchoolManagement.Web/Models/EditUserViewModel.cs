@@ -17,6 +17,10 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Email Address")]
         public string Email { get; set; } = null!;
 
+        [Phone]
+        [Display(Name = "Phone Number")]
+        public string? PhoneNumber { get; set; }
+
         [Required]
         [Display(Name = "User Role")]
         public string Role { get; set; } = null!;
@@ -27,8 +31,6 @@ namespace SchoolManagement.Web.Models
         public string? ProfilePictureUrl { get; set; }
 
         // Student-only fields:
-        [Display(Name = "Contact Number")]
-        public string? Contact { get; set; }
 
         [Display(Name = "Date of Birth")]
         [DataType(DataType.Date)]
@@ -39,5 +41,8 @@ namespace SchoolManagement.Web.Models
 
         [Display(Name = "Official Student Photo URL")]
         public string? OfficialPhotoUrl { get; set; }
+
+        [Display(Name = "Course")]
+        public int? CourseId { get; set; }
     }
 }
