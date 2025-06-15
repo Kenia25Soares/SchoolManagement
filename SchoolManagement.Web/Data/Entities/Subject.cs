@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SuperShop.Data.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Data.Entities
 {
-    public class Subject
+    public class Subject : IEntity
     {
         public int Id { get; set; }
 
