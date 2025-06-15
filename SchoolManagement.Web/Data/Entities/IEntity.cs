@@ -1,4 +1,4 @@
-﻿namespace SuperShop.Data.Entities
+﻿namespace SchoolManagement.Web.Data.Entities
 {
     public interface IEntity
     {

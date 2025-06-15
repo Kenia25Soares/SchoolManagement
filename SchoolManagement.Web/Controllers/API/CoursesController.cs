@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Models;
 
-namespace SchoolManagement.Controllers
+namespace SchoolManagement.Web.Controllers.API
 {
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Courses")]
@@ -17,11 +19,15 @@ namespace SchoolManagement.Controllers
             _courseRepository = courseRepository;
         }
 
-        // GET: Index
+        /// <summary>
+        /// Lista todos os cursos.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var courses = await _courseRepository.GetAllAsync();
+            // ⚠ ALTERAÇÃO IMPORTANTE: GetAll() + ToListAsync()
+            var courses = await _courseRepository.GetAll().ToListAsync();
+
             var viewModel = courses.Select(c => new CourseViewModel
             {
                 Id = c.Id,
@@ -33,14 +39,18 @@ namespace SchoolManagement.Controllers
             return View("Views/AdminDashboard/Courses/Index.cshtml", viewModel);
         }
 
-        // GET: Create
+        /// <summary>
+        /// Abre o formulário de criação.
+        /// </summary>
         [HttpGet("Create")]
         public IActionResult Create()
         {
             return View("Views/AdminDashboard/Courses/Create.cshtml");
         }
 
-        // POST: Create
+        /// <summary>
+        /// Cria um novo curso.
+        /// </summary>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseViewModel model)
@@ -54,14 +64,16 @@ namespace SchoolManagement.Controllers
                     Shift = model.Shift
                 };
 
-                await _courseRepository.AddAsync(course);
+                await _courseRepository.CreateAsync(course);
                 return RedirectToAction(nameof(Index));
             }
 
             return View("Views/AdminDashboard/Courses/Create.cshtml", model);
         }
 
-        // GET: Edit
+        /// <summary>
+        /// Abre o formulário de edição.
+        /// </summary>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -79,7 +91,9 @@ namespace SchoolManagement.Controllers
             return View("Views/AdminDashboard/Courses/Edit.cshtml", viewModel);
         }
 
-        // POST: Edit
+        /// <summary>
+        /// Edita o curso.
+        /// </summary>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CourseViewModel model)
@@ -101,7 +115,9 @@ namespace SchoolManagement.Controllers
             return View("Views/AdminDashboard/Courses/Edit.cshtml", model);
         }
 
-        // GET: Delete
+        /// <summary>
+        /// Mostra página de confirmação de delete.
+        /// </summary>
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -119,12 +135,18 @@ namespace SchoolManagement.Controllers
             return View("Views/AdminDashboard/Courses/Delete.cshtml", viewModel);
         }
 
-        // POST: Delete
+        /// <summary>
+        /// Remove o curso.
+        /// </summary>
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _courseRepository.DeleteAsync(id);
+            var entity = await _courseRepository.GetByIdAsync(id);
+            if (entity != null)
+            {
+                await _courseRepository.DeleteAsync(entity);
+            }
             return RedirectToAction(nameof(Index));
         }
     }

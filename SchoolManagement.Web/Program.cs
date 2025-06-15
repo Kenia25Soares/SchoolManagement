@@ -40,6 +40,7 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 var app = builder.Build();
 

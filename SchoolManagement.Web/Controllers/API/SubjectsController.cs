@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Models;
@@ -27,7 +28,7 @@ namespace SchoolManagement.Web.Controllers.API
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var subjects = await _subjectRepository.GetAllAsync();
+            var subjects = await _subjectRepository.GetAll().ToListAsync();
             var viewModel = subjects.Select(s => new SubjectViewModel
             {
                 Id = s.Id,
@@ -62,7 +63,7 @@ namespace SchoolManagement.Web.Controllers.API
                     Workload = model.Workload
                 };
 
-                await _subjectRepository.AddAsync(subject);
+                await _subjectRepository.CreateAsync(subject);
                 return RedirectToAction(nameof(Index));
             }
 
@@ -137,7 +138,11 @@ namespace SchoolManagement.Web.Controllers.API
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _subjectRepository.DeleteAsync(id);
+            var subject = await _subjectRepository.GetByIdAsync(id);
+            if (subject != null)
+            {
+                await _subjectRepository.DeleteAsync(subject);
+            }
             return RedirectToAction(nameof(Index));
         }
     }
