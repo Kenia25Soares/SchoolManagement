@@ -27,8 +27,14 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label asp-for="Role" class="form-label"></label>
-                        <select asp-for="Role" asp-items="new SelectList(Model.Roles)" class="form-select" id="Role"></select>
+                        <select asp-for="Role" asp-items="new SelectList(Model.Roles)" class="form-select"></select>
                         <span asp-validation-for="Role" class="text-danger"></span>
                     </div>
 
@@ -36,32 +42,6 @@
                         <label asp-for="ProfilePicture" class="form-label">Profile Picture</label>
                         <input asp-for="ProfilePicture" type="file" class="form-control" />
                         <span asp-validation-for="ProfilePicture" class="text-danger"></span>
-                    </div>
-                </div>
-
-                <div id="studentFields" class="row" style="display: none;">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="PhoneNumber" class="form-label"></label>
-                        <input asp-for="PhoneNumber" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="DateOfBirth" class="form-label"></label>
-                        <input asp-for="DateOfBirth" class="form-control" type="date" />
-                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-12 mb-3">
-                        <label asp-for="Address" class="form-label"></label>
-                        <input asp-for="Address" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="Address" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="OfficialPhotoUrl" class="form-label"></label>
-                        <input asp-for="OfficialPhotoUrl" class="form-control" />
-                        <span asp-validation-for="OfficialPhotoUrl" class="text-danger"></span>
                     </div>
                 </div>
 
@@ -76,16 +56,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        const roleDropdown = document.getElementById("Role");
-        const studentFields = document.getElementById("studentFields");
-
-        function toggleStudentFields() {
-            studentFields.style.display = roleDropdown.value === "Student" ? "flex" : "none";
-        }
-
-        roleDropdown.addEventListener("change", toggleStudentFields);
-        toggleStudentFields();
-    </script>
 }

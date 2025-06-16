@@ -8,9 +8,6 @@ using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers.API
 {
-    /// <summary>
-    /// Controller de gestão de utilizadores (Apenas Admin)
-    /// </summary>
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Users")]
     public class UsersController : Controller
@@ -32,16 +29,12 @@ namespace SchoolManagement.Web.Controllers.API
             _blobHelper = blobHelper;
         }
 
-        /// <summary>
-        /// Define foto de perfil do Admin para o layout.
-        /// </summary>
         private async Task SetUserProfilePictureAsync()
         {
             var user = await _userManager.GetUserAsync(User);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
-        // GET: Listagem de utilizadores
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -53,20 +46,22 @@ namespace SchoolManagement.Web.Controllers.API
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                model.Add(new UserListViewModel
+                if (roles.Contains("Admin") || roles.Contains("Employee"))
                 {
-                    Id = user.Id,
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    Role = roles.FirstOrDefault() ?? "N/A",
-                    ProfilePictureUrl = user.ProfilePictureUrl
-                });
+                    model.Add(new UserListViewModel
+                    {
+                        Id = user.Id,
+                        FullName = user.FullName,
+                        Email = user.Email,
+                        Role = roles.FirstOrDefault() ?? "N/A",
+                        ProfilePictureUrl = user.ProfilePictureUrl
+                    });
+                }
             }
 
             return View("/Views/AdminDashboard/Users/Index.cshtml", model);
         }
 
-        // POST: Apagar utilizador
         [HttpPost("Delete/{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -78,7 +73,6 @@ namespace SchoolManagement.Web.Controllers.API
             return RedirectToAction("Index");
         }
 
-        // GET: Formulário de criação
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -86,16 +80,15 @@ namespace SchoolManagement.Web.Controllers.API
 
             var model = new CreateUserViewModel
             {
-                Roles = new List<string> { "Admin", "Employee", "Student" }
+                Roles = new List<string> { "Admin", "Employee" }
             };
             return View("/Views/AdminDashboard/Users/Create.cshtml", model);
         }
 
-        // POST: Criar novo utilizador
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
-            model.Roles = new List<string> { "Admin", "Employee", "Student" };
+            model.Roles = new List<string> { "Admin", "Employee" };
             await SetUserProfilePictureAsync();
 
             if (!ModelState.IsValid)
@@ -105,41 +98,16 @@ namespace SchoolManagement.Web.Controllers.API
             if (model.ProfilePicture != null)
             {
                 blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-                Console.WriteLine($"✅ IMAGEM GUARDADA NO BLOB: {blobId}");
             }
-            else
-            {
-                Console.WriteLine("❌ NENHUMA IMAGEM FOI ENVIADA");
-            }
-            ApplicationUser user;
 
-            if (model.Role == "Student")
+            var user = new ApplicationUser
             {
-                user = new StudentUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FullName = model.FullName,
-                    PhoneNumber = model.PhoneNumber,
-                    ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString(),
-                    DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
-                    Address = model.Address,
-                    OfficialPhotoUrl = model.OfficialPhotoUrl,
-                    IsExcludedDueToAbsences = false,
-                    CourseId = model.CourseId
-                };
-            }
-            else
-            {
-                user = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FullName = model.FullName,
-                    PhoneNumber = model.PhoneNumber,
-                    ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString()
-                };
-            }
+                UserName = model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString()
+            };
 
             var result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
@@ -171,7 +139,6 @@ namespace SchoolManagement.Web.Controllers.API
             return RedirectToAction("Index");
         }
 
-        // GET: Formulário de edição
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(string id)
         {
@@ -190,25 +157,16 @@ namespace SchoolManagement.Web.Controllers.API
                 ProfilePictureUrl = user.ProfilePictureUrl,
                 PhoneNumber = user.PhoneNumber,
                 Role = roles.FirstOrDefault(),
-                Roles = new List<string> { "Admin", "Employee", "Student" }
+                Roles = new List<string> { "Admin", "Employee" }
             };
-
-            if (user is StudentUser student)
-            {
-                model.DateOfBirth = student.DateOfBirth;
-                model.Address = student.Address;
-                model.OfficialPhotoUrl = student.OfficialPhotoUrl;
-                model.CourseId = student.CourseId;
-            }
 
             return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
         }
 
-        // POST: Atualizar utilizador
         [HttpPost("Edit/{id}")]
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
-            model.Roles = new List<string> { "Admin", "Employee", "Student" };
+            model.Roles = new List<string> { "Admin", "Employee" };
             await SetUserProfilePictureAsync();
 
             if (!ModelState.IsValid)
@@ -226,17 +184,6 @@ namespace SchoolManagement.Web.Controllers.API
             {
                 Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
                 user.ProfilePictureUrl = blobId.ToString();
-            }
-
-            if (model.Role == "Student")
-            {
-                if (user is StudentUser student)
-                {
-                    student.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
-                    student.Address = model.Address;
-                    student.OfficialPhotoUrl = model.OfficialPhotoUrl;
-                    student.CourseId = model.CourseId;
-                }
             }
 
             var result = await _userManager.UpdateAsync(user);

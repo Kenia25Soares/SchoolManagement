@@ -39,7 +39,14 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
+        }
+        else if (User.IsInRole("Employee"))
+        {
+            <a asp-controller="EmployeeDashboard" asp-action="Index">Dashboard</a>
+        }
     </div>
 
     <!-- Page Content -->
