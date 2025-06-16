@@ -1,73 +1,59 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Helpers;
 
 namespace SchoolManagement.Web.Data
 {
     public class SeedDb
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly DataContext _context;
+        private readonly IUserHelper _userHelper;
 
-        public SeedDb(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            DataContext context)
+        public SeedDb(DataContext context, IUserHelper userHelper)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
             _context = context;
+            _userHelper = userHelper;
         }
 
         public async Task SeedAsync()
         {
-            await EnsureRolesAsync();
-            await EnsureAdminAsync();
-        }
+            await _context.Database.MigrateAsync();
 
-        private async Task EnsureRolesAsync()
-        {
-            string[] roles = { "Admin", "Employee", "Student" };
+            // Verificar se as roles existem, caso contrário, criá-las
+            await _userHelper.CheckRoleAsync("Admin");
+            await _userHelper.CheckRoleAsync("Employee");
+            await _userHelper.CheckRoleAsync("Student");
 
-            foreach (var roleName in roles)
-            {
-                if (!await _roleManager.RoleExistsAsync(roleName))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole(roleName));
-                }
-            }
-        }
-
-        private async Task EnsureAdminAsync()
-        {
+            // Criar o utilizador Admin se não existir
             var email = "admin@school.com";
+            var user = await _userHelper.GetUserByEmailAsync(email);
 
-            var exists = await _userManager.FindByEmailAsync(email);
-
-            if (exists == null)
+            if (user == null)
             {
-                var user = new ApplicationUser
+                user = new ApplicationUser
                 {
-                    UserName = email,
-                    Email = email,
                     FullName = "System Admin",
+                    Email = email,
+                    UserName = email,
                     EmailConfirmed = true
                 };
 
-                var result = await _userManager.CreateAsync(user, "Admin123*");
+                var result = await _userHelper.AddUserAsync(user, "Admin123*");
 
-                if (result.Succeeded)
+                if (result != IdentityResult.Success)
                 {
-                    await _userManager.AddToRoleAsync(user, "Admin");
+                    throw new InvalidOperationException("Failed to create default admin user.");
                 }
-                else
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error.Description);
-                    }
-                }
+
+                await _userHelper.AddUserToRoleAsync(user, "Admin");
+            }
+
+            // Garantir que continua no Role Admin 
+            if (!await _userHelper.IsUserInRoleAsync(user, "Admin"))
+            {
+                await _userHelper.AddUserToRoleAsync(user, "Admin");
             }
         }
     }

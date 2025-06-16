@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,9 @@ using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers.API
 {
+    /// <summary>
+    /// Controller de gestão de utilizadores (Apenas Admin)
+    /// </summary>
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Users")]
     public class UsersController : Controller
@@ -29,12 +32,16 @@ namespace SchoolManagement.Web.Controllers.API
             _blobHelper = blobHelper;
         }
 
+        /// <summary>
+        /// Define foto de perfil do Admin para o layout.
+        /// </summary>
         private async Task SetUserProfilePictureAsync()
         {
             var user = await _userManager.GetUserAsync(User);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
+        // GET: Listagem de utilizadores
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -51,13 +58,15 @@ namespace SchoolManagement.Web.Controllers.API
                     Id = user.Id,
                     FullName = user.FullName,
                     Email = user.Email,
-                    Role = roles.FirstOrDefault() ?? "N/A"
+                    Role = roles.FirstOrDefault() ?? "N/A",
+                    ProfilePictureUrl = user.ProfilePictureUrl
                 });
             }
 
             return View("/Views/AdminDashboard/Users/Index.cshtml", model);
         }
 
+        // POST: Apagar utilizador
         [HttpPost("Delete/{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -69,6 +78,7 @@ namespace SchoolManagement.Web.Controllers.API
             return RedirectToAction("Index");
         }
 
+        // GET: Formulário de criação
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -81,6 +91,7 @@ namespace SchoolManagement.Web.Controllers.API
             return View("/Views/AdminDashboard/Users/Create.cshtml", model);
         }
 
+        // POST: Criar novo utilizador
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
@@ -90,13 +101,16 @@ namespace SchoolManagement.Web.Controllers.API
             if (!ModelState.IsValid)
                 return View("/Views/AdminDashboard/Users/Create.cshtml", model);
 
-            // UPLOAD DA FOTO (caso o admin envie imagem)
             Guid blobId = Guid.Empty;
             if (model.ProfilePicture != null)
             {
-                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projectspictures");
+                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                Console.WriteLine($"✅ IMAGEM GUARDADA NO BLOB: {blobId}");
             }
-
+            else
+            {
+                Console.WriteLine("❌ NENHUMA IMAGEM FOI ENVIADA");
+            }
             ApplicationUser user;
 
             if (model.Role == "Student")
@@ -157,6 +171,7 @@ namespace SchoolManagement.Web.Controllers.API
             return RedirectToAction("Index");
         }
 
+        // GET: Formulário de edição
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(string id)
         {
@@ -189,6 +204,7 @@ namespace SchoolManagement.Web.Controllers.API
             return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
         }
 
+        // POST: Atualizar utilizador
         [HttpPost("Edit/{id}")]
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
@@ -206,7 +222,11 @@ namespace SchoolManagement.Web.Controllers.API
             user.UserName = model.Email;
             user.PhoneNumber = model.PhoneNumber;
 
-            
+            if (model.ProfilePicture != null)
+            {
+                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                user.ProfilePictureUrl = blobId.ToString();
+            }
 
             if (model.Role == "Student")
             {

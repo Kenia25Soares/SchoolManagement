@@ -30,6 +30,9 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Profile Picture URL")]
         public string? ProfilePictureUrl { get; set; }
 
+        [Display(Name = "Upload New Profile Picture")]
+        public IFormFile? ProfilePicture { get; set; }
+
         // Student-only fields:
 
         [Display(Name = "Date of Birth")]

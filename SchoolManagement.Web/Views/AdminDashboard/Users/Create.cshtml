@@ -10,7 +10,6 @@
         <div class="card-body">
             <h2 class="card-title text-center mb-4">Create New User</h2>
 
-            <!-- IMPORTANTE: adicionar enctype para o upload -->
             <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="All" class="text-danger"></div>
 
@@ -33,7 +32,6 @@
                         <span asp-validation-for="Role" class="text-danger"></span>
                     </div>
 
-                    <!-- ALTERADO PARA INPUT FILE -->
                     <div class="col-md-6 mb-3">
                         <label asp-for="ProfilePicture" class="form-label">Profile Picture</label>
                         <input asp-for="ProfilePicture" type="file" class="form-control" />

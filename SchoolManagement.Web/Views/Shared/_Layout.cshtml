@@ -22,7 +22,11 @@
                 <div class="d-flex align-items-center gap-2">
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
-                        <img src="@pictureUrl" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
+                        <img src="@(string.IsNullOrEmpty(pictureUrl)
+                                             ? "/images/default-profile.png"
+                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
+                                             class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
+
                     }
                     <span class="text-white">@User.Identity.Name</span>
                     <form method="post" asp-controller="Account" asp-action="Logout">

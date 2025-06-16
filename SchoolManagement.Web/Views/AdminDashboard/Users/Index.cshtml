@@ -29,18 +29,23 @@
                             @foreach (var user in Model)
                             {
                                 <tr>
-                                    <td>@user.FullName</td>
-                                    <td>@user.Email</td>
-                                    <td>@user.Role</td>
                                     <td>
-                                        <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-warning me-1">Edit</a>
-
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@user.Id" data-name="@user.FullName">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
+                                        <img src="@(string.IsNullOrEmpty(user.ProfilePictureUrl)
+                                                                            ? "/image/default-profile.png"
+                                                                            : $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}")"
+                                         alt="Profile" class="rounded-circle me-2" style="width:40px; height:40px; object-fit:cover;" />
+                                    @user.FullName
+                                </td>
+                                <td>@user.Email</td>
+                                <td>@user.Role</td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-warning me-1">Edit</a>
+                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@user.Id" data-name="@user.FullName">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                                                        }
                         </tbody>
                     </table>
 
