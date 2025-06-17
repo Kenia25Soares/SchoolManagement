@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolManagement.Web.Data;
 
@@ -11,9 +12,11 @@ using SchoolManagement.Web.Data;
 namespace SchoolManagement.Web.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250617115608_AddCourseSubjectRelation")]
+    partial class AddCourseSubjectRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -312,7 +315,7 @@ namespace SchoolManagement.Web.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("CourseSubjects");
+                    b.ToTable("CourseSubject");
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Subject", b =>
@@ -323,6 +326,9 @@ namespace SchoolManagement.Web.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -332,6 +338,8 @@ namespace SchoolManagement.Web.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
 
                     b.ToTable("Subjects");
                 });
@@ -425,13 +433,13 @@ namespace SchoolManagement.Web.Migrations
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.CourseSubject", b =>
                 {
                     b.HasOne("SchoolManagement.Web.Data.Entities.Course", "Course")
-                        .WithMany("CourseSubjects")
+                        .WithMany()
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SchoolManagement.Web.Data.Entities.Subject", "Subject")
-                        .WithMany("CourseSubjects")
+                        .WithMany()
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -439,6 +447,13 @@ namespace SchoolManagement.Web.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Subject", b =>
+                {
+                    b.HasOne("SchoolManagement.Web.Data.Entities.Course", null)
+                        .WithMany("Subjects")
+                        .HasForeignKey("CourseId");
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentUser", b =>
@@ -452,14 +467,9 @@ namespace SchoolManagement.Web.Migrations
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Course", b =>
                 {
-                    b.Navigation("CourseSubjects");
-
                     b.Navigation("Students");
-                });
 
-            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Subject", b =>
-                {
-                    b.Navigation("CourseSubjects");
+                    b.Navigation("Subjects");
                 });
 #pragma warning restore 612, 618
         }

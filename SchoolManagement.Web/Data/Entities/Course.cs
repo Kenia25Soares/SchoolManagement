@@ -19,7 +19,8 @@ namespace SchoolManagement.Web.Data.Entities
         [StringLength(20)]
         public string Shift { get; set; }  // Turno
 
-       
-       /* public ICollection<Subject> Subjects { get; set; } */  // Relacionamento com as Disciplinas
+
+        public ICollection<StudentUser>? Students { get; set; }
+        public ICollection<CourseSubject> CourseSubjects { get; set; } = new List<CourseSubject>();
     }
 }

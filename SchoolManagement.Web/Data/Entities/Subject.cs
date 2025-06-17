@@ -13,5 +13,7 @@ namespace SchoolManagement.Web.Data.Entities
         [Required]
         [Display(Name = "Workload (hours)")]
         public int Workload { get; set; }
+
+        public ICollection<CourseSubject> CourseSubjects { get; set; } = new List<CourseSubject>();
     }
 }
