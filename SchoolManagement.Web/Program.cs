@@ -5,8 +5,13 @@ using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
+using Syncfusion.Licensing;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+//Link Syncfusion license key from appsettings.json
+SyncfusionLicenseProvider.RegisterLicense(builder.Configuration["Syncfusion:LicenseKey"]);
 
 // Database
 builder.Services.AddDbContext<DataContext>(options =>
