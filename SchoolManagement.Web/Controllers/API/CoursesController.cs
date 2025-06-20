@@ -8,23 +8,24 @@ using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers.API
-{ 
-    
+{
     /// <summary>
-   /// Controller responsável pela gestão de cursos.
-   /// Apenas acessível ao Admin.
-   /// </summary>
+    /// Controller responsável pela gestão de cursos.
+    /// Apenas acessível ao Admin.
+    /// </summary>
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Courses")]
     public class CoursesController : Controller
     {
         private readonly ICourseRepository _courseRepository;
         private readonly IConverterHelper _converterHelper;
+        private readonly ICourseHelper _courseHelper;
 
-        public CoursesController(ICourseRepository courseRepository, IConverterHelper converterHelper)
+        public CoursesController(ICourseRepository courseRepository, IConverterHelper converterHelper, ICourseHelper courseHelper)
         {
             _courseRepository = courseRepository;
             _converterHelper = converterHelper;
+            _courseHelper = courseHelper;
         }
 
         /// <summary>
@@ -130,6 +131,31 @@ namespace SchoolManagement.Web.Controllers.API
             {
                 await _courseRepository.DeleteAsync(entity);
             }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet("Manage/{id}")]
+        public async Task<IActionResult> Manage(int id)
+        {
+            var model = await _courseHelper.GetCourseManagementAsync(id);
+            if (model == null)
+                return NotFound();
+
+            return View("Views/AdminDashboard/Courses/Manage.cshtml", model);
+        }
+
+        [HttpPost("UpdateCourseAssignments")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCourseAssignments(CourseManagementViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var courseManagement = await _courseHelper.GetCourseManagementAsync(model.CourseId);
+                return View("Manage", courseManagement);
+            }
+
+            await _courseHelper.UpdateCourseAssignmentsAsync(model);
+
             return RedirectToAction(nameof(Index));
         }
     }

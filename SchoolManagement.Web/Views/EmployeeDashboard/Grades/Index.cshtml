@@ -1,0 +1,45 @@
+﻿@model IEnumerable<SchoolManagement.Web.Data.Entities.StudentUser>
+@{
+    ViewData["Title"] = "Grades Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <h1 class="mt-4">Grades & Absences</h1>
+
+    <form method="get" asp-action="Index">
+        <div class="mb-3">
+            <label for="courseId">Select Course</label>
+            <select id="courseId" name="courseId" class="form-control" onchange="this.form.submit()">
+                @foreach (var course in (SelectList)ViewBag.Courses)
+                {
+                    <option value="@course.Value" selected="@(course.Selected ? "selected" : null)">
+                        @course.Text
+                    </option>
+                }
+            </select>
+        </div>
+    </form>
+
+    <table class="table table-striped table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in Model)
+            {
+                <tr>
+                    <td>@student.FullName</td>
+                    <td>@student.Email</td>
+                    <td>
+                        <a asp-action="Assign" asp-route-studentId="@student.Id" class="btn btn-sm btn-primary">Assign Grades</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

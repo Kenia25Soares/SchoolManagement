@@ -8,11 +8,11 @@ namespace SchoolManagement.Web.Models
     {
         public string Id { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Full name is required.")]
         [Display(Name = "Full Name")]
         public string FullName { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
         public string Email { get; set; } = null!;
 
@@ -20,21 +20,23 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
+        [Required(ErrorMessage = "Date of Birth is required.")]
         [Display(Name = "Date of Birth")]
         [DataType(DataType.Date)]
         public DateTime? DateOfBirth { get; set; }
 
         public string? Address { get; set; }
 
-        [Display(Name = "Official Student Photo URL")]
-        public string? OfficialPhotoUrl { get; set; }
-
-        public int? CourseId { get; set; }
+        [Required(ErrorMessage = "Class is required.")]
+        [Display(Name = "Class")]
+        public int? StudentClassId { get; set; }
 
         [Display(Name = "Current Profile Picture")]
         public string? ProfilePictureUrl { get; set; }
 
         [Display(Name = "New Profile Picture")]
         public IFormFile? ProfilePicture { get; set; }
+
+        public string? OfficialPhotoUrl { get; set; }
     }
 }

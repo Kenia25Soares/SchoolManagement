@@ -1,0 +1,54 @@
+﻿@model SchoolManagement.Web.Models.GradeAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Assign Grades and Absences";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Grades for @Model.StudentName</h2>
+            <h5 class="text-muted text-center mb-4">Course: @Model.CourseName</h5>
+
+            <form action="/EmployeeDashboard/Grades/Save" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="StudentId" />
+                <input type="hidden" asp-for="CourseId" />
+
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th style="width: 150px;">Grade</th>
+                            <th style="width: 150px;">Absences</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Subjects.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Subjects[i].SubjectName
+                                    <input type="hidden" asp-for="Subjects[i].SubjectId" />
+                                </td>
+                                <td>
+                                    <input asp-for="Subjects[i].Grade" class="form-control" />
+                                </td>
+                                <td>
+                                    <input asp-for="Subjects[i].Absences" class="form-control" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="d-flex justify-content-end mt-3 gap-2">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <a asp-action="Index" asp-route-courseId="@Model.CourseId" class="btn btn-secondary">Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

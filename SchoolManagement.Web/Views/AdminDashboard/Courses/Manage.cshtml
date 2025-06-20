@@ -1,0 +1,83 @@
+﻿@model SchoolManagement.Web.Models.CourseManagementViewModel
+
+@{
+    ViewData["Title"] = "Manage Course";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 1000px;">
+        <div class="card-body">
+
+            <h2 class="card-title text-center mb-4">
+                Manage Course: @Model.CourseName
+            </h2>
+
+            <h5 class="text-primary mb-2">Subjects</h5>
+            <div class="row mb-4">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Available</label>
+                    <select id="availableSubjects" class="form-control" multiple size="6">
+                        @foreach (var s in Model.AvailableSubjects)
+                        {
+                            <option value="@s.SubjectId">@s.SubjectName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                    <button type="button" class="btn btn-success w-100" onclick="assignSubjects()">➕</button>
+                    <button type="button" class="btn btn-danger w-100" onclick="removeSubjects()">➖</button>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Assigned</label>
+                    <select id="assignedSubjects" class="form-control" multiple size="6">
+                        @foreach (var s in Model.AssignedSubjects)
+                        {
+                            <option value="@s.SubjectId">@s.SubjectName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <form id="saveSubjectsForm" method="post" asp-action="UpdateCourseAssignments" asp-controller="Courses">
+                <input type="hidden" id="AssignedSubjectsHidden" name="AssignedSubjectsHidden" />
+                <input type="hidden" name="CourseId" value="@Model.CourseId" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" asp-controller="Courses" class="btn btn-secondary">Back</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function moveItems(fromId, toId) {
+            const from = document.getElementById(fromId);
+            const to = document.getElementById(toId);
+            Array.from(from.selectedOptions).forEach(opt => {
+                from.removeChild(opt);
+                to.appendChild(opt);
+            });
+        }
+
+        function assignSubjects() {
+            moveItems('availableSubjects', 'assignedSubjects');
+        }
+
+        function removeSubjects() {
+            moveItems('assignedSubjects', 'availableSubjects');
+        }
+
+        document.getElementById('saveSubjectsForm').addEventListener('submit', function () {
+            const assignedSelect = document.getElementById('assignedSubjects');
+            const assignedIds = Array.from(assignedSelect.options).map(opt => opt.value);
+            document.getElementById('AssignedSubjectsHidden').value = assignedIds.join(',');
+        });
+    </script>
+}

@@ -16,7 +16,7 @@ namespace SchoolManagement.Web.Data.Repository
         {
             return await _context.Users
                 .OfType<StudentUser>()
-                .Include(s => s.Course)
+                .Include(s => s.StudentClass)
                 .ToListAsync();
         }
 
@@ -24,7 +24,7 @@ namespace SchoolManagement.Web.Data.Repository
         {
             return await _context.Users
                 .OfType<StudentUser>()
-                .Include(s => s.Course)
+                .Include(s => s.StudentClass)
                 .FirstOrDefaultAsync(s => s.Id == userId);
         }
 

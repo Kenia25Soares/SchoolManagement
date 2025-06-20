@@ -6,13 +6,11 @@ namespace SchoolManagement.Web.Models
     {
         public int Id { get; set; }
 
-        [Required]
-        [StringLength(100)]
-        public string Name { get; set; }
+        [Required(ErrorMessage = "Subject name is required.")]
+        public string Name { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Workload is required.")]
         [Display(Name = "Workload (hours)")]
-        [Range(1, 500, ErrorMessage = "Please enter a valid workload in hours.")]
         public int Workload { get; set; }
     }
 }

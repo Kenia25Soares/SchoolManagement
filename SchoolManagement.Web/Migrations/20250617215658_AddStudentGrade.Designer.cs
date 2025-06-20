@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolManagement.Web.Data;
 
@@ -11,9 +12,11 @@ using SchoolManagement.Web.Data;
 namespace SchoolManagement.Web.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250617215658_AddStudentGrade")]
+    partial class AddStudentGrade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,9 +283,20 @@ namespace SchoolManagement.Web.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AcademicYear")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Shift")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
@@ -302,36 +316,6 @@ namespace SchoolManagement.Web.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("CourseSubjects");
-                });
-
-            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentClass", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AcademicYear")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Shift")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.ToTable("StudentClasses");
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentGrade", b =>
@@ -365,9 +349,9 @@ namespace SchoolManagement.Web.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("StudentId");
-
                     b.HasIndex("SubjectId");
+
+                    b.HasIndex("StudentId", "SubjectId", "CourseId");
 
                     b.ToTable("StudentGrades");
                 });
@@ -382,7 +366,8 @@ namespace SchoolManagement.Web.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Workload")
                         .HasColumnType("int");
@@ -399,6 +384,9 @@ namespace SchoolManagement.Web.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
 
@@ -408,11 +396,7 @@ namespace SchoolManagement.Web.Migrations
                     b.Property<string>("OfficialPhotoUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("StudentClassId")
-                        .IsRequired()
-                        .HasColumnType("int");
-
-                    b.HasIndex("StudentClassId");
+                    b.HasIndex("CourseId");
 
                     b.HasDiscriminator().HasValue("StudentUser");
                 });
@@ -498,23 +482,12 @@ namespace SchoolManagement.Web.Migrations
                     b.Navigation("Subject");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentClass", b =>
-                {
-                    b.HasOne("SchoolManagement.Web.Data.Entities.Course", "Course")
-                        .WithMany("StudentClasses")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-                });
-
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentGrade", b =>
                 {
                     b.HasOne("SchoolManagement.Web.Data.Entities.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SchoolManagement.Web.Data.Entities.StudentUser", "Student")
@@ -524,7 +497,7 @@ namespace SchoolManagement.Web.Migrations
                         .IsRequired();
 
                     b.HasOne("SchoolManagement.Web.Data.Entities.Subject", "Subject")
-                        .WithMany("StudentGrades")
+                        .WithMany()
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -538,32 +511,23 @@ namespace SchoolManagement.Web.Migrations
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentUser", b =>
                 {
-                    b.HasOne("SchoolManagement.Web.Data.Entities.StudentClass", "StudentClass")
+                    b.HasOne("SchoolManagement.Web.Data.Entities.Course", "Course")
                         .WithMany("Students")
-                        .HasForeignKey("StudentClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CourseId");
 
-                    b.Navigation("StudentClass");
+                    b.Navigation("Course");
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Course", b =>
                 {
                     b.Navigation("CourseSubjects");
 
-                    b.Navigation("StudentClasses");
-                });
-
-            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentClass", b =>
-                {
                     b.Navigation("Students");
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Subject", b =>
                 {
                     b.Navigation("CourseSubjects");
-
-                    b.Navigation("StudentGrades");
                 });
 #pragma warning restore 612, 618
         }

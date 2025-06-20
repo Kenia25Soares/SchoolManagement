@@ -35,33 +35,35 @@ public class EmployeeCoursesController : Controller
         return View("/Views/EmployeeDashboard/Courses/Manage.cshtml", model);
     }
 
-    // AJAX para atribuir aluno
     [HttpPost("AssignStudent")]
     public async Task<IActionResult> AssignStudent(int courseId, string studentId)
     {
+        var studentClass = await _context.StudentClasses.FirstOrDefaultAsync(sc => sc.Id == courseId);
+        if (studentClass == null) return NotFound();
+
         var student = await _context.Users.OfType<StudentUser>().FirstOrDefaultAsync(s => s.Id == studentId);
         if (student == null) return NotFound();
 
-        student.CourseId = courseId;
+        student.StudentClassId = studentClass.Id;
         await _context.SaveChangesAsync();
 
         return Ok();
     }
 
-    // AJAX para remover aluno
     [HttpPost("RemoveStudent")]
     public async Task<IActionResult> RemoveStudent(int courseId, string studentId)
     {
-        var student = await _context.Users.OfType<StudentUser>().FirstOrDefaultAsync(s => s.Id == studentId && s.CourseId == courseId);
+        var student = await _context.Users.OfType<StudentUser>()
+            .FirstOrDefaultAsync(s => s.Id == studentId && s.StudentClassId == courseId);
+
         if (student == null) return NotFound();
 
-        student.CourseId = null;
+        student.StudentClassId = null;
         await _context.SaveChangesAsync();
 
         return Ok();
     }
 
-    // AJAX para atribuir disciplina (usando CourseSubject)
     [HttpPost("AssignSubject")]
     public async Task<IActionResult> AssignSubject(int courseId, int subjectId)
     {
@@ -71,8 +73,7 @@ public class EmployeeCoursesController : Controller
 
         if (course == null) return NotFound();
 
-        bool alreadyAssigned = course.CourseSubjects.Any(cs => cs.SubjectId == subjectId);
-        if (!alreadyAssigned)
+        if (!course.CourseSubjects.Any(cs => cs.SubjectId == subjectId))
         {
             course.CourseSubjects.Add(new CourseSubject
             {

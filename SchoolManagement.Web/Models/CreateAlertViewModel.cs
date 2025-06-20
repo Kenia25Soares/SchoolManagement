@@ -5,15 +5,14 @@ namespace SchoolManagement.Web.Models
 {
     public class CreateAlertViewModel
     {
-        [Required]
+        [Required(ErrorMessage = "Title is required.")]
         public string Title { get; set; } = null!;
 
-
-        [Required]
+        [Required(ErrorMessage = "Description is required.")]
         public string Description { get; set; } = null!;
 
-
-        [Required]
+        [Required(ErrorMessage = "Priority is required.")]
+        [Display(Name = "Alert Priority")]
         public AlertPriority Priority { get; set; }
     }
 }

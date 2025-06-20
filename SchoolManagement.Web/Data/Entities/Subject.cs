@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Data.Entities
 {
@@ -7,7 +8,6 @@ namespace SchoolManagement.Web.Data.Entities
         public int Id { get; set; }
 
         [Required]
-        [StringLength(100)]
         public string Name { get; set; }
 
         [Required]
@@ -15,5 +15,7 @@ namespace SchoolManagement.Web.Data.Entities
         public int Workload { get; set; }
 
         public ICollection<CourseSubject> CourseSubjects { get; set; } = new List<CourseSubject>();
+
+        public ICollection<StudentGrade> StudentGrades { get; set; } = new List<StudentGrade>();
     }
 }

@@ -20,8 +20,6 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Academic Year</th>
-                                <th>Shift</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -30,11 +28,18 @@
                             {
                                 <tr>
                                     <td>@course.Name</td>
-                                    <td>@course.AcademicYear</td>
-                                    <td>@course.Shift</td>
                                     <td>
                                         <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-warning">Edit</a>
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@course.Id" data-name="@course.Name">Delete</button>
+                                        <a asp-action="Manage" asp-route-id="@course.Id" class="btn btn-sm btn-info">Manage</a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal"
+                                                data-id="@course.Id"
+                                                data-name="@course.Name"
+                                                aria-label="Delete course @course.Name">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -74,11 +79,11 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        var deleteModal = document.getElementById('deleteModal')
+        var deleteModal = document.getElementById('deleteModal');
         deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget
-            var courseId = button.getAttribute('data-id')
-            var courseName = button.getAttribute('data-name')
+            var button = event.relatedTarget;
+            var courseId = button.getAttribute('data-id');
+            var courseName = button.getAttribute('data-name');
 
             document.getElementById('courseName').innerText = courseName;
             document.getElementById('courseIdToDelete').value = courseId;

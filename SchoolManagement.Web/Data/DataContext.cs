@@ -11,8 +11,10 @@ namespace SchoolManagement.Web.Data
         }
 
         public DbSet<Course> Courses { get; set; }
+        public DbSet<StudentClass> StudentClasses { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<CourseSubject> CourseSubjects { get; set; }
+        public DbSet<StudentGrade> StudentGrades { get; set; }
         public DbSet<Alert> Alerts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -36,6 +38,13 @@ namespace SchoolManagement.Web.Data
                 .HasOne(cs => cs.Subject)
                 .WithMany(s => s.CourseSubjects)
                 .HasForeignKey(cs => cs.SubjectId);
+
+            builder.Entity<StudentGrade>()
+                .HasOne(sg => sg.Course)
+                .WithMany()
+                .HasForeignKey(sg => sg.CourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

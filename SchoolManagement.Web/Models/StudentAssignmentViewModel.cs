@@ -1,12 +1,16 @@
-﻿using SchoolManagement.Web.Data.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Models
 {
     public class StudentAssignmentViewModel
     {
-        public string StudentId { get; set; }
-        public string StudentName { get; set; }
+        [Required]
+        public string StudentId { get; set; } = null!;
+
+        [Display(Name = "Student Name")]
+        public string StudentName { get; set; } = null!;
+
+        [Display(Name = "Assigned")]
         public bool IsAssigned { get; set; }
     }
 }

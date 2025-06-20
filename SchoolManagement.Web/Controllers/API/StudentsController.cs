@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
@@ -14,17 +16,25 @@ namespace SchoolManagement.Web.Controllers.API
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IBlobHelper _blobHelper;
+        private readonly DataContext _context;
 
-        public StudentsController(UserManager<ApplicationUser> userManager, IBlobHelper blobHelper)
+        public StudentsController(UserManager<ApplicationUser> userManager, IBlobHelper blobHelper, DataContext context)
         {
             _userManager = userManager;
             _blobHelper = blobHelper;
+            _context = context;
         }
 
         private async Task SetUserProfilePictureAsync()
         {
             var user = await _userManager.GetUserAsync(User);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
+
+        private async Task LoadClassesAsync(object selected = null)
+        {
+            var classes = await _context.StudentClasses.OrderBy(c => c.Name).ToListAsync();
+            ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
         [HttpGet]
@@ -49,6 +59,7 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Create()
         {
             await SetUserProfilePictureAsync();
+            await LoadClassesAsync();
             return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
         }
 
@@ -56,13 +67,14 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Create(CreateStudentViewModel model)
         {
             await SetUserProfilePictureAsync();
+            await LoadClassesAsync(model.StudentClassId);
 
             if (!ModelState.IsValid)
                 return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
 
             Guid blobId = Guid.Empty;
             if (model.ProfilePicture != null)
-                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "profilepictures");
 
             var student = new StudentUser
             {
@@ -73,7 +85,7 @@ namespace SchoolManagement.Web.Controllers.API
                 DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
                 Address = model.Address,
                 OfficialPhotoUrl = model.OfficialPhotoUrl,
-                CourseId = model.CourseId,
+                StudentClassId = model.StudentClassId,
                 ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString(),
                 IsExcludedDueToAbsences = false
             };
@@ -101,6 +113,8 @@ namespace SchoolManagement.Web.Controllers.API
             var user = await _userManager.FindByIdAsync(id) as StudentUser;
             if (user == null) return NotFound();
 
+            await LoadClassesAsync(user.StudentClassId);
+
             var model = new EditStudentViewModel
             {
                 Id = user.Id,
@@ -110,7 +124,7 @@ namespace SchoolManagement.Web.Controllers.API
                 DateOfBirth = user.DateOfBirth,
                 Address = user.Address,
                 OfficialPhotoUrl = user.OfficialPhotoUrl,
-                CourseId = user.CourseId,
+                StudentClassId = user.StudentClassId,
                 ProfilePictureUrl = user.ProfilePictureUrl
             };
 
@@ -121,6 +135,7 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Edit(EditStudentViewModel model)
         {
             await SetUserProfilePictureAsync();
+            await LoadClassesAsync(model.StudentClassId);
 
             if (!ModelState.IsValid)
                 return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
@@ -135,11 +150,11 @@ namespace SchoolManagement.Web.Controllers.API
             user.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
             user.Address = model.Address;
             user.OfficialPhotoUrl = model.OfficialPhotoUrl;
-            user.CourseId = model.CourseId;
+            user.StudentClassId = model.StudentClassId;
 
             if (model.ProfilePicture != null)
             {
-                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "profilepictures");
                 user.ProfilePictureUrl = blobId.ToString();
             }
 

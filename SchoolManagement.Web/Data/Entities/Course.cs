@@ -7,20 +7,13 @@ namespace SchoolManagement.Web.Data.Entities
         public int Id { get; set; }
 
         [Required]
-        [StringLength(100)]
         public string Name { get; set; }
 
-        [Required]
-        [StringLength(50)]
-        [Display(Name = "Academic Year")]
-        public string AcademicYear { get; set; } 
-
-        [Required]
-        [StringLength(20)]
-        public string Shift { get; set; }  // Turno
+        // Um curso pode ter várias turmas (StudentClasses)
+        public ICollection<StudentClass> StudentClasses { get; set; } = new List<StudentClass>();
 
 
-        public ICollection<StudentUser>? Students { get; set; }
+        // Um curso pode ter várias disciplinas (Subjects) através de CourseSubjects
         public ICollection<CourseSubject> CourseSubjects { get; set; } = new List<CourseSubject>();
     }
 }

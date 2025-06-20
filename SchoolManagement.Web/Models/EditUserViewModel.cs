@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,11 +9,11 @@ namespace SchoolManagement.Web.Models
     {
         public string Id { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Full name is required.")]
         [Display(Name = "Full Name")]
         public string FullName { get; set; } = null!;
 
-        [Required]
+        [Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
         [Display(Name = "Email Address")]
         public string Email { get; set; } = null!;
@@ -21,19 +22,17 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Role is required.")]
         [Display(Name = "User Role")]
         public string Role { get; set; } = null!;
 
         public List<string> Roles { get; set; } = new();
 
-        [Display(Name = "Profile Picture URL")]
+        [Display(Name = "Current Profile Picture")]
         public string? ProfilePictureUrl { get; set; }
 
         [Display(Name = "Upload New Profile Picture")]
         public IFormFile? ProfilePicture { get; set; }
-
-        // Student-only fields:
 
         [Display(Name = "Date of Birth")]
         [DataType(DataType.Date)]
@@ -42,10 +41,9 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Home Address")]
         public string? Address { get; set; }
 
-        [Display(Name = "Official Student Photo URL")]
         public string? OfficialPhotoUrl { get; set; }
 
-        [Display(Name = "Course")]
-        public int? CourseId { get; set; }
+        [Display(Name = "Class")]
+        public int? StudentClassId { get; set; }
     }
 }
