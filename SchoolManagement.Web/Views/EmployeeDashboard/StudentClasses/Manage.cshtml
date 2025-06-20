@@ -1,0 +1,108 @@
+﻿@model SchoolManagement.Web.Models.ManageStudentClassViewModel
+
+@{
+    ViewData["Title"] = "Manage Student Class";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 1000px;">
+        <div class="card-body">
+
+            <h2 class="card-title text-center mb-4">
+                Manage Students for Class: @Model.StudentClassName
+            </h2>
+
+            <h5 class="text-primary mb-2">Students</h5>
+            <div class="row mb-4">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold" for="availableStudents">Available</label>
+                    <select id="availableStudents" class="form-control" multiple size="8" aria-label="Available Students">
+                        @foreach (var s in Model.AvailableStudents)
+                        {
+                            <option value="@s.StudentId">@s.StudentName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                    <button type="button" class="btn btn-success w-100" onclick="assignStudents()">➕</button>
+                    <button type="button" class="btn btn-danger w-100" onclick="removeStudents()">➖</button>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label fw-bold" for="assignedStudents">Assigned</label>
+                    <select id="assignedStudents" class="form-control" multiple size="8" aria-label="Assigned Students">
+                        @foreach (var s in Model.AssignedStudents)
+                        {
+                            <option value="@s.StudentId">@s.StudentName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Index" asp-controller="StudentClasses" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const studentClassId = '@Model.StudentClassId';
+
+        function moveItems(fromId, toId) {
+            const from = document.getElementById(fromId);
+            const to = document.getElementById(toId);
+            const selectedOptions = Array.from(from.selectedOptions);
+
+            selectedOptions.forEach(opt => {
+                from.removeChild(opt);
+                to.appendChild(opt);
+            });
+
+            return selectedOptions.map(opt => opt.value);
+        }
+
+        async function assignStudents() {
+            const studentIds = moveItems('availableStudents', 'assignedStudents');
+            for (const studentId of studentIds) {
+                await updateStudentAssignment(studentId, true);
+            }
+        }
+
+        async function removeStudents() {
+            const studentIds = moveItems('assignedStudents', 'availableStudents');
+            for (const studentId of studentIds) {
+                await updateStudentAssignment(studentId, false);
+            }
+        }
+
+        async function updateStudentAssignment(studentId, assign) {
+            try {
+                const response = await fetch(`/EmployeeDashboard/StudentClasses/AssignStudent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({
+                        studentId: studentId,
+                        studentClassId: assign ? studentClassId : null
+                    })
+                });
+
+                if (!response.ok) {
+                    alert('Failed to update student assignment.');
+                }
+            } catch (error) {
+                alert('Error occurred while updating assignment.');
+            }
+        }
+
+        function getAntiForgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]').value;
+        }
+    </script>
+}

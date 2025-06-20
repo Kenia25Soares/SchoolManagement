@@ -2,7 +2,7 @@
 
 namespace SchoolManagement.Web.Data.Repository
 {
-    public interface IStudentRepository
+    public interface IStudentRepository 
     {
         Task<IEnumerable<StudentUser>> GetAllAsync();
         Task<StudentUser?> GetByIdAsync(string userId);

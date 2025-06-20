@@ -46,13 +46,15 @@ builder.Services.AddScoped<IBlobHelper, BlobHelper>();
 builder.Services.AddScoped<IUserHelper, UserHelper>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
 builder.Services.AddScoped<IConverterHelper, ConverterHelper>();
+builder.Services.AddScoped<IStudentClassHelper, StudentClassHelper>();
+builder.Services.AddScoped<ICourseHelper, CourseHelper>();
 
 // Repositories
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<ICourseHelper, CourseHelper>();
+builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
 
 var app = builder.Build();
 

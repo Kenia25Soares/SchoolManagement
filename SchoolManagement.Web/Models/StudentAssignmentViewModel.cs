@@ -12,5 +12,7 @@ namespace SchoolManagement.Web.Models
 
         [Display(Name = "Assigned")]
         public bool IsAssigned { get; set; }
+
+        public int? StudentClassId { get; set; }
     }
 }

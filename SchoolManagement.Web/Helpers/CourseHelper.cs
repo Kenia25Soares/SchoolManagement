@@ -1,8 +1,11 @@
-﻿using SchoolManagement.Web.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class CourseHelper : ICourseHelper
 {
@@ -46,32 +49,38 @@ public class CourseHelper : ICourseHelper
         };
     }
 
-    public async Task UpdateCourseAssignmentsAsync(CourseManagementViewModel model)
+    public async Task AssignSubjectToCourseAsync(int courseId, int subjectId)
     {
         var course = await _context.Courses
             .Include(c => c.CourseSubjects)
-            .FirstOrDefaultAsync(c => c.Id == model.CourseId);
+            .FirstOrDefaultAsync(c => c.Id == courseId);
 
-        if (course == null) return;
+        if (course == null) throw new Exception("Course not found");
 
-        _context.CourseSubjects.RemoveRange(course.CourseSubjects);
-
-        var subjectIds = (model.AssignedSubjectsHidden ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(id => int.TryParse(id, out var sid) ? sid : (int?)null)
-            .Where(id => id.HasValue)
-            .Select(id => id.Value)
-            .ToList();
-
-        foreach (var subjectId in subjectIds)
+        if (!course.CourseSubjects.Any(cs => cs.SubjectId == subjectId))
         {
-            _context.CourseSubjects.Add(new CourseSubject
+            course.CourseSubjects.Add(new CourseSubject
             {
-                CourseId = course.Id,
+                CourseId = courseId,
                 SubjectId = subjectId
             });
+            await _context.SaveChangesAsync();
         }
+    }
 
-        await _context.SaveChangesAsync();
+    public async Task RemoveSubjectFromCourseAsync(int courseId, int subjectId)
+    {
+        var course = await _context.Courses
+            .Include(c => c.CourseSubjects)
+            .FirstOrDefaultAsync(c => c.Id == courseId);
+
+        if (course == null) throw new Exception("Course not found");
+
+        var courseSubject = course.CourseSubjects.FirstOrDefault(cs => cs.SubjectId == subjectId);
+        if (courseSubject != null)
+        {
+            course.CourseSubjects.Remove(courseSubject);
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -144,19 +144,35 @@ namespace SchoolManagement.Web.Controllers.API
             return View("Views/AdminDashboard/Courses/Manage.cshtml", model);
         }
 
-        [HttpPost("UpdateCourseAssignments")]
+        [HttpPost("AssignSubject")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateCourseAssignments(CourseManagementViewModel model)
+        public async Task<IActionResult> AssignSubject([FromBody] AssignSubjectRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                var courseManagement = await _courseHelper.GetCourseManagementAsync(model.CourseId);
-                return View("Manage", courseManagement);
-            }
+            if (request == null || request.CourseId <= 0 || request.SubjectId <= 0)
+                return BadRequest("Invalid request");
 
-            await _courseHelper.UpdateCourseAssignmentsAsync(model);
+            await _courseHelper.AssignSubjectToCourseAsync(request.CourseId, request.SubjectId);
 
-            return RedirectToAction(nameof(Index));
+            return Ok();
         }
+
+        [HttpPost("RemoveSubject")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveSubject([FromBody] AssignSubjectRequest request)
+        {
+            if (request == null || request.CourseId <= 0 || request.SubjectId <= 0)
+                return BadRequest("Invalid request");
+
+            await _courseHelper.RemoveSubjectFromCourseAsync(request.CourseId, request.SubjectId);
+
+            return Ok();
+        }
+
+        public class AssignSubjectRequest
+        {
+            public int CourseId { get; set; }
+            public int SubjectId { get; set; }
+        }
+
     }
 }

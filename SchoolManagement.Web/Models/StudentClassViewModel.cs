@@ -1,4 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Models
 {
@@ -6,20 +10,22 @@ namespace SchoolManagement.Web.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Name is required.")]
-        [Display(Name = "Class Name")]
-        public string Name { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; }
 
-        [Required(ErrorMessage = "Academic Year is required.")]
+        [Required(ErrorMessage = "Academic Year is required")]
         [Display(Name = "Academic Year")]
-        public string AcademicYear { get; set; } = string.Empty;
+        public string AcademicYear { get; set; }
 
-        [Required(ErrorMessage = "Shift is required.")]
-        [Display(Name = "Shift")]
-        public string Shift { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Shift is required")]
+        public string Shift { get; set; }
 
-        [Required(ErrorMessage = "Course is required.")]
+        [Required(ErrorMessage = "Please select a course")]
         [Display(Name = "Course")]
         public int CourseId { get; set; }
+        [ValidateNever]
+        public string CourseName { get; set; }
+        [ValidateNever]
+        public IEnumerable<SelectListItem> Courses { get; set; }
     }
 }

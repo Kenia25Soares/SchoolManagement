@@ -1,0 +1,88 @@
+﻿@model SchoolManagement.Web.Models.EditStudentViewModel
+
+@{
+    ViewData["Title"] = "Edit Student";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Edit Student</h2>
+
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="OfficialPhotoUrl" class="form-label"></label>
+                        <input asp-for="OfficialPhotoUrl" class="form-control" />
+                        <span asp-validation-for="OfficialPhotoUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Current Profile Picture:</label><br />
+                        <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl)
+                                                                                       ? "/images/default-profile.png"
+                                                                                       : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
+                             class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProfilePicture" class="form-label"></label>
+                        <input asp-for="ProfilePicture" type="file" class="form-control" />
+                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StudentClassId" class="form-label">Class</label>
+                        <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                        <span asp-validation-for="StudentClassId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
