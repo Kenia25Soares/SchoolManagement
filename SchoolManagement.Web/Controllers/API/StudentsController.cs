@@ -7,6 +7,9 @@ using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers.API
 {
@@ -37,7 +40,7 @@ namespace SchoolManagement.Web.Controllers.API
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
-        [HttpGet]
+        [HttpGet("")]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
@@ -64,6 +67,7 @@ namespace SchoolManagement.Web.Controllers.API
         }
 
         [HttpPost("Create")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateStudentViewModel model)
         {
             await SetUserProfilePictureAsync();
@@ -102,7 +106,7 @@ namespace SchoolManagement.Web.Controllers.API
             await _userManager.AddToRoleAsync(student, "Student");
 
             TempData["SuccessMessage"] = "Student created successfully!";
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet("Edit/{id}")]
@@ -132,6 +136,7 @@ namespace SchoolManagement.Web.Controllers.API
         }
 
         [HttpPost("Edit/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditStudentViewModel model)
         {
             await SetUserProfilePictureAsync();
@@ -168,7 +173,7 @@ namespace SchoolManagement.Web.Controllers.API
             }
 
             TempData["SuccessMessage"] = "Student updated successfully!";
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
     }
 }

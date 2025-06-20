@@ -1,44 +1,68 @@
-﻿@model SchoolManagement.Web.Models.StudentClassViewModel
+﻿@model SchoolManagement.Web.Models.EditStudentViewModel
 
 @{
-    ViewData["Title"] = "Edit Student Class";
+    ViewData["Title"] = "Edit Student";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5">
     <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
         <div class="card-body">
-            <h2 class="card-title text-center mb-4">Edit Student Class</h2>
+            <h2 class="card-title text-center mb-4">Edit Student</h2>
 
-            <form asp-action="Edit" method="post">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
                 <div asp-validation-summary="All" class="text-danger"></div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Name" class="form-label"></label>
-                        <input asp-for="Name" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="Name" class="text-danger"></span>
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="AcademicYear" class="form-label"></label>
-                        <input asp-for="AcademicYear" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="AcademicYear" class="text-danger"></span>
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Shift" class="form-label"></label>
-                        <input asp-for="Shift" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="Shift" class="text-danger"></span>
+                        <label asp-for="PhoneNumber" class="form-label"></label>
+                        <input asp-for="PhoneNumber" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="CourseId" class="form-label">Course</label>
-                        <select asp-for="CourseId" class="form-select" asp-items="Model.Courses">
-                            <option value="">-- Select Course --</option>
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="OfficialPhotoUrl" class="form-label"></label>
+                        <input asp-for="OfficialPhotoUrl" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="OfficialPhotoUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProfilePicture" class="form-label"></label>
+                        <input asp-for="ProfilePicture" type="file" class="form-control" />
+                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StudentClassId" class="form-label">Class</label>
+                        <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
+                            <option value="">-- Select Class --</option>
                         </select>
-                        <span asp-validation-for="CourseId" class="text-danger"></span>
+                        <span asp-validation-for="StudentClassId" class="text-danger"></span>
                     </div>
                 </div>
 
