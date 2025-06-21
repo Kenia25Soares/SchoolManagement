@@ -20,12 +20,14 @@ namespace SchoolManagement.Web.Controllers.API
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IBlobHelper _blobHelper;
         private readonly DataContext _context;
+        private readonly IMailHelper _mailHelper;
 
-        public StudentsController(UserManager<ApplicationUser> userManager, IBlobHelper blobHelper, DataContext context)
+        public StudentsController(UserManager<ApplicationUser> userManager, IMailHelper mailHelper, IBlobHelper blobHelper, DataContext context)
         {
             _userManager = userManager;
             _blobHelper = blobHelper;
             _context = context;
+            _mailHelper = mailHelper;
         }
 
         private async Task SetUserProfilePictureAsync()
@@ -105,7 +107,32 @@ namespace SchoolManagement.Web.Controllers.API
 
             await _userManager.AddToRoleAsync(student, "Student");
 
-            TempData["SuccessMessage"] = "Student created successfully!";
+            // GERAR E ENVIAR EMAIL PARA DEFINIR A SENHA
+            var token = await _userManager.GeneratePasswordResetTokenAsync(student);
+            var resetLink = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { token = token, email = student.Email },
+                protocol: Request.Scheme);
+
+            // Aqui você pode montar o corpo do email (exemplo simples)
+            var emailBody = $@"
+        <h2>Welcome to the School Management System</h2>
+        <p>To set your password, please click the link below:</p>
+        <p><a href='{resetLink}'>Set your password</a></p>";
+
+            // Envie o email (assumindo que você tenha o IMailHelper configurado)
+            var mailResponse = _mailHelper.SendEmail(student.Email, "Set your password", emailBody);
+
+            if (!mailResponse.IsSuccess)
+            {
+                // Log ou avise que não conseguiu enviar email
+                ModelState.AddModelError("", "Failed to send password setup email to student.");
+                // Você pode escolher retornar a view com erro ou continuar normalmente
+                // return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
+            }
+
+            TempData["SuccessMessage"] = "Student created successfully! A password setup email was sent.";
             return RedirectToAction(nameof(Index));
         }
 

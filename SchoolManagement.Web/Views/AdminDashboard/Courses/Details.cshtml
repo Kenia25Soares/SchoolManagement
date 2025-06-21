@@ -1,0 +1,24 @@
+﻿@model SchoolManagement.Web.Models.CourseViewModel
+
+@{
+    ViewData["Title"] = "Course Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 600px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Course Details</h2>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Name:</label>
+                <p class="form-control-plaintext">@Model.Name</p>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Back</a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+            </div>
+        </div>
+    </div>
+</div>

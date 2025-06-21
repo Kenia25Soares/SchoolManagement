@@ -48,6 +48,7 @@ builder.Services.AddTransient<IMailHelper, MailHelper>();
 builder.Services.AddScoped<IConverterHelper, ConverterHelper>();
 builder.Services.AddScoped<IStudentClassHelper, StudentClassHelper>();
 builder.Services.AddScoped<ICourseHelper, CourseHelper>();
+builder.Services.AddScoped<IStudentGradeHelper, StudentGradeHelper>();
 
 // Repositories
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
@@ -55,6 +56,7 @@ builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
+builder.Services.AddScoped<IStudentAbsenceHelper, StudentAbsenceHelper>();
 
 var app = builder.Build();
 

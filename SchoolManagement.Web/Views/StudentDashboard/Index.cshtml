@@ -1,0 +1,31 @@
+﻿@model StudentDashboardViewModel
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+    Layout = "~/Views/Shared/_LayoutStudent.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Welcome, @Model.StudentName!</h2>
+    <div class="row gx-4 justify-content-center">
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">View Your Grades</h5>
+                    <p class="card-text">Check all your grades per subject.</p>
+                    <a asp-action="Grades" class="btn btn-primary mt-auto">View Grades</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-5 col-lg-4 mt-4 mt-md-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">View Your Absences</h5>
+                    <p class="card-text">See your attendance and absences per subject.</p>
+                    <a asp-action="Absences" class="btn btn-primary mt-auto">View Absences</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

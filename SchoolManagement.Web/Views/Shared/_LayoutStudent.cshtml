@@ -23,24 +23,15 @@
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
                         <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                                                       ? "/images/default-profile.png"
-                                                                       : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
+                                                         ? "/images/default-profile.png"
+                                                         : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
                      class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
                                 }
                     <span class="text-white">@User.Identity.Name</span>
 
-                    @if (User.IsInRole("Student"))
-                    {
-                        <form method="get" asp-controller="Account" asp-action="EditStudentProfile" class="me-2">
-                            <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <form method="get" asp-controller="Account" asp-action="EditProfile" class="me-2">
-                            <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
-                        </form>
-                    }
+                    <form method="get" asp-controller="Account" asp-action="EditStudentProfile" class="me-2">
+                        <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
+                    </form>
 
                     <form method="post" asp-controller="Account" asp-action="Logout">
                         <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
@@ -50,25 +41,11 @@
         </div>
     </nav>
 
-    <!-- Sidebar -->
-    @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
-    {
-        <div class="sidebar">
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
-        }
-        else if (User.IsInRole("Employee"))
-        {
-            <a asp-controller="EmployeeDashboard" asp-action="Index">Dashboard</a>
-            <a asp-controller="EmployeeAlerts" asp-action="Create">Add Alert</a>
-        }
-    </div>
-    }
     <!-- Page Content -->
-    <div class="content-wrapper">
+    <div class="container mt-5" style="padding-top: 20px;">
         @RenderBody()
     </div>
+
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)

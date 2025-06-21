@@ -126,5 +126,18 @@ namespace SchoolManagement.Web.Controllers.API
             }
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var subject = await _subjectRepository.GetByIdAsync(id);
+            if (subject == null)
+            {
+                return NotFound();
+            }
+
+            var model = _converterHelper.ToSubjectViewModel(subject);
+            return View("Views/AdminDashboard/Subjects/Details.cshtml", model);
+        }
     }
 }

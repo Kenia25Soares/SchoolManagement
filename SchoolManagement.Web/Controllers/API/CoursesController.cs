@@ -35,7 +35,10 @@ namespace SchoolManagement.Web.Controllers.API
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var courses = await _courseRepository.GetAll().ToListAsync();
+            var courses = await _courseRepository.GetAll()
+                                                .Include(c => c.CourseSubjects)
+                                                .ToListAsync();
+
             var viewModel = courses.Select(c => _converterHelper.ToCourseViewModel(c)).ToList();
             return View("Views/AdminDashboard/Courses/Index.cshtml", viewModel);
         }
@@ -174,5 +177,16 @@ namespace SchoolManagement.Web.Controllers.API
             public int SubjectId { get; set; }
         }
 
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var course = await _courseRepository.GetByIdAsync(id);
+            if (course == null)
+                return NotFound();
+
+            var model = _converterHelper.ToCourseViewModel(course);
+
+            return View("Views/AdminDashboard/Courses/Details.cshtml", model);
+        }
     }
 }

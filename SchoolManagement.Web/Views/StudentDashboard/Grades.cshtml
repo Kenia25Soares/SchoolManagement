@@ -1,0 +1,64 @@
+﻿@model StudentGradesDetailsViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutStudent.cshtml";
+    ViewData["Title"] = "Grades Details for " + Model.StudentName;
+}
+
+<div class="container mt-4">
+    <h2>Grades Details for @Model.StudentName</h2>
+
+    <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+        <strong class="fs-4">Média Total Geral:</strong>
+        <span class="badge bg-primary fs-4">@Model.TotalAverage.ToString("F2")</span>
+    </div>
+
+    @if (!Model.SubjectGrades.Any())
+    {
+        <div class="alert alert-info">No grades recorded.</div>
+    }
+    else
+    {
+        @foreach (var subject in Model.SubjectGrades)
+        {
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>@subject.SubjectName - Média: @subject.WeightedAverage.ToString("F2")</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Grade Type</th>
+                                <th>Grades</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gradeTypeGroup in subject.GradesByType)
+                            {
+                                <tr>
+                                    <td>@gradeTypeGroup.GradeTypeName</td>
+                                    <td>
+                                        @if (gradeTypeGroup.Grades.Any())
+                                        {
+                                            foreach (var grade in gradeTypeGroup.Grades)
+                                            {
+                                                <span class="badge rounded-pill bg-primary me-1" style="color: white;">@grade.ToString("F2")</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No grades</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+
+    <a asp-action="Index" class="btn btn-secondary mb-3">Back to Grades List</a>
+</div>

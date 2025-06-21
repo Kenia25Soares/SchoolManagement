@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Models;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Helpers
@@ -20,6 +21,8 @@ namespace SchoolManagement.Web.Helpers
         Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user);
         Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user);
         Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string password);
+        Task<ApplicationUser> GetUserAsync(ClaimsPrincipal principal);
         Task<SelectList> GetClassesSelectListAsync(int? selectedClassId);
+        Task<int> GetUsersCountAsync();
     }
 }

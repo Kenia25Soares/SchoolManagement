@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Models;
+using System.Security.Claims;
 
 namespace SchoolManagement.Web.Helpers
 {
@@ -104,6 +105,16 @@ namespace SchoolManagement.Web.Helpers
                 .ToListAsync();
 
             return new SelectList(classes, "Id", "Name", selectedClassId);
+        }
+
+        public async Task<ApplicationUser> GetUserAsync(ClaimsPrincipal principal)
+        {
+            return await _userManager.GetUserAsync(principal);
+        }
+
+        public async Task<int> GetUsersCountAsync()
+        {
+            return await _userManager.Users.CountAsync();
         }
     }
 }

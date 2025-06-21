@@ -10,7 +10,8 @@ namespace SchoolManagement.Web.Helpers
             return new CourseViewModel
             {
                 Id = course.Id,
-                Name = course.Name
+                Name = course.Name,
+                SubjectsCount = course.CourseSubjects?.Count ?? 0
             };
         }
 

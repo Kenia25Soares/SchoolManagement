@@ -202,5 +202,30 @@ namespace SchoolManagement.Web.Controllers.API
             TempData["SuccessMessage"] = "User updated successfully!";
             return RedirectToAction("Index");
         }
+
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return NotFound();
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var model = new CreateUserViewModel
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Role = roles.FirstOrDefault() ?? "",
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Roles = new List<string> { "Admin", "Employee" }
+            };
+
+            return View("/Views/AdminDashboard/Users/Details.cshtml", model);
+        }
     }
 }

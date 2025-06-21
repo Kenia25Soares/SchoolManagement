@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data;
@@ -46,7 +47,20 @@ namespace SchoolManagement.Web.Controllers.API
                 })
                 .ToListAsync();
 
-            return View(alerts);
+            var stats = new AdminDashboardViewModel
+            {
+                TotalUsers = await _userHelper.GetUsersCountAsync(),
+                TotalCourses = await _context.Courses.CountAsync(),
+                TotalSubjects = await _context.Subjects.CountAsync()
+            };
+
+            var model = new AdminDashboardCombinedViewModel
+            {
+                Alerts = alerts,
+                Stats = stats
+            };
+
+            return View(model);
         }
     }
 }

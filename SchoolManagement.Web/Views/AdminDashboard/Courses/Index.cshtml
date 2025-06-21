@@ -20,7 +20,8 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Actions</th>
+                                <th style="width: 15%;">Subjects</th>
+                                <th style="width: 25%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -29,7 +30,11 @@
                                 <tr>
                                     <td>@course.Name</td>
                                     <td>
+                                        <span class="badge bg-success">@course.SubjectsCount</span>
+                                    </td>
+                                    <td style="width: 25%;">
                                         <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-warning">Edit</a>
+                                        <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-sm btn-info me-1">Details</a>
                                         <a asp-action="Manage" asp-route-id="@course.Id" class="btn btn-sm btn-info">Manage</a>
                                         <button type="button"
                                                 class="btn btn-sm btn-danger"
@@ -45,7 +50,6 @@
                             }
                         </tbody>
                     </table>
-
                 </div>
             </div>
         </div>

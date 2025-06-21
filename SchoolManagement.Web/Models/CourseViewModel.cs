@@ -9,5 +9,7 @@ namespace SchoolManagement.Web.Models
         [Required(ErrorMessage = "Name is required.")]
         [Display(Name = "Course Name")]
         public string Name { get; set; }
+
+        public int SubjectsCount { get; set; }
     }
 }
