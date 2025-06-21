@@ -1,27 +1,36 @@
-using Microsoft.AspNetCore.Identity;
+ï»¿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers.API
 {
     public class AccountController : Controller
     {
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IBlobHelper _blobHelper;
         private readonly IUserHelper _userHelper;
         private readonly IMailHelper _mailHelper;
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, IMailHelper mailHelper, IUserHelper userHelper)
+        public AccountController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IMailHelper mailHelper,
+            IUserHelper userHelper,
+            IBlobHelper blobHelper)
         {
+            _userManager = userManager;
             _signInManager = signInManager;
             _userHelper = userHelper;
+            _blobHelper = blobHelper;
             _mailHelper = mailHelper;
         }
 
-
         /// <summary>
-        /// Abre o formulário de login.
+        /// Abre o formulï¿½rio de login.
         /// </summary>
         // GET
         public IActionResult Login() => View();
@@ -72,7 +81,7 @@ namespace SchoolManagement.Web.Controllers.API
 
 
         /// <summary>
-        /// Abre o formulário de reset de password.
+        /// Abre o formulï¿½rio de reset de password.
         /// </summary>
         // GET
         [HttpGet]
@@ -112,7 +121,7 @@ namespace SchoolManagement.Web.Controllers.API
             var result = await _userHelper.ResetPasswordAsync(user, model.Token, model.Password);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Password definida com sucesso. Pode agora iniciar sessão.";
+                TempData["SuccessMessage"] = "Password definida com sucesso. Pode agora iniciar sessï¿½o.";
                 return RedirectToAction("Login", "Account");
             }
 
@@ -126,7 +135,7 @@ namespace SchoolManagement.Web.Controllers.API
 
 
         /// <summary>
-        /// Abre o formulário de recuperação de password.
+        /// Abre o formulï¿½rio de recuperaï¿½ï¿½o de password.
         /// </summary>
         // GET
         [HttpGet]
@@ -137,7 +146,7 @@ namespace SchoolManagement.Web.Controllers.API
 
 
         /// <summary>
-        /// Submete a recuperação de password e envia o email.
+        /// Submete a recuperaï¿½ï¿½o de password e envia o email.
         /// </summary>
         // POST
         [HttpPost]
@@ -149,7 +158,7 @@ namespace SchoolManagement.Web.Controllers.API
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Email não encontrado.");
+                ModelState.AddModelError(string.Empty, "Email nï¿½o encontrado.");
                 return View(model);
             }
 
@@ -164,7 +173,7 @@ namespace SchoolManagement.Web.Controllers.API
 
             if (response.IsSuccess)
             {
-                ViewBag.Message = "As instruções foram enviadas para o seu email.";
+                ViewBag.Message = "As instruï¿½ï¿½es foram enviadas para o seu email.";
             }
             else
             {
@@ -173,5 +182,129 @@ namespace SchoolManagement.Web.Controllers.API
 
             return View();
         }
+
+        // GET: Edit profile (Admin/Employee)
+        [HttpGet]
+        public async Task<IActionResult> EditProfile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var model = new EditProfileViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                ProfilePictureUrl = user.ProfilePictureUrl
+            };
+
+            return View(model);
+        }
+
+        // POST: Edit profile (Admin/Employee)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(EditProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByIdAsync(model.Id);
+            if (user == null) return NotFound();
+
+            user.FullName = model.FullName;
+            user.Email = model.Email;
+            user.UserName = model.Email;
+
+            if (model.ProfilePicture != null)
+            {
+                var blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                user.ProfilePictureUrl = blobId.ToString();
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var e in result.Errors)
+                    ModelState.AddModelError("", e.Description);
+                return View(model);
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+
+            TempData["SuccessMessage"] = "Profile updated successfully.";
+            return RedirectToAction(nameof(EditProfile));
+        }
+
+        // GET: Edit student profile (StudentUser)
+        [HttpGet]
+        public async Task<IActionResult> EditStudentProfile()
+        {
+            var user = await _userManager.GetUserAsync(User) as StudentUser;
+            if (user == null) return NotFound();
+
+            var model = new EditStudentProfileViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address,
+                OfficialPhotoUrl = user.OfficialPhotoUrl,
+                StudentClassId = user.StudentClassId,
+                ProfilePictureUrl = user.ProfilePictureUrl
+            };
+
+            ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(user.StudentClassId);
+
+            return View(model);
+        }
+
+        // POST: Edit student profile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditStudentProfile(EditStudentProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(model.StudentClassId);
+                return View(model);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.Id) as StudentUser;
+            if (user == null) return NotFound();
+
+            user.FullName = model.FullName;
+            user.Email = model.Email;
+            user.UserName = model.Email;
+            user.PhoneNumber = model.PhoneNumber;
+            user.DateOfBirth = model.DateOfBirth;
+            user.Address = model.Address;
+            user.OfficialPhotoUrl = model.OfficialPhotoUrl;
+            user.StudentClassId = model.StudentClassId;
+
+            if (model.ProfilePicture != null)
+            {
+                var blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                user.ProfilePictureUrl = blobId.ToString();
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var e in result.Errors)
+                    ModelState.AddModelError("", e.Description);
+
+                ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(model.StudentClassId);
+                return View(model);
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+
+            TempData["SuccessMessage"] = "Profile updated successfully.";
+            return RedirectToAction(nameof(EditStudentProfile));
+        }
+
     }
 }

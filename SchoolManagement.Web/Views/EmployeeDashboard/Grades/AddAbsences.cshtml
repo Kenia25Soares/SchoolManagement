@@ -1,0 +1,116 @@
+﻿@model AddAbsencesViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Add Absences for Student";
+
+    string GetSubjectOptions(int selectedId)
+    {
+        var options = "";
+        foreach (var s in Model.Subjects)
+        {
+            var selected = s.Value == selectedId.ToString() ? "selected" : "";
+            options += $"<option value='{s.Value}' {selected}>{s.Text}</option>";
+        }
+        return options;
+    }
+}
+
+<div class="container-fluid">
+    <h1 class="mt-4">Employee Dashboard</h1>
+    <p>Add absences for @ViewBag.StudentName here.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Add Absences for @ViewBag.StudentName</h5>
+
+                    <form asp-action="AddAbsences" method="post">
+                        <input type="hidden" asp-for="StudentId" />
+
+                        <table class="table table-bordered" id="absencesTable">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Absences</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Absences.Count; i++)
+                                {
+                                    <tr>
+                                        <td>
+                                            <select name="Absences[@i].SubjectId" class="form-select" required>
+                                                <option value="">-- Select Subject --</option>
+                                                @Html.Raw(GetSubjectOptions(Model.Absences[i].SubjectId))
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input name="Absences[@i].Absences" class="form-control" type="number" min="0" value="@Model.Absences[i].Absences" required />
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                        <button type="button" class="btn btn-success mb-3" onclick="addRow()">+</button>
+
+                        <div>
+                            <button type="submit" class="btn btn-primary">Save Absences</button>
+                            <a asp-action="Index" class="btn btn-secondary">Back</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const subjectOptions = `@Html.Raw(GetSubjectOptions(0))`;
+
+        function addRow() {
+            const tbody = document.querySelector('#absencesTable tbody');
+            const index = tbody.querySelectorAll('tr').length;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <select name="Absences[${index}].SubjectId" class="form-select" required>
+                        <option value="">-- Select Subject --</option>
+                        ${subjectOptions}
+                    </select>
+                </td>
+                <td>
+                    <input name="Absences[${index}].Absences" class="form-control" type="number" min="0" required />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+
+            const rows = document.querySelectorAll('#absencesTable tbody tr');
+            rows.forEach((tr, i) => {
+                tr.querySelectorAll('select, input').forEach(el => {
+                    const name = el.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/\d+/, i);
+                        el.setAttribute('name', newName);
+                    }
+                });
+            });
+        }
+    </script>
+}

@@ -14,16 +14,22 @@
                 <div asp-validation-summary="All" class="text-danger"></div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label asp-for="Name" class="form-label"></label>
                         <input asp-for="Name" class="form-control" autocomplete="off" />
                         <span asp-validation-for="Name" class="text-danger"></span>
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label asp-for="Workload" class="form-label"></label>
                         <input asp-for="Workload" type="number" class="form-control" autocomplete="off" />
                         <span asp-validation-for="Workload" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="AllowedAbsences" class="form-label"></label>
+                        <input asp-for="AllowedAbsences" type="number" class="form-control" min="0" autocomplete="off" />
+                        <span asp-validation-for="AllowedAbsences" class="text-danger"></span>
                     </div>
                 </div>
 

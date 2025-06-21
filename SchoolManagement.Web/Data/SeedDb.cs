@@ -30,6 +30,19 @@ namespace SchoolManagement.Web.Data
             var email = "admin@school.com";
             var user = await _userHelper.GetUserByEmailAsync(email);
 
+            if (!_context.GradeTypes.Any())
+            {
+                var gradeTypes = new List<GradeType>
+            {
+                new GradeType { Name = "Test", Weight = 0.3 },
+                new GradeType { Name = "Assignment", Weight = 0.3 },
+                new GradeType { Name = "Exam", Weight = 0.4 }
+            };
+
+                    _context.GradeTypes.AddRange(gradeTypes);
+                    await _context.SaveChangesAsync();
+                }
+
             if (user == null)
             {
                 user = new ApplicationUser

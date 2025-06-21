@@ -21,6 +21,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Workload (hours)</th>
+                                <th>Allowed Absences</th>  <!-- Nova coluna -->
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -30,6 +31,7 @@
                                 <tr>
                                     <td>@subject.Name</td>
                                     <td>@subject.Workload</td>
+                                    <td>@subject.AllowedAbsences</td>  <!-- Valor da nova coluna -->
                                     <td>
                                         <a asp-action="Edit" asp-route-id="@subject.Id" class="btn btn-sm btn-warning">Edit</a>
                                         <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@subject.Id" data-name="@subject.Name">Delete</button>

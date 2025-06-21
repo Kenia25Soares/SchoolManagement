@@ -12,5 +12,9 @@ namespace SchoolManagement.Web.Models
         [Required(ErrorMessage = "Workload is required.")]
         [Display(Name = "Workload (hours)")]
         public int Workload { get; set; }
+
+        [Required]
+        [Display(Name = "Allowed Absences")]
+        public int AllowedAbsences { get; set; }
     }
 }

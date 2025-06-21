@@ -24,25 +24,36 @@ namespace SchoolManagement.Web.Helpers
         }
         public SubjectViewModel ToSubjectViewModel(Subject subject)
         {
+            if (subject == null) return null;
+
             return new SubjectViewModel
             {
                 Id = subject.Id,
                 Name = subject.Name,
-                Workload = subject.Workload
+                Workload = subject.Workload,
+                AllowedAbsences = subject.AllowedAbsences
             };
         }
 
         public Subject ToSubjectEntity(SubjectViewModel model, bool isNew)
         {
-            return new Subject
+            if (model == null) return null;
+
+            var subject = new Subject
             {
-                Id = isNew ? 0 : model.Id,
                 Name = model.Name,
-                Workload = model.Workload
+                Workload = model.Workload,
+                AllowedAbsences = model.AllowedAbsences
             };
+
+            if (!isNew)
+            {
+                subject.Id = model.Id;
+            }
+
+            return subject;
         }
 
-        // NOVO: Conversão StudentClass <-> StudentClassViewModel
         public StudentClassViewModel ToStudentClassViewModel(StudentClass studentClass)
         {
             return new StudentClassViewModel

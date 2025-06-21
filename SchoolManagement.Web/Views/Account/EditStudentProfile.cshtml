@@ -8,9 +8,9 @@
 <div class="container mt-5">
     <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
         <div class="card-body">
-            <h2 class="card-title text-center mb-4">Edit Student</h2>
+            <h2 class="card-title text-center mb-4">Edit Student - @Model.FullName</h2>
 
-            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <form asp-action="EditStudentProfile" method="post" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
                 <div asp-validation-summary="All" class="text-danger"></div>
 
@@ -35,7 +35,7 @@
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="DateOfBirth" class="form-label"></label>
-                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <input asp-for="DateOfBirth" type="date" class="form-control" />
                         <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                     </div>
 
@@ -52,23 +52,35 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ProfilePicture" class="form-label"></label>
-                        <input asp-for="ProfilePicture" type="file" class="form-control" />
-                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
                         <label asp-for="StudentClassId" class="form-label">Class</label>
                         <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
                             <option value="">-- Select Class --</option>
                         </select>
                         <span asp-validation-for="StudentClassId" class="text-danger"></span>
                     </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Current Profile Picture</label><br />
+                        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                        {
+                            <img src="@Model.ProfilePictureUrl" alt="Profile Picture" style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
+                        }
+                        else
+                        {
+                            <span>No picture uploaded</span>
+                        }
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProfilePicture" class="form-label">Upload New Picture</label>
+                        <input asp-for="ProfilePicture" type="file" class="form-control" accept="image/*" />
+                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
                 </div>
             </form>
         </div>

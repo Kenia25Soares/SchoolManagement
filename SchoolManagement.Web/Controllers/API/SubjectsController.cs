@@ -5,6 +5,8 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers.API
 {

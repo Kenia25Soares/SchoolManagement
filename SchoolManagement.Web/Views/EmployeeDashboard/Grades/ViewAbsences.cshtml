@@ -1,0 +1,48 @@
+﻿@model StudentAbsencesViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Absences for " + Model.StudentName;
+}
+
+<div class="container-fluid">
+    <h1 class="mt-4">Employee Dashboard</h1>
+    <p>Manage absences for @Model.StudentName here.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Absences for @Model.StudentName</h5>
+
+                    @if (!Model.Absences.Any())
+                    {
+                        <div class="alert alert-info">No absences recorded for this student.</div>
+                    }
+                    else
+                    {
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Total Absences</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var absence in Model.Absences)
+                                {
+                                    <tr>
+                                        <td>@absence.SubjectName</td>
+                                        <td>@absence.TotalAbsences</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                    <a asp-action="Index" class="btn btn-secondary mt-3">Back to Grades</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,129 @@
+﻿@model AddGradesViewModel
+
+@{
+    ViewData["Title"] = "Add Grades for Student";
+
+    string GetSubjectOptions(int selectedId)
+    {
+        var options = "";
+        foreach (var s in Model.Subjects)
+        {
+            var selected = s.Value == selectedId.ToString() ? "selected" : "";
+            options += $"<option value='{s.Value}' {selected}>{s.Text}</option>";
+        }
+        return options;
+    }
+
+    string GetGradeTypeOptions(int selectedId)
+    {
+        var options = "";
+        foreach (var gt in Model.GradeTypes)
+        {
+            var selected = gt.Value == selectedId.ToString() ? "selected" : "";
+            options += $"<option value='{gt.Value}' {selected}>{gt.Text}</option>";
+        }
+        return options;
+    }
+}
+
+<div class="container mt-4">
+    <h2>Add Grades for @ViewBag.StudentName</h2>
+
+    <form asp-action="AddGrades" method="post">
+        <input type="hidden" asp-for="StudentId" />
+
+        <table class="table table-bordered" id="gradesTable">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Grade Type</th>
+                    <th>Grade</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Grades.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            <select name="Grades[@i].SubjectId" class="form-select" required>
+                                <option value="">-- Select Subject --</option>
+                                @Html.Raw(GetSubjectOptions(Model.Grades[i].SubjectId))
+                            </select>
+                        </td>
+                        <td>
+                            <select name="Grades[@i].GradeTypeId" class="form-select" required>
+                                <option value="">-- Select Grade Type --</option>
+                                @Html.Raw(GetGradeTypeOptions(Model.Grades[i].GradeTypeId))
+                            </select>
+                        </td>
+                        <td>
+                            <input name="Grades[@i].Grade" class="form-control" type="number" step="0.01" min="0" max="20" value="@Model.Grades[i].Grade" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <button type="button" class="btn btn-success mb-3" onclick="addRow()">+</button>
+
+        <div>
+            <button type="submit" class="btn btn-primary">Save Grades</button>
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        const subjectOptions = `@Html.Raw(GetSubjectOptions(0))`;
+        const gradeTypeOptions = `@Html.Raw(GetGradeTypeOptions(0))`;
+
+        function addRow() {
+            const tbody = document.querySelector('#gradesTable tbody');
+            const index = tbody.querySelectorAll('tr').length;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <select name="Grades[${index}].SubjectId" class="form-select" required>
+                        <option value="">-- Select Subject --</option>
+                        ${subjectOptions}
+                    </select>
+                </td>
+                <td>
+                    <select name="Grades[${index}].GradeTypeId" class="form-select" required>
+                        <option value="">-- Select Grade Type --</option>
+                        ${gradeTypeOptions}
+                    </select>
+                </td>
+                <td>
+                    <input name="Grades[${index}].Grade" class="form-control" type="number" step="0.01" min="0" max="20" />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+
+            const rows = document.querySelectorAll('#gradesTable tbody tr');
+            rows.forEach((tr, i) => {
+                tr.querySelectorAll('select, input').forEach(el => {
+                    const name = el.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/\d+/, i);
+                        el.setAttribute('name', newName);
+                    }
+                });
+            });
+        }
+    </script>
+}

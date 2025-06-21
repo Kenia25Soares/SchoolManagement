@@ -19,5 +19,8 @@ namespace SchoolManagement.Web.Data.Entities
         public double? Grade { get; set; }
         public int Absences { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public int? GradeTypeId { get; set; }
+        public GradeType? GradeType { get; set; }
     }
 }

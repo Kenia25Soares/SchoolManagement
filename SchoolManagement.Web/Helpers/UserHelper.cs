@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Models;
 
@@ -9,15 +12,18 @@ namespace SchoolManagement.Web.Helpers
         private readonly UserManager<ApplicationUser> _userManager;  //faz a gestão dos utilizadores
         private readonly SignInManager<ApplicationUser> _signInManager;  //faz a gestão do login e logout dos utilizadores
         private readonly RoleManager<IdentityRole> _roleManager;  //faz a gestão dos papéis (roles) dos utilizadores
+        private readonly DataContext _context;
 
         public UserHelper(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            DataContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _context = context;
         }
 
         public async Task<IdentityResult> AddUserAsync(ApplicationUser user, string password)
@@ -89,6 +95,15 @@ namespace SchoolManagement.Web.Helpers
         public async Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string password)
         {
             return await _userManager.ResetPasswordAsync(user, token, password);
+        }
+
+        public async Task<SelectList> GetClassesSelectListAsync(int? selectedClassId)
+        {
+            var classes = await _context.StudentClasses
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            return new SelectList(classes, "Id", "Name", selectedClassId);
         }
     }
 }

@@ -23,12 +23,25 @@
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
                         <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                             ? "/images/default-profile.png"
-                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
-                                             class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
-
-                    }
+                                                                       ? "/images/default-profile.png"
+                                                                       : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
+                     class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
+                                }
                     <span class="text-white">@User.Identity.Name</span>
+
+                    @if (User.IsInRole("Student"))
+                    {
+                        <form method="get" asp-controller="Account" asp-action="EditStudentProfile" class="me-2">
+                            <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="get" asp-controller="Account" asp-action="EditProfile" class="me-2">
+                            <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
+                        </form>
+                    }
+
                     <form method="post" asp-controller="Account" asp-action="Logout">
                         <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
                     </form>

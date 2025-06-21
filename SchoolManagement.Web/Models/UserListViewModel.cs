@@ -17,5 +17,10 @@ namespace SchoolManagement.Web.Models
 
         [Display(Name = "User Role")]
         public string Role { get; set; } = null!;
+
+        public double? AverageGrade { get; set; }
+        public int TotalAbsences { get; set; }
+        public bool IsFailedByAbsences { get; set; }
+        public bool FailedDueToAbsences { get; internal set; }
     }
 }

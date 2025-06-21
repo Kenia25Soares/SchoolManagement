@@ -78,7 +78,7 @@ namespace SchoolManagement.Web.Controllers.API
 
             Guid blobId = Guid.Empty;
             if (model.ProfilePicture != null)
-                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "profilepictures");
+                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
 
             var student = new StudentUser
             {
@@ -119,7 +119,7 @@ namespace SchoolManagement.Web.Controllers.API
 
             await LoadClassesAsync(user.StudentClassId);
 
-            var model = new EditStudentViewModel
+            var model = new EditStudentProfileViewModel
             {
                 Id = user.Id,
                 FullName = user.FullName,
@@ -137,7 +137,7 @@ namespace SchoolManagement.Web.Controllers.API
 
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(EditStudentViewModel model)
+        public async Task<IActionResult> Edit(EditStudentProfileViewModel model)
         {
             await SetUserProfilePictureAsync();
             await LoadClassesAsync(model.StudentClassId);
@@ -152,14 +152,14 @@ namespace SchoolManagement.Web.Controllers.API
             user.Email = model.Email;
             user.UserName = model.Email;
             user.PhoneNumber = model.PhoneNumber;
-            user.DateOfBirth = model.DateOfBirth ?? DateTime.MinValue;
+            user.DateOfBirth = model.DateOfBirth;
             user.Address = model.Address;
             user.OfficialPhotoUrl = model.OfficialPhotoUrl;
             user.StudentClassId = model.StudentClassId;
 
             if (model.ProfilePicture != null)
             {
-                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "profilepictures");
+                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
                 user.ProfilePictureUrl = blobId.ToString();
             }
 
