@@ -32,11 +32,9 @@ namespace SchoolManagement.Web.Models
         public int? StudentClassId { get; set; }
 
         [Display(Name = "Current Profile Picture")]
-        public string? ProfilePictureUrl { get; set; }
+        public IFormFile? OfficialPhoto { get; set; }
 
         [Display(Name = "New Profile Picture")]
         public IFormFile? ProfilePicture { get; set; }
-
-        public string? OfficialPhotoUrl { get; set; }
     }
 }

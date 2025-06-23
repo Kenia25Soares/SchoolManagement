@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
@@ -29,18 +30,10 @@ namespace SchoolManagement.Web.Controllers.API
             _mailHelper = mailHelper;
         }
 
-        /// <summary>
-        /// Abre o formul�rio de login.
-        /// </summary>
-        // GET
+        // GET: Login
         public IActionResult Login() => View();
 
-
-
-        /// <summary>
-        /// Faz o login do utilizador.
-        /// </summary>
-        // POST
+        // POST: Login
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -68,29 +61,19 @@ namespace SchoolManagement.Web.Controllers.API
             return View(model);
         }
 
-
-        /// <summary>
-        /// Faz o logout do utilizador.
-        /// </summary>
-        // GET
+        // GET: Logout
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login");
         }
 
-
-        /// <summary>
-        /// Abre o formul�rio de reset de password.
-        /// </summary>
-        // GET
+        // GET: ResetPassword
         [HttpGet]
         public IActionResult ResetPassword(string token, string email)
         {
             if (token == null || email == null)
-            {
                 return BadRequest("Token and email are required.");
-            }
 
             var model = new ResetPasswordViewModel
             {
@@ -101,11 +84,7 @@ namespace SchoolManagement.Web.Controllers.API
             return View(model);
         }
 
-
-        /// <summary>
-        /// Submete o reset de password.
-        /// </summary>
-        // POST
+        // POST: ResetPassword
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
@@ -114,41 +93,29 @@ namespace SchoolManagement.Web.Controllers.API
 
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
             if (user == null)
-            {
                 return RedirectToAction("ResetPasswordConfirmation");
-            }
 
             var result = await _userHelper.ResetPasswordAsync(user, model.Token, model.Password);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Password definida com sucesso. Pode agora iniciar sess�o.";
+                TempData["SuccessMessage"] = "Password definida com sucesso. Pode agora iniciar sessão.";
                 return RedirectToAction("Login", "Account");
             }
 
             foreach (var error in result.Errors)
-            {
                 ModelState.AddModelError(string.Empty, error.Description);
-            }
 
             return View(model);
         }
 
-
-        /// <summary>
-        /// Abre o formul�rio de recupera��o de password.
-        /// </summary>
-        // GET
+        // GET: RecoverPassword
         [HttpGet]
         public IActionResult RecoverPassword()
         {
             return View();
         }
 
-
-        /// <summary>
-        /// Submete a recupera��o de password e envia o email.
-        /// </summary>
-        // POST
+        // POST: RecoverPassword
         [HttpPost]
         public async Task<IActionResult> RecoverPassword(RecoverPasswordViewModel model)
         {
@@ -158,7 +125,7 @@ namespace SchoolManagement.Web.Controllers.API
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Email n�o encontrado.");
+                ModelState.AddModelError(string.Empty, "Email não encontrado.");
                 return View(model);
             }
 
@@ -172,13 +139,9 @@ namespace SchoolManagement.Web.Controllers.API
             ");
 
             if (response.IsSuccess)
-            {
-                ViewBag.Message = "As instru��es foram enviadas para o seu email.";
-            }
+                ViewBag.Message = "As instruções foram enviadas para o seu email.";
             else
-            {
                 ModelState.AddModelError(string.Empty, "Erro ao enviar o email.");
-            }
 
             return View();
         }
@@ -290,6 +253,12 @@ namespace SchoolManagement.Web.Controllers.API
                 user.ProfilePictureUrl = blobId.ToString();
             }
 
+            if (model.OfficialPhoto != null)
+            {
+                var blobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
+                user.OfficialPhotoUrl = blobId.ToString();
+            }
+
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
@@ -305,6 +274,5 @@ namespace SchoolManagement.Web.Controllers.API
             TempData["SuccessMessage"] = "Profile updated successfully.";
             return RedirectToAction(nameof(EditStudentProfile));
         }
-
     }
 }

@@ -22,7 +22,11 @@ namespace SchoolManagement.Web.Controllers.API
         private readonly DataContext _context;
         private readonly IMailHelper _mailHelper;
 
-        public StudentsController(UserManager<ApplicationUser> userManager, IMailHelper mailHelper, IBlobHelper blobHelper, DataContext context)
+        public StudentsController(
+            UserManager<ApplicationUser> userManager,
+            IMailHelper mailHelper,
+            IBlobHelper blobHelper,
+            DataContext context)
         {
             _userManager = userManager;
             _blobHelper = blobHelper;
@@ -42,7 +46,7 @@ namespace SchoolManagement.Web.Controllers.API
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
-        [HttpGet("")]
+        [HttpGet()]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
@@ -78,9 +82,14 @@ namespace SchoolManagement.Web.Controllers.API
             if (!ModelState.IsValid)
                 return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
 
-            Guid blobId = Guid.Empty;
+            Guid profilePictureBlobId = Guid.Empty;
+            Guid officialPhotoBlobId = Guid.Empty;
+
             if (model.ProfilePicture != null)
-                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                profilePictureBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+
+            if (model.OfficialPhoto != null)
+                officialPhotoBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
 
             var student = new StudentUser
             {
@@ -90,9 +99,9 @@ namespace SchoolManagement.Web.Controllers.API
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
                 Address = model.Address,
-                OfficialPhotoUrl = model.OfficialPhotoUrl,
                 StudentClassId = model.StudentClassId,
-                ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString(),
+                ProfilePictureUrl = profilePictureBlobId == Guid.Empty ? null : profilePictureBlobId.ToString(),
+                OfficialPhotoUrl = officialPhotoBlobId == Guid.Empty ? null : officialPhotoBlobId.ToString(),
                 IsExcludedDueToAbsences = false
             };
 
@@ -107,7 +116,7 @@ namespace SchoolManagement.Web.Controllers.API
 
             await _userManager.AddToRoleAsync(student, "Student");
 
-            // GERAR E ENVIAR EMAIL PARA DEFINIR A SENHA
+            // Gerar e enviar email para definir a senha
             var token = await _userManager.GeneratePasswordResetTokenAsync(student);
             var resetLink = Url.Action(
                 "ResetPassword",
@@ -115,20 +124,16 @@ namespace SchoolManagement.Web.Controllers.API
                 new { token = token, email = student.Email },
                 protocol: Request.Scheme);
 
-            // Aqui você pode montar o corpo do email (exemplo simples)
             var emailBody = $@"
-        <h2>Welcome to the School Management System</h2>
-        <p>To set your password, please click the link below:</p>
-        <p><a href='{resetLink}'>Set your password</a></p>";
+                <h2>Welcome to the School Management System</h2>
+                <p>To set your password, please click the link below:</p>
+                <p><a href='{resetLink}'>Set your password</a></p>";
 
-            // Envie o email (assumindo que você tenha o IMailHelper configurado)
             var mailResponse = _mailHelper.SendEmail(student.Email, "Set your password", emailBody);
-
             if (!mailResponse.IsSuccess)
             {
-                // Log ou avise que não conseguiu enviar email
                 ModelState.AddModelError("", "Failed to send password setup email to student.");
-                // Você pode escolher retornar a view com erro ou continuar normalmente
+                // Pode retornar a view com erro ou prosseguir normalmente
                 // return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
             }
 
@@ -186,8 +191,14 @@ namespace SchoolManagement.Web.Controllers.API
 
             if (model.ProfilePicture != null)
             {
-                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-                user.ProfilePictureUrl = blobId.ToString();
+                Guid profileBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                user.ProfilePictureUrl = profileBlobId.ToString();
+            }
+
+            if (model.OfficialPhoto != null)
+            {
+                Guid officialBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
+                user.OfficialPhotoUrl = officialBlobId.ToString();
             }
 
             var result = await _userManager.UpdateAsync(user);
