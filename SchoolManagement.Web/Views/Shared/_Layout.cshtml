@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Syncfusion.EJ2
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -6,10 +7,12 @@
     <title>@ViewData["Title"] - School Management</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link href="https://cdn.syncfusion.com/ej2/30.1.37/bootstrap5.css" rel="stylesheet" />
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
         <div class="container-fluid d-flex justify-content-between align-items-center">
@@ -23,8 +26,8 @@
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
                         <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                                                       ? "/images/default-profile.png"
-                                                                       : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
+                                                         ? "/images/default-profile.png"
+                                                         : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
                      class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
                                 }
                     <span class="text-white">@User.Identity.Name</span>
@@ -54,23 +57,27 @@
     @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
     {
         <div class="sidebar">
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
-        }
-        else if (User.IsInRole("Employee"))
-        {
-            <a asp-controller="EmployeeDashboard" asp-action="Index">Dashboard</a>
-            <a asp-controller="EmployeeAlerts" asp-action="Create">Add Alert</a>
-        }
-    </div>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
+            }
+            else if (User.IsInRole("Employee"))
+            {
+                <a asp-controller="EmployeeDashboard" asp-action="Index">Dashboard</a>
+                <a asp-controller="EmployeeAlerts" asp-action="Create">Add Alert</a>
+            }
+        </div>
     }
+
     <!-- Page Content -->
     <div class="content-wrapper">
         @RenderBody()
     </div>
 
+    <!-- Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.syncfusion.com/ej2/30.1.37/dist/ej2.min.js"></script>
+    @Html.EJS().ScriptManager()
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
