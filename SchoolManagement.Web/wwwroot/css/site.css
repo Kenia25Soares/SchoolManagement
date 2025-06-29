@@ -66,4 +66,15 @@ body {
     align-items: center;
 }
 
+/* Aplica a todos os botões da Syncfusion */
+.e-btn {
+    color: white !important;
+}
+
+/* Para garantir contraste se houver variações */
+.e-btn:hover {
+    color: white !important;
+}
+
+
 

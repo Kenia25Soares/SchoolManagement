@@ -48,7 +48,14 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
-                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                    <ejs-button id="btnBackToUsers"
+                                type="button"
+                                content="Back"
+                                iconCss="fas fa-arrow-left"
+                                cssClass="e-secondary e-plus"
+                                iconPosition="Left"
+                                onclick="location.href='/AdminDashboard/Users'">
+                    </ejs-button>
                 </div>
             </form>
         </div>

@@ -14,14 +14,21 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Courses</h5>
-                    <a asp-action="Create" class="btn btn-success mb-3">Add New Course</a>
+
+                    <ejs-button id="btnAddCourse"
+                                content="Add Course"
+                                iconCss="fas fa-plus"
+                                cssClass="e-success e-plus mb-3"
+                                iconPosition="Left"
+                                onclick="location.href='/AdminDashboard/Courses/Create'">
+                    </ejs-button>
 
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th style="width: 15%;">Subjects</th>
-                                <th style="width: 25%;">Actions</th>
+                                <th style="width: 30%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -32,19 +39,35 @@
                                     <td>
                                         <span class="badge bg-success">@course.SubjectsCount</span>
                                     </td>
-                                    <td style="width: 25%;">
-                                        <a asp-action="Edit" asp-route-id="@course.Id" class="btn btn-sm btn-warning">Edit</a>
-                                        <a asp-action="Details" asp-route-id="@course.Id" class="btn btn-sm btn-info me-1">Details</a>
-                                        <a asp-action="Manage" asp-route-id="@course.Id" class="btn btn-sm btn-info">Manage</a>
-                                        <button type="button"
-                                                class="btn btn-sm btn-danger"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal"
-                                                data-id="@course.Id"
-                                                data-name="@course.Name"
-                                                aria-label="Delete course @course.Name">
-                                            Delete
-                                        </button>
+                                    <td>
+                                        <ejs-button id="editBtn-@course.Id"
+                                                    content="Edit"
+                                                    iconCss="fas fa-pen"
+                                                    cssClass="e-warning e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Courses/Edit/@course.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="detailsBtn-@course.Id"
+                                                    content="Details"
+                                                    iconCss="fas fa-eye"
+                                                    cssClass="e-primary e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Courses/Details/@course.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="manageBtn-@course.Id"
+                                                    content="Manage"
+                                                    iconCss="fas fa-cogs"
+                                                    cssClass="e-info e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Courses/Manage/@course.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="deleteBtn-@course.Id"
+                                                    content="Delete"
+                                                    iconCss="fas fa-trash"
+                                                    cssClass="e-danger e-plus"
+                                                    data-id="@course.Id"
+                                                    data-name="@course.Name">
+                                        </ejs-button>
                                     </td>
                                 </tr>
                             }
@@ -71,8 +94,20 @@
             <div class="modal-footer">
                 <form id="deleteForm" method="post">
                     <input type="hidden" name="id" id="courseIdToDelete" />
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                    <ejs-button id="confirmDeleteBtn"
+                                type="submit"
+                                content="Delete"
+                                iconCss="fas fa-trash"
+                                cssClass="e-danger">
+                    </ejs-button>
+
+                    <ejs-button id="cancelDeleteBtn"
+                                content="Cancel"
+                                iconCss="fas fa-times"
+                                cssClass="e-secondary"
+                                onclick="bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide(); return false;">
+                    </ejs-button>
                 </form>
             </div>
         </div>
@@ -83,16 +118,20 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        var deleteModal = document.getElementById('deleteModal');
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var courseId = button.getAttribute('data-id');
-            var courseName = button.getAttribute('data-name');
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll("[id^='deleteBtn-']").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    const id = btn.getAttribute("data-id");
+                    const name = btn.getAttribute("data-name");
 
-            document.getElementById('courseName').innerText = courseName;
-            document.getElementById('courseIdToDelete').value = courseId;
+                    document.getElementById('courseName').innerText = name;
+                    document.getElementById('courseIdToDelete').value = id;
+                    document.getElementById('deleteForm').action = `/AdminDashboard/Courses/Delete/${id}`;
 
-            document.getElementById('deleteForm').action = '/AdminDashboard/Courses/Delete/' + courseId;
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
+                });
+            });
         });
     </script>
 }

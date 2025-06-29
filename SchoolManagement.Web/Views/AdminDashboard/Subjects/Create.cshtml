@@ -22,20 +22,34 @@
 
                     <div class="col-md-4 mb-3">
                         <label asp-for="Workload" class="form-label"></label>
-                        <input asp-for="Workload" type="number" class="form-control" autocomplete="off" />
+                        <input asp-for="Workload" type="number" class="form-control" autocomplete="off" min="1" max="500" />
                         <span asp-validation-for="Workload" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-4 mb-3">
                         <label asp-for="AllowedAbsences" class="form-label"></label>
-                        <input asp-for="AllowedAbsences" type="number" class="form-control" min="0" autocomplete="off" />
+                        <input asp-for="AllowedAbsences" type="number" class="form-control" autocomplete="off" min="0" />
                         <span asp-validation-for="AllowedAbsences" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
-                    <button type="submit" class="btn btn-success">Create</button>
-                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                    <ejs-button id="btnCreateSubject"
+                                type="submit"
+                                content="Create"
+                                iconCss="fas fa-plus"
+                                cssClass="e-success e-plus"
+                                iconPosition="Left">
+                    </ejs-button>
+
+                    <ejs-button id="btnBackToSubjects"
+                                type="button"
+                                content="Back"
+                                iconCss="fas fa-arrow-left"
+                                cssClass="e-secondary e-plus"
+                                iconPosition="Left"
+                                onclick="location.href='/AdminDashboard/Subjects'">
+                    </ejs-button>
                 </div>
             </form>
         </div>

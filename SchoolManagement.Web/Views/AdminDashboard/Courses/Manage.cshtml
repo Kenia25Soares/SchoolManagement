@@ -26,8 +26,21 @@
                 </div>
 
                 <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                    <button type="button" class="btn btn-success w-100" onclick="assignSubjects()">➕</button>
-                    <button type="button" class="btn btn-danger w-100" onclick="removeSubjects()">➖</button>
+                    <ejs-button id="btnAssign"
+                                content="Assign"
+                                iconCss="fas fa-plus"
+                                cssClass="e-success e-plus w-100"
+                                iconPosition="Left"
+                                onclick="assignSubjects()">
+                    </ejs-button>
+
+                    <ejs-button id="btnRemove"
+                                content="Remove"
+                                iconCss="fas fa-minus"
+                                cssClass="e-danger e-plus w-100"
+                                iconPosition="Left"
+                                onclick="removeSubjects()">
+                    </ejs-button>
                 </div>
 
                 <div class="col-md-5">
@@ -41,13 +54,23 @@
                 </div>
             </div>
 
-            <a asp-action="Index" asp-controller="Courses" class="btn btn-secondary">Back</a>
+            <div class="d-flex justify-content-end">
+                <ejs-button id="btnBackToCourses"
+                            content="Back"
+                            iconCss="fas fa-arrow-left"
+                            cssClass="e-secondary e-plus"
+                            iconPosition="Left"
+                            onclick="location.href='/AdminDashboard/Courses'">
+                </ejs-button>
+            </div>
 
         </div>
     </div>
 </div>
 
 @section Scripts {
+    @Html.AntiForgeryToken()
+
     <script>
         const courseId = @Model.CourseId;
 

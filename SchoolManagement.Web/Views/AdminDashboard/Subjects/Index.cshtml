@@ -14,7 +14,14 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Subjects</h5>
-                    <a asp-action="Create" class="btn btn-success mb-3">Add New Subject</a>
+
+                    <ejs-button id="btnAddSubject"
+                                cssClass="e-success mb-3"
+                                content="Add New Subject"
+                                iconCss="fas fa-book-medical"
+                                iconPosition="Left"
+                                onclick="location.href='/AdminDashboard/Subjects/Create'">
+                    </ejs-button>
 
                     <table class="table table-striped table-bordered">
                         <thead>
@@ -22,7 +29,7 @@
                                 <th>Name</th>
                                 <th>Workload (hours)</th>
                                 <th>Allowed Absences</th>
-                                <th style="width: 20%;">Actions</th>
+                                <th style="width: 25%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -32,10 +39,28 @@
                                     <td>@subject.Name</td>
                                     <td>@subject.Workload</td>
                                     <td>@subject.AllowedAbsences</td>
-                                    <td style="width: 20%;">
-                                        <a asp-action="Edit" asp-route-id="@subject.Id" class="btn btn-sm btn-warning">Edit</a>
-                                        <a asp-action="Details" asp-route-id="@subject.Id" class="btn btn-sm btn-info me-1">Details</a>
-                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@subject.Id" data-name="@subject.Name">Delete</button>
+                                    <td>
+                                        <ejs-button id="btnEdit-@subject.Id"
+                                                    content="Edit"
+                                                    iconCss="fas fa-pen"
+                                                    cssClass="e-warning e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Subjects/Edit/@subject.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="btnDetails-@subject.Id"
+                                                    content="Details"
+                                                    iconCss="fas fa-eye"
+                                                    cssClass="e-primary e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Subjects/Details/@subject.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="btnDelete-@subject.Id"
+                                                    content="Delete"
+                                                    iconCss="fas fa-trash"
+                                                    cssClass="e-danger e-plus"
+                                                    data-id="@subject.Id"
+                                                    data-name="@subject.Name">
+                                        </ejs-button>
                                     </td>
                                 </tr>
                             }
@@ -63,8 +88,20 @@
             <div class="modal-footer">
                 <form id="deleteForm" method="post">
                     <input type="hidden" name="id" id="subjectIdToDelete" />
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                    <ejs-button id="confirmDeleteBtn"
+                                type="submit"
+                                content="Delete"
+                                iconCss="fas fa-trash"
+                                cssClass="e-danger">
+                    </ejs-button>
+
+                    <ejs-button id="cancelDeleteBtn"
+                                content="Cancel"
+                                iconCss="fas fa-times"
+                                cssClass="e-secondary"
+                                onclick="bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide(); return false;">
+                    </ejs-button>
                 </form>
             </div>
         </div>
@@ -73,18 +110,21 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
     <script>
-        var deleteModal = document.getElementById('deleteModal')
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget
-            var subjectId = button.getAttribute('data-id')
-            var subjectName = button.getAttribute('data-name')
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll("[id^='btnDelete-']").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    const id = btn.getAttribute("data-id");
+                    const name = btn.getAttribute("data-name");
 
-            document.getElementById('subjectName').innerText = subjectName;
-            document.getElementById('subjectIdToDelete').value = subjectId;
+                    document.getElementById('subjectName').innerText = name;
+                    document.getElementById('subjectIdToDelete').value = id;
+                    document.getElementById('deleteForm').action = `/AdminDashboard/Subjects/Delete/${id}`;
 
-            document.getElementById('deleteForm').action = '/AdminDashboard/Subjects/Delete/' + subjectId;
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
+                });
+            });
         });
     </script>
 }

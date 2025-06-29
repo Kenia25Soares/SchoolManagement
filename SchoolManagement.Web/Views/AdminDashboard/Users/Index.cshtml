@@ -18,7 +18,7 @@
                     <ejs-button id="btnAddUser"
                                 cssClass="e-success mb-3"
                                 content="Add User"
-                                iconCss="e-icons e-plus"
+                                iconCss="fas fa-user-plus"
                                 iconPosition="Left"
                                 onclick="location.href='/AdminDashboard/Users/Create'">
                     </ejs-button>
@@ -30,7 +30,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
-                                <th style="width: 20%;">Actions</th>
+                                <th style="width: 25%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -39,8 +39,8 @@
                                 <tr>
                                     <td>
                                         <img src="@(string.IsNullOrEmpty(user.ProfilePictureUrl)
-                                                                                         ? "/image/default-profile.png"
-                                                                                         : $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}")"
+                                                                                                 ? "/image/default-profile.png"
+                                                                                                 : $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}")"
                                          alt="Profile" class="rounded-circle me-2"
                                          style="width:40px; height:40px; object-fit:cover;" />
                                     @user.FullName
@@ -48,29 +48,29 @@
                                 <td>@user.Email</td>
                                 <td>@user.Role</td>
                                 <td>
-                                    <ejs-button id="btnEdit-@user.Id"  
+                                    <ejs-button id="btnEdit-@user.Id"
                                                 content="Edit"
-                                                iconCss="e-icons e-edit"
+                                                iconCss="fas fa-pen"
                                                 cssClass="e-warning e-plus me-1"
                                                 onclick="location.href='/AdminDashboard/Users/Edit/@user.Id'">
                                     </ejs-button>
 
-                                    <ejs-button id="btnDetails-@user.Id"  
-                                                content="Details"
-                                                iconCss="e-icons e-eye"
-                                                cssClass="e-info e-plus me-1"
-                                                onclick="location.href='/AdminDashboard/Users/Details/@user.Id'">
-                                    </ejs-button>
+                                        <ejs-button id="btnDetails-@user.Id"
+                                                    content="Details"
+                                                    iconCss="fas fa-eye"
+                                                    cssClass="e-primary e-plus me-1"
+                                                    onclick="location.href='/AdminDashboard/Users/Details/@user.Id'">
+                                        </ejs-button>
 
-                                    <ejs-button id="btnDelete-@user.Id"
-                                                content="Delete"
-                                                iconCss="e-icons e-trash"
-                                                cssClass="e-danger e-plus"
-                                                data-id="@user.Id"
-                                                data-name="@user.FullName">
-                                    </ejs-button>
-                                </td>
-                            </tr>
+                                        <ejs-button id="btnDelete-@user.Id"
+                                                    content="Delete"
+                                                    iconCss="fas fa-trash"
+                                                    cssClass="e-danger e-plus"
+                                                    data-id="@user.Id"
+                                                    data-name="@user.FullName">
+                                        </ejs-button>
+                                    </td>
+                                </tr>
                                                         }
                         </tbody>
                     </table>
@@ -95,8 +95,20 @@
             <div class="modal-footer">
                 <form id="deleteForm" method="post">
                     <input type="hidden" name="id" id="userIdToDelete" />
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                    <ejs-button id="confirmDeleteBtn"
+                                type="submit"
+                                content="Delete"
+                                iconCss="fas fa-trash"
+                                cssClass="e-danger">
+                    </ejs-button>
+
+                    <ejs-button id="cancelDeleteBtn"
+                                content="Cancel"
+                                iconCss="fas fa-times"
+                                cssClass="e-secondary"
+                                onclick="bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide(); return false;">
+                    </ejs-button>
                 </form>
             </div>
         </div>

@@ -10,6 +10,7 @@
 
     <!-- Cards -->
     <div class="row mt-4">
+        <!-- USERS -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -18,11 +19,17 @@
                 <div class="card-body">
                     <h5 class="card-title">Users</h5>
                     <p class="card-text">Manage admins, staff, and students.</p>
-                    <a href="/AdminDashboard/Users" class="btn btn-primary">Manage Users</a>
+                    <ejs-button id="ManageUsers"
+                                content="Manage Users"
+                                iconCss="fas fa-users"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/AdminDashboard/Users'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
 
+        <!-- COURSES -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -31,11 +38,17 @@
                 <div class="card-body">
                     <h5 class="card-title">Courses</h5>
                     <p class="card-text">Add or edit available courses.</p>
-                    <a href="/AdminDashboard/Courses" class="btn btn-primary">Manage Courses</a>
+                    <ejs-button id="ManageCourses"
+                                content="Manage Courses"
+                                iconCss="fas fa-graduation-cap"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/AdminDashboard/Courses'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
 
+        <!-- SUBJECTS -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -44,7 +57,12 @@
                 <div class="card-body">
                     <h5 class="card-title">Subjects</h5>
                     <p class="card-text">Add or edit available subjects.</p>
-                    <a href="/AdminDashboard/Subjects" class="btn btn-primary">Manage Subjects</a>
+                    <ejs-button id="ManageSubjects"
+                                content="Manage Subjects"
+                                iconCss="fas fa-book"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/AdminDashboard/Subjects'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
@@ -108,7 +126,11 @@
                                 @if (!alert.IsResolved)
                                 {
                                     <form method="post" asp-controller="AdminAlerts" asp-action="Resolve" asp-route-id="@alert.Id">
-                                        <button type="submit" class="btn btn-sm btn-primary">Mark Resolved</button>
+                                        <ejs-button type="submit"
+                                                    content="Resolve"
+                                                    iconCss="fas fa-check-circle"
+                                                    cssClass="e-primary e-small">
+                                        </ejs-button>
                                     </form>
                                 }
                                 else
