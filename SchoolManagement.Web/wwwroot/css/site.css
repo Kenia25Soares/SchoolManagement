@@ -76,5 +76,20 @@ body {
     color: white !important;
 }
 
+.custom-link-btn.e-btn {
+    background-color: transparent !important;
+    border: none !important;
+    color: #0d6efd !important;
+    text-align: center;
+    font-size: 0.95rem;
+    box-shadow: none !important;
+    font-weight: 500;
+    cursor: pointer;
+}
 
+.custom-link-btn.e-btn:hover {
+    background-color: transparent !important;
+    color: #0d6efd !important;
+    text-decoration: none !important;
+}
 

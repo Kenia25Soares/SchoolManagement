@@ -23,7 +23,7 @@
         {
             <div class="card mb-4 shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>@subject.SubjectName - Média: @subject.WeightedAverage.ToString("F2")</h5>
+                    <h5 class="mb-0">@subject.SubjectName - Média: @subject.WeightedAverage.ToString("F2")</h5>
                 </div>
                 <div class="card-body p-0">
                     <table class="table mb-0">
@@ -43,7 +43,9 @@
                                         {
                                             foreach (var grade in gradeTypeGroup.Grades)
                                             {
-                                                <span class="badge rounded-pill bg-primary me-1" style="color: white;">@grade.ToString("F2")</span>
+                                                <span class="badge rounded-pill bg-primary me-1" style="color: white;">
+                                                    @grade.ToString("F2")
+                                                </span>
                                             }
                                         }
                                         else
@@ -60,5 +62,13 @@
         }
     }
 
-    <a asp-action="Index" class="btn btn-secondary mb-3">Back to Grades List</a>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <ejs-button id="btnBackToGradesList"
+                    content="Back to Grades List"
+                    iconCss="fas fa-arrow-left"
+                    cssClass="e-secondary e-plus"
+                    iconPosition="Left"
+                    onclick="location.href='/EmployeeDashboard/Grades'">
+        </ejs-button>
+    </div>
 </div>

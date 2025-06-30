@@ -15,6 +15,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Students Grades</h5>
 
+                    <!-- Class Filter -->
                     <form method="get" asp-action="Index" class="mb-3">
                         <select name="classId" class="form-select w-auto d-inline" onchange="this.form.submit()">
                             @foreach (var cls in Model.Classes)
@@ -26,6 +27,7 @@
                         </select>
                     </form>
 
+                    <!-- Students Table -->
                     <table class="table table-striped table-bordered align-middle">
                         <thead>
                             <tr>
@@ -33,20 +35,20 @@
                                 <th>Email</th>
                                 <th>Average Grade</th>
                                 <th>Absences</th>
-                                <th>Actions</th>
+                                <th style="width: 30%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var student in Model.Students)
                             {
                                 <tr>
-                                <td>@student.FullName</td>
-                                <td>@student.Email</td>
-                                <td>
-                                    @(student.AverageGrade.HasValue? student.AverageGrade.Value.ToString("F2") : "-")
-                                </td>
-                                <td>
-                                    @if (student.FailedDueToAbsences)
+                                    <td>@student.FullName</td>
+                                    <td>@student.Email</td>
+                                    <td>
+                                        @(student.AverageGrade.HasValue? student.AverageGrade.Value.ToString("F2") : "-")
+                                    </td>
+                                    <td>
+                                        @if (student.FailedDueToAbsences)
                                         {
                                             <span class="badge bg-danger">Failed</span>
                                         }
@@ -56,23 +58,34 @@
                                         }
                                     </td>
                                     <td>
-                                        <div class="btn-group" role="group" aria-label="Student actions">
-                                            <a asp-action="AddGrades" asp-route-studentId="@student.Id"
-                                               class="btn btn-primary btn-sm me-2" title="Add Grades">
-                                                Grades
-                                            </a>
-                                            <a asp-action="Details" asp-route-studentId="@student.Id"
-                                               class="btn btn-info btn-sm me-2" title="View Grades">
-                                                View Grades
-                                            </a>
-                                            <a asp-action="AddAbsences" asp-route-studentId="@student.Id"
-                                               class="btn btn-warning btn-sm me-2" title="Add Absences">
-                                                Absences
-                                            </a>
-                                            <a asp-action="ViewAbsences" asp-route-studentId="@student.Id"
-                                               class="btn btn-warning btn-sm me-2" title="View Absences">
-                                                View Absences
-                                            </a>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <ejs-button id="btnAddGrades-@student.Id"
+                                                        content="Grades"
+                                                        iconCss="fas fa-plus"
+                                                        cssClass="e-primary e-plus"
+                                                        onclick="location.href='/EmployeeDashboard/Grades/AddGrades?studentId=@student.Id'">
+                                            </ejs-button>
+
+                                            <ejs-button id="btnViewGrades-@student.Id"
+                                                        content="View"
+                                                        iconCss="fas fa-eye"
+                                                        cssClass="e-info e-plus"
+                                                        onclick="location.href='/EmployeeDashboard/Grades/Details?studentId=@student.Id'">
+                                            </ejs-button>
+
+                                            <ejs-button id="btnAddAbsences-@student.Id"
+                                                        content="Absences"
+                                                        iconCss="fas fa-user-clock"
+                                                        cssClass="e-warning e-plus"
+                                                        onclick="location.href='/EmployeeDashboard/Grades/AddAbsences?studentId=@student.Id'">
+                                            </ejs-button>
+
+                                            <ejs-button id="btnViewAbsences-@student.Id"
+                                                        content="View Absences"
+                                                        iconCss="fas fa-eye"
+                                                        cssClass="e-warning e-plus"
+                                                        onclick="location.href='/EmployeeDashboard/Grades/ViewAbsences?studentId=@student.Id'">
+                                            </ejs-button>
                                         </div>
                                     </td>
                                 </tr>
@@ -85,4 +98,3 @@
         </div>
     </div>
 </div>
-

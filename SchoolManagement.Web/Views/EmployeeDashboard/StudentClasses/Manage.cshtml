@@ -8,7 +8,6 @@
 <div class="container mt-5">
     <div class="card shadow-lg mx-auto p-4" style="max-width: 1000px;">
         <div class="card-body">
-
             <h2 class="card-title text-center mb-4">
                 Manage Students for Class: @Model.StudentClassName
             </h2>
@@ -26,8 +25,19 @@
                 </div>
 
                 <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                    <button type="button" class="btn btn-success w-100" onclick="assignStudents()">➕</button>
-                    <button type="button" class="btn btn-danger w-100" onclick="removeStudents()">➖</button>
+                    <ejs-button id="btnAssignStudents"
+                                cssClass="e-success w-100"
+                                iconCss="fas fa-plus"
+                                iconPosition="Left"
+                                onclick="assignStudents()">
+                    </ejs-button>
+
+                    <ejs-button id="btnRemoveStudents"
+                                cssClass="e-danger w-100"
+                                iconCss="fas fa-minus"
+                                iconPosition="Left"
+                                onclick="removeStudents()">
+                    </ejs-button>
                 </div>
 
                 <div class="col-md-5">
@@ -42,7 +52,13 @@
             </div>
 
             <div class="d-flex gap-2">
-                <a asp-action="Index" asp-controller="StudentClasses" class="btn btn-secondary">Back</a>
+                <ejs-button id="btnBackToClasses"
+                            content="Back"
+                            iconCss="fas fa-arrow-left"
+                            cssClass="e-secondary e-plus"
+                            iconPosition="Left"
+                            onclick="location.href='/EmployeeDashboard/StudentClasses'">
+                </ejs-button>
             </div>
         </div>
     </div>

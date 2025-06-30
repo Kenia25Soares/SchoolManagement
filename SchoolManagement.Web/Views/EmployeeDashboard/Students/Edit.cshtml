@@ -49,8 +49,8 @@
                         <label class="form-label">Current Official Photo:</label>
                         <div class="mb-2">
                             <img src="@(string.IsNullOrEmpty(Model.OfficialPhotoUrl)
-                                                                 ? "/images/default-official-photo.png"
-                                                                 : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.OfficialPhotoUrl}")"
+                                                                             ? "/images/default-official-photo.png"
+                                                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.OfficialPhotoUrl}")"
                                  alt="Official Photo"
                                  class="rounded"
                                  style="width: 150px; height: 150px; object-fit: cover;" />
@@ -64,8 +64,8 @@
                         <label class="form-label">Current Profile Picture:</label>
                         <div class="mb-2">
                             <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl)
-                                                                 ? "/images/default-profile.png"
-                                                                 : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
+                                                                             ? "/images/default-profile.png"
+                                                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
                                  alt="Profile Picture"
                                  class="rounded-circle"
                                  style="width: 150px; height: 150px; object-fit: cover;" />
@@ -85,8 +85,22 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                    <ejs-button id="btnEditStudent"
+                                type="submit"
+                                content="Save Changes"
+                                iconCss="fas fa-save"
+                                cssClass="e-success e-plus"
+                                iconPosition="Left">
+                    </ejs-button>
+
+                    <ejs-button id="btnBackToStudents"
+                                type="button"
+                                content="Back"
+                                iconCss="fas fa-arrow-left"
+                                cssClass="e-secondary e-plus"
+                                iconPosition="Left"
+                                onclick="location.href='/EmployeeDashboard/Students'">
+                    </ejs-button>
                 </div>
             </form>
         </div>

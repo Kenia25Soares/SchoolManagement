@@ -1,4 +1,5 @@
-﻿@model SchoolManagement.Web.Models.LoginViewModel
+﻿@using Syncfusion.EJ2
+@model SchoolManagement.Web.Models.LoginViewModel
 
 @{
     Layout = "~/Views/Shared/_LayoutPublic.cshtml";
@@ -28,17 +29,30 @@
                 <label asp-for="RememberMe" class="form-check-label">Remember Me?</label>
             </div>
 
-            <div class="d-grid gap-2">
-                <input type="submit" value="Login" class="btn btn-success" />
-                <a asp-action="RecoverPassword" class="btn btn-link">Forgot your password?</a>
+            <div class="d-grid gap-2 text-center">
+                <ejs-button id="btnLogin1"
+                            type="submit"
+                            content="Login"
+                            iconCss="fas fa-sign-in-alt"
+                            cssClass="e-primary e-block e-plus"
+                            iconPosition="Left"
+                            EnablePersistence="true"
+                            style="min-height: 38px;">
+                </ejs-button>
+
+                <ejs-button id="btnForgot"
+                            content="Forgot your password?"
+                            iconCss="fas fa-key"
+                            cssClass="custom-link-btn e-block"
+                            iconPosition="Left"
+                            onclick="window.location.href='/Account/RecoverPassword'">
+                </ejs-button>
             </div>
         </form>
     </div>
 </div>
 
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    @Html.EJS().ScriptManager()
 }

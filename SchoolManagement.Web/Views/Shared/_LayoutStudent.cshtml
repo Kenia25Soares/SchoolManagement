@@ -7,10 +7,8 @@
     <title>@ViewData["Title"] - School Management</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/30.1.37/bootstrap5.css" rel="stylesheet" />
-
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -28,18 +26,34 @@
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
                         <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                                         ? "/images/default-profile.png"
-                                                         : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
-                     class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;" />
+                                                                  ? "/images/default-profile.png"
+                                                                  : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
+                     class="rounded-circle"
+                     style="width: 35px; height: 35px; object-fit: cover;" />
                                 }
+
                     <span class="text-white">@User.Identity.Name</span>
 
-                    <form method="get" asp-controller="Account" asp-action="EditStudentProfile" class="me-2">
-                        <button type="submit" class="btn btn-sm btn-outline-light">Edit Profile</button>
+                    <form method="get" asp-controller="Account" asp-action="EditStudentProfile" class="me-1">
+                        <ejs-button id="btnEditProfile"
+                                    type="submit"
+                                    content="Edit"
+                                    iconCss="fas fa-user-edit"
+                                    cssClass="e-outline e-light e-plus"
+                                    iconPosition="Left"
+                                    style="min-width: 100px;">
+                        </ejs-button>
                     </form>
 
                     <form method="post" asp-controller="Account" asp-action="Logout">
-                        <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+                        <ejs-button id="btnLogout"
+                                    type="submit"
+                                    content="Logout"
+                                    iconCss="fas fa-sign-out-alt"
+                                    cssClass="e-outline e-light e-plus"
+                                    iconPosition="Left"
+                                    style="min-width: 100px;">
+                        </ejs-button>
                     </form>
                 </div>
             }
@@ -51,8 +65,10 @@
         @RenderBody()
     </div>
 
-
+    <!-- Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.syncfusion.com/ej2/30.1.37/dist/ej2.min.js"></script>
+    @Html.EJS().ScriptManager()
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

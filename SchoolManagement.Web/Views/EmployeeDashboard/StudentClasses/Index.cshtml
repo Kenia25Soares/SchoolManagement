@@ -14,7 +14,14 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Student Classes</h5>
-                    <a asp-action="Create" class="btn btn-success mb-3">Add New Class</a>
+
+                    <ejs-button id="btnAddClass"
+                                content="Add New Class"
+                                iconCss="fas fa-plus"
+                                cssClass="e-success mb-3"
+                                iconPosition="Left"
+                                onclick="location.href='/EmployeeDashboard/StudentClasses/Create'">
+                    </ejs-button>
 
                     <table class="table table-striped table-bordered">
                         <thead>
@@ -35,23 +42,32 @@
                                     <td>@sc.Shift</td>
                                     <td>@sc.CourseName</td>
                                     <td>
-                                        <a asp-action="Edit" asp-route-id="@sc.Id" class="btn btn-sm btn-warning">Edit</a>
-                                        <a asp-action="Manage" asp-route-id="@sc.Id" class="btn btn-sm btn-primary">Manage</a>
-                                        <button type="button"
-                                                class="btn btn-sm btn-danger"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal"
-                                                data-id="@sc.Id"
-                                                data-name="@sc.Name"
-                                                aria-label="Delete class @sc.Name">
-                                            Delete
-                                        </button>
+                                        <ejs-button id="btnEdit-@sc.Id"
+                                                    content="Edit"
+                                                    iconCss="fas fa-pen"
+                                                    cssClass="e-warning e-plus me-1"
+                                                    onclick="location.href='/EmployeeDashboard/StudentClasses/Edit/@sc.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="btnManage-@sc.Id"
+                                                    content="Manage"
+                                                    iconCss="fas fa-cogs"
+                                                    cssClass="e-primary e-plus me-1"
+                                                    onclick="location.href='/EmployeeDashboard/StudentClasses/Manage/@sc.Id'">
+                                        </ejs-button>
+
+                                        <ejs-button id="btnDelete-@sc.Id"
+                                                    content="Delete"
+                                                    iconCss="fas fa-trash"
+                                                    cssClass="e-danger e-plus"
+                                                    data-id="@sc.Id"
+                                                    data-name="@sc.Name">
+                                        </ejs-button>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-
                 </div>
             </div>
         </div>
@@ -73,8 +89,20 @@
             <div class="modal-footer">
                 <form id="deleteForm" method="post">
                     <input type="hidden" name="id" id="classIdToDelete" />
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                    <ejs-button id="confirmDeleteClassBtn"
+                                type="submit"
+                                content="Delete"
+                                iconCss="fas fa-trash"
+                                cssClass="e-danger">
+                    </ejs-button>
+
+                    <ejs-button id="cancelDeleteClassBtn"
+                                content="Cancel"
+                                iconCss="fas fa-times"
+                                cssClass="e-secondary"
+                                onclick="bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide(); return false;">
+                    </ejs-button>
                 </form>
             </div>
         </div>
@@ -83,18 +111,21 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
     <script>
-        var deleteModal = document.getElementById('deleteModal');
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var classId = button.getAttribute('data-id');
-            var className = button.getAttribute('data-name');
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll("[id^='btnDelete-']").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    const id = btn.getAttribute("data-id");
+                    const name = btn.getAttribute("data-name");
 
-            document.getElementById('className').innerText = className;
-            document.getElementById('classIdToDelete').value = classId;
+                    document.getElementById('className').innerText = name;
+                    document.getElementById('classIdToDelete').value = id;
+                    document.getElementById('deleteForm').action = `/EmployeeDashboard/StudentClasses/Delete/${id}`;
 
-            document.getElementById('deleteForm').action = '/EmployeeDashboard/StudentClasses/Delete/' + classId;
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
+                });
+            });
         });
     </script>
 }

@@ -1,4 +1,5 @@
-﻿@model SchoolManagement.Web.Models.EditStudentProfileViewModel
+﻿@using Syncfusion.EJ2
+@model SchoolManagement.Web.Models.EditStudentProfileViewModel
 
 @{
     ViewData["Title"] = "Edit Student";
@@ -47,7 +48,7 @@
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="OfficialPhoto" class="form-label"></label>
-                        <input asp-for="OfficialPhoto" class="form-control" autocomplete="off" />
+                        <input asp-for="OfficialPhoto" class="form-control" />
                         <span asp-validation-for="OfficialPhoto" class="text-danger"></span>
                     </div>
 
@@ -63,7 +64,8 @@
                         <label>Current Profile Picture</label><br />
                         @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
                         {
-                            <img src="@Model.ProfilePictureUrl" alt="Profile Picture" style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
+                            <img src="@Model.ProfilePictureUrl" alt="Profile Picture"
+                                 style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
                         }
                         else
                         {
@@ -79,8 +81,22 @@
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <a asp-controller="StudentDashboard" asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+                    <ejs-button id="btnSaveStudent"
+                                type="submit"
+                                content="Save Changes"
+                                iconCss="fas fa-save"
+                                cssClass="e-success e-plus"
+                                iconPosition="Left">
+                    </ejs-button>
+
+                    <ejs-button id="btnCancelStudent"
+                                type="button"
+                                content="Cancel"
+                                iconCss="fas fa-times"
+                                cssClass="e-secondary e-plus"
+                                iconPosition="Left"
+                                onclick="location.href='/StudentDashboard/Index'">
+                    </ejs-button>
                 </div>
             </form>
         </div>
@@ -89,4 +105,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @Html.EJS().ScriptManager()
 }

@@ -8,35 +8,50 @@
     <p>Welcome to the control panel.</p>
 
     <div class="row mt-4">
-        <!-- Card: Manage Students -->
-        <div class="col-md-4">
+        <!-- STUDENTS -->
+        <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Students</h5>
-                    <p class="card-text">Manage students enrollment.</p>
-                    <a href="/EmployeeDashboard/Students" class="btn btn-primary">Manage Students</a>
+                    <p class="card-text">Manage student enrollment.</p>
+                    <ejs-button id="ManageStudents"
+                                content="Manage Students"
+                                iconCss="fas fa-user-graduate"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/EmployeeDashboard/Students'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
 
-        <!-- Card: Manage Student Classes -->
-        <div class="col-md-4">
+        <!-- STUDENT CLASSES -->
+        <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Student Classes</h5>
-                    <p class="card-text">Create and manage classes.</p>
-                    <a href="/EmployeeDashboard/StudentClasses" class="btn btn-primary">Manage Classes</a>
+                    <p class="card-text">Create and manage student classes.</p>
+                    <ejs-button id="ManageStudentClasses"
+                                content="Manage Classes"
+                                iconCss="fas fa-chalkboard-teacher"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/EmployeeDashboard/StudentClasses'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
 
-        <!-- Card: Manage Grades -->
-        <div class="col-md-4">
+        <!-- GRADES -->
+        <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Grades</h5>
                     <p class="card-text">Assign grades and track absences by subject.</p>
-                    <a href="/EmployeeDashboard/Grades" class="btn btn-primary">Manage Grades</a>
+                    <ejs-button id="ManageGrades"
+                                content="Manage Grades"
+                                iconCss="fas fa-book-open"
+                                cssClass="e-primary e-plus"
+                                onclick="location.href='/EmployeeDashboard/Grades'">
+                    </ejs-button>
                 </div>
             </div>
         </div>

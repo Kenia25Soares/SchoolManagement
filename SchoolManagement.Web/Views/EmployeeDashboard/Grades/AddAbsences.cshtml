@@ -18,7 +18,7 @@
 
 <div class="container-fluid">
     <h1 class="mt-4">Employee Dashboard</h1>
-    <p>Add absences for @ViewBag.StudentName here.</p>
+    <p>Add absences for <strong>@ViewBag.StudentName</strong> here.</p>
 
     <div class="row mt-4">
         <div class="col-md-12">
@@ -34,7 +34,7 @@
                                 <tr>
                                     <th>Subject</th>
                                     <th>Absences</th>
-                                    <th></th>
+                                    <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -50,19 +50,41 @@
                                         <td>
                                             <input name="Absences[@i].Absences" class="form-control" type="number" min="0" value="@Model.Absences[i].Absences" required />
                                         </td>
-                                        <td>
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                                        <td id="removeBtnCell-@i" class="d-flex justify-content-center align-items-center py-2">
+                                            <ejs-button id="btnRemoveRow-@i"
+                                                        type="button"
+                                                        iconCss="fas fa-minus"
+                                                        cssClass="e-danger e-plus"
+                                                        onclick="removeRow(this)">
+                                            </ejs-button>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
 
-                        <button type="button" class="btn btn-success mb-3" onclick="addRow()">+</button>
+                        <ejs-button id="btnAddRow"
+                                    content="Add Row"
+                                    iconCss="fas fa-plus"
+                                    cssClass="e-success e-plus mb-3"
+                                    iconPosition="Left"
+                                    onclick="addRow()">
+                        </ejs-button>
 
-                        <div>
-                            <button type="submit" class="btn btn-primary">Save Absences</button>
-                            <a asp-action="Index" class="btn btn-secondary">Back</a>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <ejs-button id="btnSaveAbsences"
+                                        type="submit"
+                                        content="Save Absences"
+                                        iconCss="fas fa-save"
+                                        cssClass="e-primary e-plus">
+                            </ejs-button>
+
+                            <ejs-button id="btnBackToDashboard"
+                                        content="Back"
+                                        iconCss="fas fa-arrow-left"
+                                        cssClass="e-secondary e-plus"
+                                        onclick="location.href='/EmployeeDashboard/Grades'">
+                            </ejs-button>
                         </div>
                     </form>
                 </div>
@@ -90,11 +112,25 @@
                 <td>
                     <input name="Absences[${index}].Absences" class="form-control" type="number" min="0" required />
                 </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">-</button>
+                <td id="removeBtnCell-${index}" class="text-center">
+                    <div id="removeBtnWrapper-${index}" class="justify-content-center align-items-center"></div>
                 </td>
             `;
             tbody.appendChild(tr);
+
+            const removeBtn = new ej.buttons.Button({
+                iconCss: 'fas fa-minus',
+                cssClass: 'e-danger e-plus',
+                isPrimary: false,
+                enableRipple: true,
+                created: function () {
+                    this.element.onclick = function () {
+                        removeRow(this);
+                    };
+                }
+            });
+
+            removeBtn.appendTo(`#removeBtnWrapper-${index}`);
         }
 
         function removeRow(button) {
@@ -110,6 +146,9 @@
                         el.setAttribute('name', newName);
                     }
                 });
+
+                const btnCell = tr.querySelector('td[id^="removeBtnCell-"]');
+                if (btnCell) btnCell.id = `removeBtnCell-${i}`;
             });
         }
     </script>

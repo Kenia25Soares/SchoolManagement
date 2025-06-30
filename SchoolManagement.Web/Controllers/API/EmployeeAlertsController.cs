@@ -33,7 +33,7 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> Create(CreateAlertViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
+                return View("/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
 
             var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
 

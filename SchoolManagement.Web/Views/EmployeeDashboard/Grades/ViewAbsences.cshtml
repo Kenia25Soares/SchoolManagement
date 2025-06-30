@@ -40,7 +40,15 @@
                         </table>
                     }
 
-                    <a asp-action="Index" class="btn btn-secondary mt-3">Back to Grades</a>
+                    <div class="d-flex justify-content-end mt-4">
+                        <ejs-button id="btnBackToGrades"
+                                    content="Back to Grades"
+                                    iconCss="fas fa-arrow-left"
+                                    cssClass="e-secondary e-plus"
+                                    iconPosition="Left"
+                                    onclick="location.href='/EmployeeDashboard/Grades'">
+                        </ejs-button>
+                    </div>
                 </div>
             </div>
         </div>
