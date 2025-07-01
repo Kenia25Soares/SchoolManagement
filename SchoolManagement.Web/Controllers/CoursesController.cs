@@ -7,7 +7,7 @@ using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     /// <summary>
     /// Controller responsável pela gestão de cursos.

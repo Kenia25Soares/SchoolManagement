@@ -6,7 +6,7 @@ using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System.Threading.Tasks;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     public class AccountController : Controller
     {

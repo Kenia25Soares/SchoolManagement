@@ -8,7 +8,7 @@ using SchoolManagement.Web.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     /// <summary>
     /// Controller responsável pela gestão de Subjects (Disciplinas).

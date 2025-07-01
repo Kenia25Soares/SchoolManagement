@@ -5,7 +5,7 @@ using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     [Authorize(Roles = "Student")]
     public class StudentDashboardController : Controller

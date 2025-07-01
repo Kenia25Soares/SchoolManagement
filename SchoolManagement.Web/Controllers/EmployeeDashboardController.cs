@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     /// <summary>
     /// Dashboard do Funcionário (Employee)

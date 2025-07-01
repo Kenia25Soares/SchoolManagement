@@ -5,7 +5,7 @@ using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Models;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Alerts")]

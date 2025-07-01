@@ -7,7 +7,7 @@ using SchoolManagement.Web.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     [Authorize(Roles = "Employee")]
     [Route("EmployeeDashboard/StudentClasses")]

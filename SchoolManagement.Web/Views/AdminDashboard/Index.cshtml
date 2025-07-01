@@ -10,6 +10,7 @@
 
     <!-- Cards -->
     <div class="row mt-4">
+        <ejs-badge content="10" cssClass="e-badge e-badge-primary"></ejs-badge>
         <!-- USERS -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
@@ -126,7 +127,7 @@
                                 @if (!alert.IsResolved)
                                 {
                                     <form method="post" asp-controller="AdminAlerts" asp-action="Resolve" asp-route-id="@alert.Id">
-                                        <ejs-button type="submit"
+                                        <ejs-button id="AdminAlerts" type="submit"
                                                     content="Resolve"
                                                     iconCss="fas fa-check-circle"
                                                     cssClass="e-primary e-plus">

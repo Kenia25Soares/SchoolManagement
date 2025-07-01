@@ -11,7 +11,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SchoolManagement.Web.Controllers.API
+namespace SchoolManagement.Web.Controllers
 {
     [Authorize(Roles = "Employee")]
     [Route("EmployeeDashboard/Students")]
@@ -121,7 +121,7 @@ namespace SchoolManagement.Web.Controllers.API
             var resetLink = Url.Action(
                 "ResetPassword",
                 "Account",
-                new { token = token, email = student.Email },
+                new { token, email = student.Email },
                 protocol: Request.Scheme);
 
             var emailBody = $@"
