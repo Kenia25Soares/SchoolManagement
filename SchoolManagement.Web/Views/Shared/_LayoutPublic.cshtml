@@ -11,48 +11,62 @@
     <link href="https://cdn.syncfusion.com/ej2/30.1.37/bootstrap5.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" asp-controller="Home" asp-action="Public">School</a>
+<body style="margin: 0; padding: 0;">
+    <div class="d-flex flex-column min-vh-100">
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Public">School</a>
 
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Public">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Courses" asp-action="Index">Courses</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Subjects" asp-action="Index">Subjects</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <form method="get" asp-controller="Account" asp-action="Login" class="d-flex align-items-center">
-                            <ejs-button id="btnLogin"
-                                        type="submit"
-                                        content="Login"
-                                        iconCss="fas fa-sign-in-alt"
-                                        cssClass="e-primary e-plus"
-                                        iconPosition="Left"
-                                        style="min-width: 110px;">
-                            </ejs-button>
-                        </form>
-                    </li>
-                </ul>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Courses">Courses</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="StudentClasses">Classes</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <form method="get" asp-controller="Account" asp-action="Login" class="d-flex align-items-center">
+                                <ejs-button id="btnLogin"
+                                            type="submit"
+                                            content="Login"
+                                            cssClass="e-primary e-plus"
+                                            iconPosition="Left"
+                                            style="min-width: 110px;">
+                                </ejs-button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="container mt-4">
-        @RenderBody()
+        <!-- Main Content -->
+        <main class="flex-fill">
+            <div class="container mt-4">
+                @RenderBody()
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer style="background-color: #004080; color: white; text-align: center; padding: 2rem; width: 100%;">
+            <p>© 2025 Bright Future School. All rights reserved.</p>
+            <p>
+                Follow us on
+                <a href="#" style="color: lightblue;">Facebook</a> |
+                <a href="#" style="color: lightblue;">Instagram</a> |
+                <a href="#" style="color: lightblue;">Twitter</a>
+            </p>
+        </footer>
     </div>
 
     <!-- Scripts -->

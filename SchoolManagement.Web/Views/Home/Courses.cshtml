@@ -1,0 +1,27 @@
+﻿@model List<SchoolManagement.Web.Models.CourseViewModel>
+@{
+    Layout = "~/Views/Shared/_LayoutPublic.cshtml";
+    ViewData["Title"] = "Our Courses";
+}
+
+<div class="container py-5">
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold">Explore Our Academic Programs</h1>
+        <p class="lead text-muted">
+            We offer a variety of carefully crafted courses to prepare you for real-world challenges. Below is a complete list of our current offerings.
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <ul class="list-group list-group-flush fs-5">
+                @foreach (var course in Model)
+                {
+                    <li class="list-group-item py-3 border-bottom">
+                        <strong>@course.Name</strong><br />
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
