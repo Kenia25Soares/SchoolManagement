@@ -274,5 +274,10 @@ namespace SchoolManagement.Web.Controllers
             TempData["SuccessMessage"] = "Profile updated successfully.";
             return RedirectToAction(nameof(EditStudentProfile));
         }
+
+        public IActionResult NotAuthorized()
+        {
+            return View("~/Views/Errors/403.cshtml");
+        }
     }
 }

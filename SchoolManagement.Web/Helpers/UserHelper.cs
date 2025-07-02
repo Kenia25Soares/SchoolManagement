@@ -116,5 +116,11 @@ namespace SchoolManagement.Web.Helpers
         {
             return await _userManager.Users.CountAsync();
         }
+
+        public async Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password)
+        {
+            return await _signInManager.CheckPasswordSignInAsync(user, password, false);
+        }
+
     }
 }

@@ -28,7 +28,7 @@ namespace SchoolManagement.Web.Controllers
         }
 
         /// <summary>
-        /// Lista todos os Subjects existentes.
+        /// Lista todos as Subjects existentes.
         /// </summary>
         // GET: AdminDashboard/Subjects
         [HttpGet]
@@ -127,6 +127,12 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Exibe os detalhes de uma subject específica com base no seu ID.
+        /// </summary>
+        /// <param name="id">O ID da subject que se deseja visualizar.</param>
+        /// <returns>Uma view com os detalhes da subject ou NotFound se a subject não for encontrada.</returns>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {

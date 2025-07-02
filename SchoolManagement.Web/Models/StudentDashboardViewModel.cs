@@ -8,11 +8,4 @@ namespace SchoolManagement.Web.Models
         public string StudentName { get; set; }
         public string StudentId { get; set; }
     }
-
-    public class AbsenceViewModel
-    {
-        public string SubjectName { get; set; }
-        public int TotalAbsences { get; set; }
-    }
-
 }

@@ -1,14 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
+    /// <summary>
+    /// Controller for managing student classes (turmas) in the employee dashboard.
+    /// </summary>
     [Authorize(Roles = "Employee")]
     [Route("EmployeeDashboard/StudentClasses")]
     public class StudentClassesController : Controller
@@ -22,15 +24,19 @@ namespace SchoolManagement.Web.Controllers
             _studentClassRepository = studentClassRepository;
         }
 
-        // List all student classes
-        [HttpGet("")]
+        /// <summary>
+        /// Displays all student classes.
+        /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var model = await _studentClassHelper.GetAllAsync();
             return View("Views/EmployeeDashboard/StudentClasses/Index.cshtml", model);
         }
 
-        // Create form
+        /// <summary>
+        /// Returns the create form for a new student class.
+        /// </summary>
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -41,7 +47,9 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", vm);
         }
 
-        // Create POST
+        /// <summary>
+        /// Handles the submission of a new student class.
+        /// </summary>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(StudentClassViewModel model)
@@ -64,7 +72,9 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Edit form
+        /// <summary>
+        /// Displays the edit form for a student class.
+        /// </summary>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -75,7 +85,9 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
         }
 
-        // Edit POST
+        /// <summary>
+        /// Updates a student class after form submission.
+        /// </summary>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(StudentClassViewModel model)
@@ -98,7 +110,9 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Delete GET
+        /// <summary>
+        /// Displays the confirmation page for deleting a student class.
+        /// </summary>
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -108,7 +122,9 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Delete.cshtml", model);
         }
 
-        // Delete POST
+        /// <summary>
+        /// Confirms and performs deletion of a student class.
+        /// </summary>
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -121,6 +137,9 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Allows management of student assignments to a class.
+        /// </summary>
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
@@ -136,7 +155,7 @@ namespace SchoolManagement.Web.Controllers
             }).ToList();
 
             var availableStudents = allStudents
-                .Where(s => s.StudentClassId == null)   // Apenas alunos sem turma atribuída
+                .Where(s => s.StudentClassId == null)
                 .Select(s => new StudentAssignmentViewModel
                 {
                     StudentId = s.Id,
@@ -155,7 +174,9 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Manage.cshtml", vm);
         }
 
-        // AJAX POST to assign or unassign student immediately
+        /// <summary>
+        /// Assigns or unassigns a student to a class (AJAX).
+        /// </summary>
         [HttpPost("AssignStudent")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignStudent([FromBody] AssignStudentRequest request)
@@ -167,17 +188,47 @@ namespace SchoolManagement.Web.Controllers
             if (student == null)
                 return NotFound("Student not found");
 
-            student.StudentClassId = request.StudentClassId; // null to remove assignment
+            student.StudentClassId = request.StudentClassId;
 
             await _studentClassRepository.SaveChangesAsync();
 
             return Ok();
         }
 
-        public class AssignStudentRequest
+        /// <summary>
+        /// Displays the details of a student class, including subjects.
+        /// </summary>
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(int id)
         {
-            public string StudentId { get; set; }
-            public int? StudentClassId { get; set; }
+            var studentClass = await _studentClassRepository.GetAll()
+                .Where(sc => sc.Id == id)
+                .Select(sc => new
+                {
+                    sc.Id,
+                    sc.Name,
+                    sc.AcademicYear,
+                    sc.Shift,
+                    Course = sc.Course,
+                    Subjects = sc.Course.CourseSubjects.Select(cs => cs.Subject.Name)
+                })
+                .FirstOrDefaultAsync();
+
+            if (studentClass == null)
+                return NotFound();
+
+            var model = new StudentClassViewModel
+            {
+                Id = studentClass.Id,
+                Name = studentClass.Name,
+                AcademicYear = studentClass.AcademicYear,
+                Shift = studentClass.Shift,
+                CourseName = studentClass.Course?.Name
+            };
+
+            ViewBag.Subjects = studentClass.Subjects.ToList();
+
+            return View("Views/EmployeeDashboard/StudentClasses/Details.cshtml", model);
         }
     }
 }

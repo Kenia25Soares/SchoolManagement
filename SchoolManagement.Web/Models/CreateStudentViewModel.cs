@@ -12,6 +12,9 @@ namespace SchoolManagement.Web.Models
         public DateTime? DateOfBirth { get; set; }
         public string Address { get; set; } = string.Empty;
 
+        public string ClassName { get; set; }
+
+
         [Display(Name = "Official Photo")]
         public IFormFile? OfficialPhoto { get; set; }
 
@@ -19,6 +22,10 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Profile Picture")]
         public IFormFile? ProfilePicture { get; set; }
         public int? StudentClassId { get; set; }
+
+        public string? ProfilePictureUrl { get; set; }
+
+        public string? OfficialPhotoUrl { get; set; }
     }
 }
 

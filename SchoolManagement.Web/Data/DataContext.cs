@@ -23,29 +23,43 @@ namespace SchoolManagement.Web.Data
         {
             base.OnModelCreating(builder);
 
+            // Discriminador p diferentes tipos de utilizador
             builder.Entity<ApplicationUser>()
                 .HasDiscriminator<string>("UserType")
                 .HasValue<ApplicationUser>("ApplicationUser")
                 .HasValue<StudentUser>("StudentUser");
 
+            // Chave composta para CourseSubject
             builder.Entity<CourseSubject>()
                 .HasKey(cs => new { cs.CourseId, cs.SubjectId });
 
+            // Relacionamento CourseSubject -> Course
             builder.Entity<CourseSubject>()
                 .HasOne(cs => cs.Course)
                 .WithMany(c => c.CourseSubjects)
-                .HasForeignKey(cs => cs.CourseId);
+                .HasForeignKey(cs => cs.CourseId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // Relacionamento CourseSubject -> Subject
             builder.Entity<CourseSubject>()
                 .HasOne(cs => cs.Subject)
                 .WithMany(s => s.CourseSubjects)
-                .HasForeignKey(cs => cs.SubjectId);
+                .HasForeignKey(cs => cs.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // StudentGrade -> Course
             builder.Entity<StudentGrade>()
                 .HasOne(sg => sg.Course)
                 .WithMany()
                 .HasForeignKey(sg => sg.CourseId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Impede delete em cascata 
+            foreach (var relationship in builder.Model.GetEntityTypes()
+                .SelectMany(e => e.GetForeignKeys()))
+            {
+                relationship.DeleteBehavior = DeleteBehavior.Restrict;
+            }
 
         }
     }

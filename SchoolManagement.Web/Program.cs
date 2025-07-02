@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using Syncfusion.Licensing;
+using Swashbuckle.AspNetCore.Swagger;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 //Link Syncfusion license key from appsettings.json
 SyncfusionLicenseProvider.RegisterLicense(builder.Configuration["Syncfusion:LicenseKey"]);
 
-// Database
+// Database -DB Context
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -40,8 +44,26 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Add MVC
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(); // se usares Razor também
-builder.Services.AddTransient<SeedDb>();
 
+
+// Configuração do Swagger 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "School Management API",
+        Version = "v1",
+        Description = "API for accessing student classes and related data"
+    });
+
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
+
+// Services
+builder.Services.AddTransient<SeedDb>();
 builder.Services.AddScoped<IBlobHelper, BlobHelper>();
 builder.Services.AddScoped<IUserHelper, UserHelper>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
@@ -71,6 +93,15 @@ else
     app.UseDeveloperExceptionPage();
 }
 
+app.UseStatusCodePagesWithReExecute("/errors/{0}");
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "School API v1");
+    c.RoutePrefix = "swagger"; // Acesso ao swagger
+});
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
@@ -90,5 +121,4 @@ using (var scope = app.Services.CreateScope())
     await seeder.SeedAsync(); // <- Cria o Admin user
 }
 
-await app.RunAsync(); // <- precisa ser await agora
-
+await app.RunAsync(); 

@@ -213,5 +213,37 @@ namespace SchoolManagement.Web.Controllers
             TempData["SuccessMessage"] = "Student updated successfully!";
             return RedirectToAction(nameof(Index));
         }
+
+
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return NotFound();
+
+            var student = await _userManager.Users
+                .OfType<StudentUser>()
+                .Include(s => s.StudentClass)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (student == null)
+                return NotFound();
+
+            var model = new CreateStudentViewModel
+            {
+                FullName = student.FullName,
+                Email = student.Email,
+                PhoneNumber = student.PhoneNumber,
+                DateOfBirth = student.DateOfBirth,
+                Address = student.Address,
+                StudentClassId = student.StudentClassId,
+                ClassName = student.StudentClass?.Name,
+                ProfilePictureUrl = student.ProfilePictureUrl,
+                OfficialPhotoUrl = student.OfficialPhotoUrl
+            };
+
+            return View("/Views/EmployeeDashboard/Students/Details.cshtml", model);
+        }
+
     }
 }

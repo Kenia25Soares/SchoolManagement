@@ -10,10 +10,4 @@ namespace SchoolManagement.Web.Models
         public string StudentName { get; set; } = null!;
         public List<AbsenceSummaryViewModel> Absences { get; set; } = new();
     }
-
-    public class AbsenceSummaryViewModel
-    {
-        public string SubjectName { get; set; } = null!;
-        public int TotalAbsences { get; set; }
-    }
 }

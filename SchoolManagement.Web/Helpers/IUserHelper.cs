@@ -24,5 +24,6 @@ namespace SchoolManagement.Web.Helpers
         Task<ApplicationUser> GetUserAsync(ClaimsPrincipal principal);
         Task<SelectList> GetClassesSelectListAsync(int? selectedClassId);
         Task<int> GetUsersCountAsync();
+        Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password);
     }
 }

@@ -1,0 +1,62 @@
+﻿@model SchoolManagement.Web.Models.StudentClassViewModel
+@{
+    ViewData["Title"] = "Class Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var subjects = ViewBag.Subjects as List<string>;
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 800px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Class Details</h2>
+
+            <form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" value="@Model.Name" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Academic Year</label>
+                        <input class="form-control" value="@Model.AcademicYear" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Shift</label>
+                        <input class="form-control" value="@Model.Shift" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Course</label>
+                        <input class="form-control" value="@Model.CourseName" readonly />
+                    </div>
+                </div>
+
+                <hr />
+
+                <h5 class="mt-4">Subjects</h5>
+                @if (subjects != null && subjects.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var subject in subjects)
+                        {
+                            <li class="list-group-item">@subject</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">No subjects found for this course.</p>
+                }
+
+                <div class="d-flex justify-content-end mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

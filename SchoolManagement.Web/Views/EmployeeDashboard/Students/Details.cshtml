@@ -1,0 +1,87 @@
+﻿@model SchoolManagement.Web.Models.CreateStudentViewModel
+
+@{
+    ViewData["Title"] = "Student Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg mx-auto p-4" style="max-width: 900px;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Student Details</h2>
+
+            <form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input asp-for="FullName" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input asp-for="PhoneNumber" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date of Birth</label>
+                        <input asp-for="DateOfBirth" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea asp-for="Address" class="form-control" readonly></textarea>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Class</label>
+                        <input type="text" class="form-control" value="@Model.ClassName" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Profile Picture</label><br />
+                        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                        {
+                            <img src="@($"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
+                                 alt="Profile Picture"
+                                 style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
+                        }
+                        else
+                        {
+                            <span>No picture uploaded</span>
+                        }
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Official Photo</label><br />
+                        @if (!string.IsNullOrEmpty(Model.OfficialPhotoUrl))
+                        {
+                            <img src="@($"https://blobainek.blob.core.windows.net/projetspictures/{Model.OfficialPhotoUrl}")"
+                                 alt="Official Photo"
+                                 style="width:100px; height:100px; object-fit:cover; border-radius:10%;" />
+                        }
+                        else
+                        {
+                            <span>No official photo uploaded</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <ejs-button id="btnBackToStudents"
+                                type="button"
+                                content="Back"
+                                iconCss="fas fa-arrow-left"
+                                cssClass="e-secondary e-plus"
+                                iconPosition="Left"
+                                onclick="location.href='/EmployeeDashboard/Students'">
+                    </ejs-button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
