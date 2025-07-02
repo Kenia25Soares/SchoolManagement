@@ -11,49 +11,54 @@ namespace SchoolManagement.Web.Controllers
     [Route("AdminDashboard/Alerts")]
     public class AdminAlertsController : Controller
     {
-
         private readonly DataContext _context;
-
 
         public AdminAlertsController(DataContext context)
         {
             _context = context;
         }
 
-
-
+        /// <summary>
+        /// Displays the list of alerts.
+        /// </summary>
         [HttpGet]
         public IActionResult Index()
         {
             var alerts = _context.Alerts
-                 .Include(a => a.CreatedBy)
-                 .OrderByDescending(a => a.CreatedAt)
-                 .Select(a => new AlertViewModel
-                 {
-                     Id = a.Id,
-                     Title = a.Title,
-                     Description = a.Description,
-                     Priority = a.Priority,
-                     CreatedBy = a.CreatedBy.FullName,
-                     CreatedAt = a.CreatedAt,
-                     IsResolved = a.IsResolved
-                 })
-                 .ToList();
+                .Include(a => a.CreatedBy)
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new AlertViewModel
+                {
+                    Id = a.Id,
+                    Title = a.Title,
+                    Description = a.Description,
+                    Priority = a.Priority,
+                    CreatedBy = a.CreatedBy.FullName,
+                    CreatedAt = a.CreatedAt,
+                    IsResolved = a.IsResolved
+                })
+                .ToList();
 
             return View(alerts);
         }
 
-
-
+        /// <summary>
+        /// Marks an alert as resolved.
+        /// </summary>
         [HttpPost("Resolve/{id}")]
         public async Task<IActionResult> Resolve(int id)
         {
             var alert = await _context.Alerts.FindAsync(id);
-            if (alert == null) return NotFound();
+            if (alert == null)
+            {
+                TempData["ErrorMessage"] = "Alert not found.";
+                return RedirectToAction("Index", "AdminDashboard");
+            }
 
             alert.IsResolved = true;
             await _context.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = "Alert successfully marked as resolved.";
             return RedirectToAction("Index", "AdminDashboard");
         }
     }

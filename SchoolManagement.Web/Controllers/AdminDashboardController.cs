@@ -22,12 +22,18 @@ namespace SchoolManagement.Web.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Sets the logged-in user's profile picture for display.
+        /// </summary>
         private async Task SetUserProfilePictureAsync()
         {
             var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
+        /// <summary>
+        /// Displays the main admin dashboard with stats and recent alerts.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -59,6 +65,10 @@ namespace SchoolManagement.Web.Controllers
                 Alerts = alerts,
                 Stats = stats
             };
+
+            if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+            {
+            }
 
             return View(model);
         }

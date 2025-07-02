@@ -8,9 +8,6 @@ using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers
 {
-    /// <summary>
-    /// Controller for managing student classes (turmas) in the employee dashboard.
-    /// </summary>
     [Authorize(Roles = "Employee")]
     [Route("EmployeeDashboard/StudentClasses")]
     public class StudentClassesController : Controller
@@ -24,9 +21,6 @@ namespace SchoolManagement.Web.Controllers
             _studentClassRepository = studentClassRepository;
         }
 
-        /// <summary>
-        /// Displays all student classes.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -34,9 +28,6 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Index.cshtml", model);
         }
 
-        /// <summary>
-        /// Returns the create form for a new student class.
-        /// </summary>
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -47,9 +38,6 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", vm);
         }
 
-        /// <summary>
-        /// Handles the submission of a new student class.
-        /// </summary>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(StudentClassViewModel model)
@@ -57,6 +45,7 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
+                TempData["ErrorMessage"] = "Invalid input. Please correct the form.";
                 return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", model);
             }
 
@@ -69,25 +58,24 @@ namespace SchoolManagement.Web.Controllers
             };
 
             await _studentClassRepository.CreateAsync(entity);
+            TempData["SuccessMessage"] = "Student class created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Displays the edit form for a student class.
-        /// </summary>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             var model = await _studentClassHelper.GetByIdAsync(id);
-            if (model == null) return NotFound();
+            if (model == null)
+            {
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
             return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
         }
 
-        /// <summary>
-        /// Updates a student class after form submission.
-        /// </summary>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(StudentClassViewModel model)
@@ -95,11 +83,16 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
+                TempData["ErrorMessage"] = "Invalid input. Please correct the form.";
                 return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
             }
 
             var entity = await _studentClassRepository.GetByIdAsync(model.Id);
-            if (entity == null) return NotFound();
+            if (entity == null)
+            {
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             entity.Name = model.Name;
             entity.AcademicYear = model.AcademicYear;
@@ -107,44 +100,55 @@ namespace SchoolManagement.Web.Controllers
             entity.CourseId = model.CourseId;
 
             await _studentClassRepository.UpdateAsync(entity);
+            TempData["SuccessMessage"] = "Student class updated successfully.";
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Displays the confirmation page for deleting a student class.
-        /// </summary>
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var model = await _studentClassHelper.GetByIdAsync(id);
-            if (model == null) return NotFound();
+            if (model == null)
+            {
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             return View("Views/EmployeeDashboard/StudentClasses/Delete.cshtml", model);
         }
 
-        /// <summary>
-        /// Confirms and performs deletion of a student class.
-        /// </summary>
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var entity = await _studentClassRepository.GetByIdAsync(id);
-            if (entity != null)
+            var entity = await _studentClassRepository.GetByIdWithDetailsAsync(id);
+
+            if (entity == null)
             {
-                await _studentClassRepository.DeleteAsync(entity);
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
             }
+
+            if (entity.Students != null && entity.Students.Any())
+            {
+                TempData["ErrorMessage"] = "Cannot delete the class because it has assigned students.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _studentClassRepository.DeleteAsync(entity);
+            TempData["SuccessMessage"] = "Student class deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Allows management of student assignments to a class.
-        /// </summary>
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
             var studentClass = await _studentClassRepository.GetByIdWithDetailsAsync(id);
-            if (studentClass == null) return NotFound();
+            if (studentClass == null)
+            {
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var allStudents = await _studentClassHelper.GetAllStudentsAsync();
 
@@ -174,30 +178,24 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Manage.cshtml", vm);
         }
 
-        /// <summary>
-        /// Assigns or unassigns a student to a class (AJAX).
-        /// </summary>
         [HttpPost("AssignStudent")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignStudent([FromBody] AssignStudentRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.StudentId))
-                return BadRequest("Invalid request");
+                return BadRequest("Invalid request.");
 
             var student = await _studentClassRepository.GetStudentByIdAsync(request.StudentId);
             if (student == null)
-                return NotFound("Student not found");
+                return NotFound("Student not found.");
 
             student.StudentClassId = request.StudentClassId;
 
             await _studentClassRepository.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { message = "Student assigned successfully." });
         }
 
-        /// <summary>
-        /// Displays the details of a student class, including subjects.
-        /// </summary>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
@@ -215,7 +213,10 @@ namespace SchoolManagement.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (studentClass == null)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Student class not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var model = new StudentClassViewModel
             {

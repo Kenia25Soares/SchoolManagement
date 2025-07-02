@@ -10,8 +10,8 @@ using SchoolManagement.Web.Models;
 namespace SchoolManagement.Web.Controllers
 {
     /// <summary>
-    /// Controller responsável pela gestão de cursos.
-    /// Apenas acessível ao Admin.
+    /// Controller responsible for course management.
+    /// Accessible only by Admin.
     /// </summary>
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Courses")]
@@ -21,7 +21,10 @@ namespace SchoolManagement.Web.Controllers
         private readonly IConverterHelper _converterHelper;
         private readonly ICourseHelper _courseHelper;
 
-        public CoursesController(ICourseRepository courseRepository, IConverterHelper converterHelper, ICourseHelper courseHelper)
+        public CoursesController(
+            ICourseRepository courseRepository,
+            IConverterHelper converterHelper,
+            ICourseHelper courseHelper)
         {
             _courseRepository = courseRepository;
             _converterHelper = converterHelper;
@@ -29,36 +32,31 @@ namespace SchoolManagement.Web.Controllers
         }
 
         /// <summary>
-        /// Lista todos os cursos.
+        /// Displays the list of all courses.
         /// </summary>
-        // GET: AdminDashboard/Courses
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var courses = await _courseRepository.GetAll()
-                                                .Include(c => c.CourseSubjects)
-                                                .ToListAsync();
+                .Include(c => c.CourseSubjects)
+                .ToListAsync();
 
             var viewModel = courses.Select(c => _converterHelper.ToCourseViewModel(c)).ToList();
             return View("Views/AdminDashboard/Courses/Index.cshtml", viewModel);
         }
 
-
         /// <summary>
-        /// Abre o formulário para criar um novo curso.
+        /// Shows the form to create a new course.
         /// </summary>
-        // GET: AdminDashboard/Courses/Create
         [HttpGet("Create")]
         public IActionResult Create()
         {
             return View("Views/AdminDashboard/Courses/Create.cshtml");
         }
 
-
         /// <summary>
-        /// Cria um novo curso.
+        /// Creates a new course.
         /// </summary>
-        // POST: AdminDashboard/Courses/Create
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseViewModel model)
@@ -67,31 +65,34 @@ namespace SchoolManagement.Web.Controllers
             {
                 var course = _converterHelper.ToCourseEntity(model, true);
                 await _courseRepository.CreateAsync(course);
+                TempData["SuccessMessage"] = "Course successfully created.";
                 return RedirectToAction(nameof(Index));
             }
+
+            TempData["ErrorMessage"] = "Failed to create course. Please check the form.";
             return View("Views/AdminDashboard/Courses/Create.cshtml", model);
         }
 
-
         /// <summary>
-        /// Abre o formulário para editar um curso existente.
+        /// Shows the form to edit an existing course.
         /// </summary>
-        // GET: AdminDashboard/Courses/Edit/{id}
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             var course = await _courseRepository.GetByIdAsync(id);
-            if (course == null) return NotFound();
+            if (course == null)
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var viewModel = _converterHelper.ToCourseViewModel(course);
             return View("Views/AdminDashboard/Courses/Edit.cshtml", viewModel);
         }
 
-
         /// <summary>
-        /// Atualiza um curso.
+        /// Updates an existing course.
         /// </summary>
-        // POST: AdminDashboard/Courses/Edit/{id}
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CourseViewModel model)
@@ -100,31 +101,34 @@ namespace SchoolManagement.Web.Controllers
             {
                 var course = _converterHelper.ToCourseEntity(model, false);
                 await _courseRepository.UpdateAsync(course);
+                TempData["SuccessMessage"] = "Course successfully updated.";
                 return RedirectToAction(nameof(Index));
             }
+
+            TempData["ErrorMessage"] = "Failed to update course. Please check the form.";
             return View("Views/AdminDashboard/Courses/Edit.cshtml", model);
         }
 
-
         /// <summary>
-        /// Abre a confirmação de exclusão do curso.
+        /// Shows confirmation page for deleting a course.
         /// </summary>
-        // GET: AdminDashboard/Courses/Delete/{id}
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var course = await _courseRepository.GetByIdAsync(id);
-            if (course == null) return NotFound();
+            if (course == null)
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var viewModel = _converterHelper.ToCourseViewModel(course);
             return View("Views/AdminDashboard/Courses/Delete.cshtml", viewModel);
         }
 
-
         /// <summary>
-        /// Exclui o curso.
+        /// Deletes the course.
         /// </summary>
-        // POST: AdminDashboard/Courses/Delete/{id}
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -133,60 +137,84 @@ namespace SchoolManagement.Web.Controllers
             if (entity != null)
             {
                 await _courseRepository.DeleteAsync(entity);
+                TempData["SuccessMessage"] = "Course successfully deleted.";
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Manages the subjects assigned to a course.
+        /// </summary>
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
             var model = await _courseHelper.GetCourseManagementAsync(id);
             if (model == null)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             return View("Views/AdminDashboard/Courses/Manage.cshtml", model);
         }
 
+        /// <summary>
+        /// Assigns a subject to a course.
+        /// </summary>
         [HttpPost("AssignSubject")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignSubject([FromBody] AssignSubjectRequest request)
         {
             if (request == null || request.CourseId <= 0 || request.SubjectId <= 0)
-                return BadRequest("Invalid request");
+                return BadRequest("Invalid request.");
 
             await _courseHelper.AssignSubjectToCourseAsync(request.CourseId, request.SubjectId);
 
-            return Ok();
+            return Ok(new { message = "Subject successfully assigned to course." });
         }
 
+        /// <summary>
+        /// Removes a subject from a course.
+        /// </summary>
         [HttpPost("RemoveSubject")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveSubject([FromBody] AssignSubjectRequest request)
         {
             if (request == null || request.CourseId <= 0 || request.SubjectId <= 0)
-                return BadRequest("Invalid request");
+                return BadRequest("Invalid request.");
 
             await _courseHelper.RemoveSubjectFromCourseAsync(request.CourseId, request.SubjectId);
 
-            return Ok();
+            return Ok(new { message = "Subject successfully removed from course." });
+        }
+
+        /// <summary>
+        /// Displays course details.
+        /// </summary>
+        [HttpGet("Details/{id}")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var course = await _courseRepository.GetByIdAsync(id);
+            if (course == null)
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var model = _converterHelper.ToCourseViewModel(course);
+
+            return View("Views/AdminDashboard/Courses/Details.cshtml", model);
         }
 
         public class AssignSubjectRequest
         {
             public int CourseId { get; set; }
             public int SubjectId { get; set; }
-        }
-
-        [HttpGet("Details/{id}")]
-        public async Task<IActionResult> Details(int id)
-        {
-            var course = await _courseRepository.GetByIdAsync(id);
-            if (course == null)
-                return NotFound();
-
-            var model = _converterHelper.ToCourseViewModel(course);
-
-            return View("Views/AdminDashboard/Courses/Details.cshtml", model);
         }
     }
 }

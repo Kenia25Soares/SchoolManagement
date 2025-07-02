@@ -71,6 +71,25 @@ namespace SchoolManagement.Web.Controllers
             await LoadClassesAsync();
             return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
         }
+        /// <summary>
+        /// Deletes a user based on the provided ID.
+        /// </summary>
+        [HttpPost("Delete/{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+                TempData["SuccessMessage"] = "User successfully removed.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "User not found.";
+            }
+
+            return RedirectToAction("Index");
+        }
 
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
@@ -116,7 +135,6 @@ namespace SchoolManagement.Web.Controllers
 
             await _userManager.AddToRoleAsync(student, "Student");
 
-            // Gerar e enviar email para definir a senha
             var token = await _userManager.GeneratePasswordResetTokenAsync(student);
             var resetLink = Url.Action(
                 "ResetPassword",
@@ -132,9 +150,7 @@ namespace SchoolManagement.Web.Controllers
             var mailResponse = _mailHelper.SendEmail(student.Email, "Set your password", emailBody);
             if (!mailResponse.IsSuccess)
             {
-                ModelState.AddModelError("", "Failed to send password setup email to student.");
-                // Pode retornar a view com erro ou prosseguir normalmente
-                // return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
+                TempData["ErrorMessage"] = "Student created, but failed to send password setup email.";
             }
 
             TempData["SuccessMessage"] = "Student created successfully! A password setup email was sent.";
@@ -147,7 +163,11 @@ namespace SchoolManagement.Web.Controllers
             await SetUserProfilePictureAsync();
 
             var user = await _userManager.FindByIdAsync(id) as StudentUser;
-            if (user == null) return NotFound();
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Student not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             await LoadClassesAsync(user.StudentClassId);
 
@@ -178,7 +198,11 @@ namespace SchoolManagement.Web.Controllers
                 return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
 
             var user = await _userManager.FindByIdAsync(model.Id) as StudentUser;
-            if (user == null) return NotFound();
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Student not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             user.FullName = model.FullName;
             user.Email = model.Email;
@@ -214,7 +238,6 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(string id)
         {
@@ -244,6 +267,5 @@ namespace SchoolManagement.Web.Controllers
 
             return View("/Views/EmployeeDashboard/Students/Details.cshtml", model);
         }
-
     }
 }

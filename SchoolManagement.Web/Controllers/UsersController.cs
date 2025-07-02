@@ -7,8 +7,8 @@ using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
 /// <summary>
-/// Controlador responsável pela gestão de usuários Admins no painel do administrador.
-/// Inclui ações para listar, criar, editar, excluir e visualizar utilizador.
+/// Controller responsible for managing Admin and Employee users in the admin panel.
+/// Includes actions to list, create, edit, delete, and view user details.
 /// </summary>
 [Authorize(Roles = "Admin")]
 [Route("AdminDashboard/Users")]
@@ -32,7 +32,7 @@ public class UsersController : Controller
     }
 
     /// <summary>
-    /// Define a imagem de perfil do utilizador logado para exibição no layout.
+    /// Sets the logged-in user's profile picture to be displayed in the layout.
     /// </summary>
     private async Task SetUserProfilePictureAsync()
     {
@@ -41,7 +41,7 @@ public class UsersController : Controller
     }
 
     /// <summary>
-    /// Lista todos os utilizadores com perfil de Admin ou Funcionário.
+    /// Lists all users with Admin or Employee roles.
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> Index()
@@ -70,7 +70,7 @@ public class UsersController : Controller
     }
 
     /// <summary>
-    /// Deleta um utilizador com base no ID fornecido.
+    /// Deletes a user based on the provided ID.
     /// </summary>
     [HttpPost("Delete/{id}")]
     public async Task<IActionResult> Delete(string id)
@@ -79,18 +79,18 @@ public class UsersController : Controller
         if (user != null)
         {
             await _userManager.DeleteAsync(user);
-            TempData["SuccessMessage"] = "Utilizador removido com sucesso.";
+            TempData["SuccessMessage"] = "User successfully removed.";
         }
         else
         {
-            TempData["ErrorMessage"] = "Utilizador não encontrado.";
+            TempData["ErrorMessage"] = "User not found.";
         }
 
         return RedirectToAction("Index");
     }
 
     /// <summary>
-    /// Exibe o formulário para criação de um novo utilizador.
+    /// Displays the form to create a new user.
     /// </summary>
     [HttpGet("Create")]
     public async Task<IActionResult> Create()
@@ -104,7 +104,7 @@ public class UsersController : Controller
     }
 
     /// <summary>
-    /// Cria um novo utilizador com base nos dados enviados do formulário.
+    /// Creates a new user based on submitted form data.
     /// </summary>
     [HttpPost("Create")]
     public async Task<IActionResult> Create(CreateUserViewModel model)
@@ -144,24 +144,24 @@ public class UsersController : Controller
         string token = await _userManager.GeneratePasswordResetTokenAsync(user);
         string resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, protocol: HttpContext.Request.Scheme);
 
-        var response = _mailHelper.SendEmail(user.Email, "Definir password", $@"
-            <h1>Bem-vindo ao School Management!</h1>
-            <p>Para definir sua senha, clique no link abaixo:</p>
-            <p><a href='{resetLink}'>Definir senha</a></p>
+        var response = _mailHelper.SendEmail(user.Email, "Set your password", $@"
+            <h1>Welcome to School Management!</h1>
+            <p>To set your password, click the link below:</p>
+            <p><a href='{resetLink}'>Set Password</a></p>
         ");
 
         if (!response.IsSuccess)
         {
-            ModelState.AddModelError(string.Empty, "Utilizador criado, mas falha ao enviar email.");
+            ModelState.AddModelError(string.Empty, "User created, but failed to send email.");
             return View("/Views/AdminDashboard/Users/Create.cshtml", model);
         }
 
-        TempData["SuccessMessage"] = "Utilizador criado com sucesso! Um email foi enviado.";
+        TempData["SuccessMessage"] = "User successfully created! An email has been sent.";
         return RedirectToAction("Index");
     }
 
     /// <summary>
-    /// Exibe o formulário para editar um utilizador existente.
+    /// Displays the form to edit an existing user.
     /// </summary>
     [HttpGet("Edit/{id}")]
     public async Task<IActionResult> Edit(string id)
@@ -171,7 +171,7 @@ public class UsersController : Controller
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
         {
-            TempData["ErrorMessage"] = "Utilizador não encontrado.";
+            TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction("Index");
         }
 
@@ -192,7 +192,7 @@ public class UsersController : Controller
     }
 
     /// <summary>
-    /// Salva as alterações feitas em um utilizador.
+    /// Saves changes made to a user.
     /// </summary>
     [HttpPost("Edit/{id}")]
     public async Task<IActionResult> Edit(EditUserViewModel model)
@@ -206,7 +206,7 @@ public class UsersController : Controller
         var user = await _userManager.FindByIdAsync(model.Id);
         if (user == null)
         {
-            TempData["ErrorMessage"] = "Utilizador não encontrado.";
+            TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction("Index");
         }
 
@@ -234,12 +234,12 @@ public class UsersController : Controller
         await _userManager.RemoveFromRolesAsync(user, currentRoles);
         await _userManager.AddToRoleAsync(user, model.Role);
 
-        TempData["SuccessMessage"] = "Utilizador atualizado com sucesso!";
+        TempData["SuccessMessage"] = "User successfully updated!";
         return RedirectToAction("Index");
     }
 
     /// <summary>
-    /// Exibe os detalhes específicos de um utilizador.
+    /// Displays detailed information about a specific user.
     /// </summary>
     [HttpGet("Details/{id}")]
     public async Task<IActionResult> Details(string id)
@@ -250,7 +250,7 @@ public class UsersController : Controller
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
         {
-            TempData["ErrorMessage"] = "Utilizador não encontrado.";
+            TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction("Index");
         }
 

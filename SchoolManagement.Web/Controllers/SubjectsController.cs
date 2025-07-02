@@ -10,10 +10,6 @@ using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
-    /// <summary>
-    /// Controller responsável pela gestão de Subjects (Disciplinas).
-    /// Apenas acessível ao Admin.
-    /// </summary>
     [Authorize(Roles = "Admin")]
     [Route("AdminDashboard/Subjects")]
     public class SubjectsController : Controller
@@ -27,10 +23,6 @@ namespace SchoolManagement.Web.Controllers
             _converterHelper = converterHelper;
         }
 
-        /// <summary>
-        /// Lista todos as Subjects existentes.
-        /// </summary>
-        // GET: AdminDashboard/Subjects
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -39,20 +31,12 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/AdminDashboard/Subjects/Index.cshtml", viewModel);
         }
 
-        /// <summary>
-        /// Abre o formulário para criar um novo Subject.
-        /// </summary>
-        // GET: AdminDashboard/Subjects/Create
         [HttpGet("Create")]
         public IActionResult Create()
         {
             return View("/Views/AdminDashboard/Subjects/Create.cshtml");
         }
 
-        /// <summary>
-        /// Recebe o POST do formulário de criação e cria o Subject.
-        /// </summary>
-        // POST: AdminDashboard/Subjects/Create
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SubjectViewModel model)
@@ -61,29 +45,26 @@ namespace SchoolManagement.Web.Controllers
             {
                 var subject = _converterHelper.ToSubjectEntity(model, true);
                 await _subjectRepository.CreateAsync(subject);
+                TempData["SuccessMessage"] = "Subject created successfully.";
                 return RedirectToAction(nameof(Index));
             }
             return View("/Views/AdminDashboard/Subjects/Create.cshtml", model);
         }
 
-        /// <summary>
-        /// Abre o formulário de edição de um Subject.
-        /// </summary>
-        // GET: AdminDashboard/Subjects/Edit/{id}
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null) return NotFound();
+            if (subject == null)
+            {
+                TempData["ErrorMessage"] = "Subject not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var model = _converterHelper.ToSubjectViewModel(subject);
             return View("/Views/AdminDashboard/Subjects/Edit.cshtml", model);
         }
 
-        /// <summary>
-        /// Recebe o POST do formulário de edição e atualiza o Subject.
-        /// </summary>
-        // POST: AdminDashboard/Subjects/Edit/{id}
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(SubjectViewModel model)
@@ -92,29 +73,26 @@ namespace SchoolManagement.Web.Controllers
             {
                 var subject = _converterHelper.ToSubjectEntity(model, false);
                 await _subjectRepository.UpdateAsync(subject);
+                TempData["SuccessMessage"] = "Subject updated successfully.";
                 return RedirectToAction(nameof(Index));
             }
             return View("/Views/AdminDashboard/Subjects/Edit.cshtml", model);
         }
 
-        /// <summary>
-        /// Mostra a página de confirmação de remoção de um Subject.
-        /// </summary>
-        // GET: AdminDashboard/Subjects/Delete/{id}
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var subject = await _subjectRepository.GetByIdAsync(id);
-            if (subject == null) return NotFound();
+            if (subject == null)
+            {
+                TempData["ErrorMessage"] = "Subject not found.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var model = _converterHelper.ToSubjectViewModel(subject);
             return View("/Views/AdminDashboard/Subjects/Delete.cshtml", model);
         }
 
-        /// <summary>
-        /// Remove o Subject após confirmação.
-        /// </summary>
-        // POST: AdminDashboard/Subjects/Delete/{id}
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -123,23 +101,23 @@ namespace SchoolManagement.Web.Controllers
             if (subject != null)
             {
                 await _subjectRepository.DeleteAsync(subject);
+                TempData["SuccessMessage"] = "Subject deleted successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Subject not found.";
             }
             return RedirectToAction(nameof(Index));
         }
 
-
-        /// <summary>
-        /// Exibe os detalhes de uma subject específica com base no seu ID.
-        /// </summary>
-        /// <param name="id">O ID da subject que se deseja visualizar.</param>
-        /// <returns>Uma view com os detalhes da subject ou NotFound se a subject não for encontrada.</returns>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
             var subject = await _subjectRepository.GetByIdAsync(id);
             if (subject == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Subject not found.";
+                return RedirectToAction(nameof(Index));
             }
 
             var model = _converterHelper.ToSubjectViewModel(subject);

@@ -23,7 +23,6 @@ namespace SchoolManagement.Web.Controllers
             _context = context;
         }
 
-        // GET: /EmployeeDashboard/Grades
         [HttpGet("")]
         public async Task<IActionResult> Index(int? classId)
         {
@@ -36,25 +35,16 @@ namespace SchoolManagement.Web.Controllers
                 }).ToListAsync();
 
             if (!classId.HasValue && classes.Any())
-            {
                 classId = int.Parse(classes.First().Value);
-            }
 
             foreach (var c in classes)
-            {
                 c.Selected = classId.HasValue && c.Value == classId.Value.ToString();
-            }
 
-            IQueryable<StudentUser> studentsQuery = _context.Users.OfType<StudentUser>();
-
+            var studentsQuery = _context.Users.OfType<StudentUser>();
             if (classId.HasValue)
-            {
                 studentsQuery = studentsQuery.Where(s => s.StudentClassId == classId.Value);
-            }
             else
-            {
                 studentsQuery = studentsQuery.Where(s => false);
-            }
 
             var students = await studentsQuery.ToListAsync();
             var studentIds = students.Select(s => s.Id).ToList();
@@ -70,14 +60,10 @@ namespace SchoolManagement.Web.Controllers
                 var absencesBySubject = absences
                     .Where(a => a.StudentId == student.Id)
                     .GroupBy(a => a.Subject)
-                    .Select(g => new
-                    {
-                        Subject = g.Key,
-                        TotalAbsences = g.Sum(x => x.Absences)
-                    });
+                    .Select(g => new { Subject = g.Key, TotalAbsences = g.Sum(x => x.Absences) });
 
-                bool failedByAbsences = absencesBySubject.Any(a => a.TotalAbsences > a.Subject.AllowedAbsences);
-                failedByAbsencesDict[student.Id] = failedByAbsences;
+                bool failed = absencesBySubject.Any(a => a.TotalAbsences > a.Subject.AllowedAbsences);
+                failedByAbsencesDict[student.Id] = failed;
             }
 
             var grades = await _context.StudentGrades
@@ -89,21 +75,17 @@ namespace SchoolManagement.Web.Controllers
                 .GroupBy(g => g.StudentId)
                 .ToDictionary(g => g.Key, g =>
                 {
-                    var groupedByType = g.GroupBy(x => x.GradeType);
-                    double weightedSum = 0;
-                    double totalWeight = 0;
-
-                    foreach (var group in groupedByType)
+                    double weightedSum = 0, totalWeight = 0;
+                    foreach (var group in g.GroupBy(x => x.GradeType))
                     {
                         var weight = group.Key?.Weight ?? 0;
                         if (weight > 0)
                         {
-                            var avgGrade = group.Average(x => x.Grade ?? 0);
-                            weightedSum += avgGrade * weight;
+                            var avg = group.Average(x => x.Grade ?? 0);
+                            weightedSum += avg * weight;
                             totalWeight += weight;
                         }
                     }
-
                     return totalWeight > 0 ? weightedSum / totalWeight : 0;
                 });
 
@@ -124,7 +106,6 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/Index.cshtml", model);
         }
 
-        // GET: /EmployeeDashboard/Grades/AddGrades?studentId=xyz
         [HttpGet("AddGrades")]
         public async Task<IActionResult> AddGrades(string studentId)
         {
@@ -135,11 +116,11 @@ namespace SchoolManagement.Web.Controllers
                 .Include(s => s.StudentClass)
                 .FirstOrDefaultAsync(s => s.Id == studentId);
 
-            if (student == null)
-                return NotFound();
-
-            if (student.StudentClass == null)
-                return BadRequest("Student does not have a class assigned.");
+            if (student == null || student.StudentClass == null)
+            {
+                TempData["ErrorMessage"] = "Student not found or has no class assigned.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var subjects = await _context.CourseSubjects
                 .Where(cs => cs.CourseId == student.StudentClass.CourseId)
@@ -157,83 +138,54 @@ namespace SchoolManagement.Web.Controllers
             };
 
             ViewBag.StudentName = student.FullName;
-
             return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
         }
 
-        // POST: /EmployeeDashboard/Grades/AddGrades
         [HttpPost("AddGrades")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddGrades(AddGradesViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                var student = await _context.Users.OfType<StudentUser>()
-                    .Include(s => s.StudentClass)
-                    .FirstOrDefaultAsync(s => s.Id == model.StudentId);
-
-                if (student == null)
-                    return NotFound();
-
-                if (student.StudentClass == null)
-                {
-                    ModelState.AddModelError("", "Student does not have a class assigned.");
-                    return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
-                }
-
-                var subjects = await _context.CourseSubjects
-                    .Where(cs => cs.CourseId == student.StudentClass.CourseId)
-                    .Select(cs => cs.Subject)
-                    .ToListAsync();
-
-                var gradeTypes = await _context.GradeTypes.ToListAsync();
-
-                model.Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name });
-                model.GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name });
-
-                ViewBag.StudentName = student.FullName;
-
-                return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
+                TempData["ErrorMessage"] = "Invalid input. Please check the form.";
+                return RedirectToAction(nameof(Index));
             }
 
-            var studentEntity = await _context.Users.OfType<StudentUser>()
-                                    .Include(s => s.StudentClass)
-                                    .FirstOrDefaultAsync(s => s.Id == model.StudentId);
+            var student = await _context.Users.OfType<StudentUser>()
+                .Include(s => s.StudentClass)
+                .FirstOrDefaultAsync(s => s.Id == model.StudentId);
 
-            if (studentEntity == null)
-                return NotFound();
-
-            if (!studentEntity.StudentClassId.HasValue)
-                return BadRequest("Student does not have a class assigned.");
-
-            var courseId = studentEntity.StudentClass.CourseId;
-
-            foreach (var gradeInput in model.Grades)
+            if (student == null || student.StudentClass == null)
             {
-                if (gradeInput.SubjectId == 0 || gradeInput.GradeTypeId == 0)
+                TempData["ErrorMessage"] = "Student not found or not assigned to a class.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var courseId = student.StudentClass.CourseId;
+
+            foreach (var input in model.Grades)
+            {
+                if (input.SubjectId == 0 || input.GradeTypeId == 0)
                     continue;
 
-                var grade = new StudentGrade
+                _context.StudentGrades.Add(new StudentGrade
                 {
                     StudentId = model.StudentId,
                     CourseId = courseId,
-                    SubjectId = gradeInput.SubjectId,
-                    GradeTypeId = gradeInput.GradeTypeId,
-                    Grade = gradeInput.Grade,
+                    SubjectId = input.SubjectId,
+                    GradeTypeId = input.GradeTypeId,
+                    Grade = input.Grade,
                     Absences = 0,
                     CreatedAt = DateTime.UtcNow
-                };
-
-                _context.StudentGrades.Add(grade);
+                });
             }
 
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Grades added successfully!";
-            return RedirectToAction(nameof(Index), new { classId = studentEntity.StudentClassId });
+            return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
-        // GET: /EmployeeDashboard/Grades/AddAbsences?studentId=xyz
         [HttpGet("AddAbsences")]
         public async Task<IActionResult> AddAbsences(string studentId)
         {
@@ -244,11 +196,11 @@ namespace SchoolManagement.Web.Controllers
                 .Include(s => s.StudentClass)
                 .FirstOrDefaultAsync(s => s.Id == studentId);
 
-            if (student == null)
-                return NotFound();
-
-            if (student.StudentClass == null)
-                return BadRequest("Student does not have a class assigned.");
+            if (student == null || student.StudentClass == null)
+            {
+                TempData["ErrorMessage"] = "Student not found or has no class assigned.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var subjects = await _context.CourseSubjects
                 .Where(cs => cs.CourseId == student.StudentClass.CourseId)
@@ -263,77 +215,53 @@ namespace SchoolManagement.Web.Controllers
             };
 
             ViewBag.StudentName = student.FullName;
-
             return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
         }
 
-        // POST: /EmployeeDashboard/Grades/AddAbsences
         [HttpPost("AddAbsences")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAbsences(AddAbsencesViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                var student = await _context.Users.OfType<StudentUser>()
-                    .Include(s => s.StudentClass)
-                    .FirstOrDefaultAsync(s => s.Id == model.StudentId);
-
-                if (student == null)
-                    return NotFound();
-
-                if (student.StudentClass == null)
-                {
-                    ModelState.AddModelError("", "Student does not have a class assigned.");
-                    return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
-                }
-
-                var subjects = await _context.CourseSubjects
-                    .Where(cs => cs.CourseId == student.StudentClass.CourseId)
-                    .Select(cs => cs.Subject)
-                    .ToListAsync();
-
-                model.Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name });
-
-                ViewBag.StudentName = student.FullName;
-
-                return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
+                TempData["ErrorMessage"] = "Invalid input. Please check the form.";
+                return RedirectToAction(nameof(Index));
             }
 
-            var studentEntity = await _context.Users.OfType<StudentUser>()
+            var student = await _context.Users.OfType<StudentUser>()
                 .Include(s => s.StudentClass)
                 .FirstOrDefaultAsync(s => s.Id == model.StudentId);
 
-            if (studentEntity == null || !studentEntity.StudentClassId.HasValue)
-                return BadRequest();
-
-            var courseId = studentEntity.StudentClass.CourseId;
-
-            foreach (var absenceInput in model.Absences)
+            if (student == null || student.StudentClass == null)
             {
-                if (absenceInput.SubjectId == 0)
-                    continue;
+                TempData["ErrorMessage"] = "Student not found or not assigned to a class.";
+                return RedirectToAction(nameof(Index));
+            }
 
-                var grade = new StudentGrade
+            var courseId = student.StudentClass.CourseId;
+
+            foreach (var input in model.Absences)
+            {
+                if (input.SubjectId == 0) continue;
+
+                _context.StudentGrades.Add(new StudentGrade
                 {
                     StudentId = model.StudentId,
                     CourseId = courseId,
-                    SubjectId = absenceInput.SubjectId,
+                    SubjectId = input.SubjectId,
                     GradeTypeId = null,
                     Grade = null,
-                    Absences = absenceInput.Absences,
+                    Absences = input.Absences,
                     CreatedAt = DateTime.UtcNow
-                };
-
-                _context.StudentGrades.Add(grade);
+                });
             }
 
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Absences added successfully!";
-            return RedirectToAction(nameof(Index), new { classId = studentEntity.StudentClassId });
+            return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
-        // GET: /EmployeeDashboard/Grades/Details?studentId=xyz
         [HttpGet("Details")]
         public async Task<IActionResult> Details(string studentId)
         {
@@ -375,33 +303,28 @@ namespace SchoolManagement.Web.Controllers
 
             foreach (var subject in groupedGrades)
             {
-                double weightedSum = 0;
-                double totalWeight = 0;
+                double weightedSum = 0, totalWeight = 0;
 
-                foreach (var gradeTypeGroup in subject.GradesByType)
+                foreach (var gt in subject.GradesByType)
                 {
-                    if (gradeTypeGroup.Weight > 0 && gradeTypeGroup.Grades.Any())
+                    if (gt.Weight > 0 && gt.Grades.Any())
                     {
-                        double avg = gradeTypeGroup.Grades.Average();
-                        weightedSum += avg * gradeTypeGroup.Weight;
-                        totalWeight += gradeTypeGroup.Weight;
+                        var avg = gt.Grades.Average();
+                        weightedSum += avg * gt.Weight;
+                        totalWeight += gt.Weight;
                     }
                 }
 
                 subject.WeightedAverage = totalWeight > 0 ? weightedSum / totalWeight : 0;
             }
 
-            double totalWeightedSum = 0;
-            double totalWeightsCount = 0;
+            double totalWeightedSum = groupedGrades.Sum(subj =>
+                subj.GradesByType.Where(gt => gt.Weight > 0).Sum(gt => gt.Grades.Sum()) * subj.WeightedAverage);
 
-            foreach (var subj in groupedGrades)
-            {
-                var countGradesWithWeight = subj.GradesByType.Where(gt => gt.Weight > 0).Sum(gt => gt.Grades.Count);
-                totalWeightedSum += subj.WeightedAverage * countGradesWithWeight;
-                totalWeightsCount += countGradesWithWeight;
-            }
+            double totalWeightCount = groupedGrades.Sum(subj =>
+                subj.GradesByType.Where(gt => gt.Weight > 0).Sum(gt => gt.Grades.Count));
 
-            double totalAverage = totalWeightsCount > 0 ? totalWeightedSum / totalWeightsCount : 0;
+            double totalAverage = totalWeightCount > 0 ? totalWeightedSum / totalWeightCount : 0;
 
             var model = new StudentGradesDetailsViewModel
             {
@@ -414,7 +337,6 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/Details.cshtml", model);
         }
 
-        // GET: /EmployeeDashboard/Grades/ViewAbsences?studentId=xyz
         [HttpGet("ViewAbsences")]
         public async Task<IActionResult> ViewAbsences(string studentId)
         {

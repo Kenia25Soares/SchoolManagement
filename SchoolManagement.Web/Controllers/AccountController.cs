@@ -65,6 +65,7 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
+            TempData["SuccessMessage"] = "You have been logged out successfully.";
             return RedirectToAction("Login");
         }
 
@@ -98,7 +99,7 @@ namespace SchoolManagement.Web.Controllers
             var result = await _userHelper.ResetPasswordAsync(user, model.Token, model.Password);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Password definida com sucesso. Pode agora iniciar sessão.";
+                TempData["SuccessMessage"] = "Password has been reset successfully. You can now log in.";
                 return RedirectToAction("Login", "Account");
             }
 
@@ -125,24 +126,26 @@ namespace SchoolManagement.Web.Controllers
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Email não encontrado.");
+                ModelState.AddModelError(string.Empty, "Email address not found.");
                 return View(model);
             }
 
             var token = await _userHelper.GeneratePasswordResetTokenAsync(user);
             var link = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, Request.Scheme);
 
-            var response = _mailHelper.SendEmail(user.Email, "Recuperar Password", $@"
-                <h2>Recuperar Password</h2>
-                <p>Clique no link abaixo para definir uma nova password:</p>
-                <p><a href='{link}'>Resetar Password</a></p>
+            var response = _mailHelper.SendEmail(user.Email, "Reset Your Password", $@"
+                <h2>Password Recovery</h2>
+                <p>Click the link below to set a new password:</p>
+                <p><a href='{link}'>Reset Password</a></p>
             ");
 
             if (response.IsSuccess)
-                ViewBag.Message = "As instruções foram enviadas para o seu email.";
-            else
-                ModelState.AddModelError(string.Empty, "Erro ao enviar o email.");
+            {
+                TempData["SuccessMessage"] = "Instructions to reset your password have been sent to your email.";
+                return RedirectToAction("Login");
+            }
 
+            ModelState.AddModelError(string.Empty, "Error sending the email. Please try again.");
             return View();
         }
 
@@ -199,7 +202,7 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
-        // GET: Edit student profile (StudentUser)
+        // GET: Edit student profile (Student)
         [HttpGet]
         public async Task<IActionResult> EditStudentProfile()
         {
@@ -271,7 +274,7 @@ namespace SchoolManagement.Web.Controllers
 
             await _signInManager.RefreshSignInAsync(user);
 
-            TempData["SuccessMessage"] = "Profile updated successfully.";
+            TempData["SuccessMessage"] = "Student profile updated successfully.";
             return RedirectToAction(nameof(EditStudentProfile));
         }
 
