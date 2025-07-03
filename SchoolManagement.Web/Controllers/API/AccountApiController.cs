@@ -13,7 +13,7 @@ namespace SchoolManagement.Web.Controllers.API
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountApiController : ControllerBase
+    public class AccountAPIController : ControllerBase
     {
         private readonly IUserHelper _userHelper;
         private readonly IConfiguration _configuration;
@@ -23,7 +23,7 @@ namespace SchoolManagement.Web.Controllers.API
         /// </summary>
         /// <param name="userHelper">Service for user operations</param>
         /// <param name="configuration">Application configuration</param>
-        public AccountApiController(IUserHelper userHelper, IConfiguration configuration)
+        public AccountAPIController(IUserHelper userHelper, IConfiguration configuration)
         {
             _userHelper = userHelper;
             _configuration = configuration;

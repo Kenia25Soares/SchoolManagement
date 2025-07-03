@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data;
@@ -9,9 +10,10 @@ namespace SchoolManagement.Web.Controllers.API
     /// <summary>
     /// API controller for managing student classes and retrieving related students.
     /// </summary>
+    [Authorize(Roles = "Employee")]
     [ApiController]
     [Route("api/[controller]")]
-    public class StudentClassesController : ControllerBase
+    public class StudentClassesAPIController : ControllerBase
     {
         private readonly DataContext _context;
 
@@ -19,7 +21,7 @@ namespace SchoolManagement.Web.Controllers.API
         /// Constructor to inject database context.
         /// </summary>
         /// <param name="context">The EF Core data context</param>
-        public StudentClassesController(DataContext context)
+        public StudentClassesAPIController(DataContext context)
         {
             _context = context;
         }
@@ -60,14 +62,14 @@ namespace SchoolManagement.Web.Controllers.API
                 return NotFound(new Response
                 {
                     IsSuccess = false,
-                    Message = "Turma não encontrada."
+                    Message = "Class not found."
                 });
             }
 
             return Ok(new Response
             {
                 IsSuccess = true,
-                Message = "Turma encontrada com sucesso.",
+                Message = "Class found successfully.",
                 Results = classWithStudents
             });
         }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace SchoolManagement.Web.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class ErrorsController : Controller
     {
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -12,7 +13,7 @@ namespace SchoolManagement.Web.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-
+        [HttpGet]
         [Route("errors/{code:int}")]
         public IActionResult HandleStatusCode(int code)
         {
@@ -25,6 +26,7 @@ namespace SchoolManagement.Web.Controllers
             return View("Generic");
         }
 
+        [HttpGet]
         [Route("Errors")]
         public IActionResult HandleException()
         {

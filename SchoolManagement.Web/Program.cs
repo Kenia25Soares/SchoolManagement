@@ -1,13 +1,17 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
-using Syncfusion.Licensing;
 using Swashbuckle.AspNetCore.Swagger;
+using Syncfusion.Licensing;
+using System.Runtime.Intrinsics.X86;
+using System.Text;
 
 
 
@@ -34,6 +38,42 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<DataContext>()
 .AddDefaultTokenProviders();
 
+
+// JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JWT:Issuer"],
+            ValidAudience = builder.Configuration["JWT:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var result = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    message = "Token inválido ou não fornecido."
+                });
+                return context.Response.WriteAsync(result);
+            }
+        };
+    });
+
 // Auth
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -57,12 +97,57 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for accessing student classes and related data"
     });
 
-    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    // Localização do XML gerado
+    var xmlFilename = "SchoolManagement.Web.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    }
+
+    c.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        return apiDesc.ActionDescriptor.RouteValues["controller"]?.Contains("API") ?? false;
+    });
+
+    // Adiciona suporte ao JWT no Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Digite: Bearer {seu jwt token aqui}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
-// Services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Helpers
 builder.Services.AddTransient<SeedDb>();
 builder.Services.AddScoped<IBlobHelper, BlobHelper>();
 builder.Services.AddScoped<IUserHelper, UserHelper>();
@@ -71,14 +156,14 @@ builder.Services.AddScoped<IConverterHelper, ConverterHelper>();
 builder.Services.AddScoped<IStudentClassHelper, StudentClassHelper>();
 builder.Services.AddScoped<ICourseHelper, CourseHelper>();
 builder.Services.AddScoped<IStudentGradeHelper, StudentGradeHelper>();
-
+builder.Services.AddScoped<IStudentAbsenceHelper, StudentAbsenceHelper>();
 // Repositories
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
-builder.Services.AddScoped<IStudentAbsenceHelper, StudentAbsenceHelper>();
+
 
 var app = builder.Build();
 
@@ -105,14 +190,18 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Routes
+app.MapControllers();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Public}/{id?}");
+
 
 using (var scope = app.Services.CreateScope())
 {
