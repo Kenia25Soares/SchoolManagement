@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace SchoolManagement.Web.Controllers.API
     /// <summary>
     /// API controller for managing student classes and retrieving related students.
     /// </summary>
-    [Authorize(Roles = "Employee")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Employee")]
     [ApiController]
     [Route("api/[controller]")]
     public class StudentClassesAPIController : ControllerBase

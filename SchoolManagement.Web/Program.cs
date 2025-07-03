@@ -40,12 +40,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 
 // JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication()
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -73,6 +69,7 @@ builder.Services.AddAuthentication(options =>
             }
         };
     });
+
 
 // Auth
 builder.Services.ConfigureApplicationCookie(options =>

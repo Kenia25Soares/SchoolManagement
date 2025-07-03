@@ -22,5 +22,7 @@ namespace SchoolManagement.Web.Models
         public int TotalAbsences { get; set; }
         public bool IsFailedByAbsences { get; set; }
         public bool FailedDueToAbsences { get; internal set; }
+
+        public string? ClassName { get; set; }
     }
 }

@@ -45,20 +45,50 @@ namespace SchoolManagement.Web.Controllers
             var classes = await _context.StudentClasses.OrderBy(c => c.Name).ToListAsync();
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
-
         [HttpGet()]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
 
-            var students = await _userManager.Users.OfType<StudentUser>().ToListAsync();
+            var students = await _userManager.Users
+                .OfType<StudentUser>()
+                .Include(s => s.StudentClass)
+                .ToListAsync();
+
+            var studentIds = students.Select(s => s.Id).ToList();
+
+            var grades = await _context.StudentGrades
+                .Where(g => studentIds.Contains(g.StudentId) && g.Grade.HasValue && g.GradeTypeId != null)
+                .Include(g => g.GradeType)
+                .ToListAsync();
+
+            var averages = grades
+                .GroupBy(g => g.StudentId)
+                .ToDictionary(g => g.Key, g =>
+                {
+                    double weightedSum = 0, totalWeight = 0;
+                    foreach (var group in g.GroupBy(x => x.GradeType))
+                    {
+                        var weight = group.Key?.Weight ?? 0;
+                        if (weight > 0)
+                        {
+                            var avg = group.Average(x => x.Grade ?? 0);
+                            weightedSum += avg * weight;
+                            totalWeight += weight;
+                        }
+                    }
+                    return totalWeight > 0 ? weightedSum / totalWeight : 0;
+                });
+
             var model = students.Select(s => new UserListViewModel
             {
                 Id = s.Id,
                 FullName = s.FullName,
                 Email = s.Email,
                 Role = "Student",
-                ProfilePictureUrl = s.ProfilePictureUrl
+                ProfilePictureUrl = s.ProfilePictureUrl,
+                AverageGrade = averages.ContainsKey(s.Id) ? averages[s.Id] : (double?)null,
+                ClassName = s.StudentClass?.Name ?? "N/A"
             }).ToList();
 
             return View("/Views/EmployeeDashboard/Students/Index.cshtml", model);

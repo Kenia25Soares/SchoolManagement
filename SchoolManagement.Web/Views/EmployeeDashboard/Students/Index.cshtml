@@ -23,57 +23,7 @@
                                 onclick="location.href='/EmployeeDashboard/Students/Create'">
                     </ejs-button>
 
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Profile</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var student in Model)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@(string.IsNullOrEmpty(student.ProfilePictureUrl)
-                                                                                                         ? "/images/default-profile.png"
-                                                                                                         : $"https://blobainek.blob.core.windows.net/projetspictures/{student.ProfilePictureUrl}")"
-                                         class="rounded-circle"
-                                         style="width: 40px; height: 40px; object-fit: cover;" />
-                                </td>
-                                <td>@student.FullName</td>
-                                <td>@student.Email</td>
-                                <td>
-                                    <ejs-button id="btnEdit-@student.Id"
-                                                content="Edit"
-                                                iconCss="fas fa-pen"
-                                                cssClass="e-warning e-plus me-1"
-                                                onclick="location.href='/EmployeeDashboard/Students/Edit/@student.Id'">
-                                    </ejs-button>
-
-                                        <ejs-button id="btnDetails-@student.Id"
-                                                    content="Details"
-                                                    iconCss="fas fa-eye"
-                                                    cssClass="e-primary e-plus me-1"
-                                                    onclick="location.href='/EmployeeDashboard/Students/Details/@student.Id'">
-                                        </ejs-button>
-
-                                        <ejs-button id="btnDelete-@student.Id"
-                                                    content="Delete"
-                                                    iconCss="fas fa-trash"
-                                                    cssClass="e-danger e-plus"
-                                                    data-id="@student.Id"
-                                                    data-name="@student.FullName"
-                                                    onclick="showDeleteModal(this)">
-                                        </ejs-button>
-                                    </td>
-                                </tr>
-                                                        }
-                        </tbody>
-                    </table>
-
+                    <div id="Grid"></div>
                 </div>
             </div>
         </div>
@@ -120,13 +70,68 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        function showDeleteModal(button) {
-            var studentId = button.getAttribute('data-id');
-            var studentName = button.getAttribute('data-name');
+        var students = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
 
-            document.getElementById('studentName').innerText = studentName;
-            document.getElementById('studentIdToDelete').value = studentId;
-            document.getElementById('deleteForm').action = '/EmployeeDashboard/Students/Delete/' + studentId;
+        var grid = new ej.grids.Grid({
+            dataSource: students,
+            allowPaging: true,
+            allowSorting: true,
+            allowFiltering: true,
+            filterSettings: { type: 'CheckBox' },
+            pageSettings: { pageSize: 10 },
+            columns: [
+                {
+                    headerText: 'Profile',
+                    template: function (data) {
+                        const imageUrl = data.ProfilePictureUrl
+                            ? `https://blobainek.blob.core.windows.net/projetspictures/${data.ProfilePictureUrl}`
+                            : '/images/default-profile.png';
+                        return `<img src="${imageUrl}" class="rounded-circle" style="width:40px; height:40px; object-fit:cover;" />`;
+                    },
+                    width: 100,
+                    textAlign: 'Center'
+                },
+                { field: 'FullName', headerText: 'Name', width: 150 },
+                { field: 'Email', headerText: 'Email', width: 200 },
+                { field: 'ClassName', headerText: 'Class', width: 120 },
+                {
+                    field: 'AverageGrade',
+                    headerText: 'Avg. Grade',
+                    width: 120,
+                    textAlign: 'Right',
+                    template: function (data) {
+                        const grade = data.AverageGrade !== null ? data.AverageGrade.toFixed(2) : '—';
+                        const color = data.AverageGrade !== null && data.AverageGrade < 10 ? 'red' : 'inherit';
+                        return `<span style="color:${color}; font-weight:bold;">${grade}</span>`;
+                    }
+                },
+                {
+                    headerText: 'Actions',
+                    template: function(data) {
+                        return `
+                            <button class="e-btn e-warning me-1" onclick="location.href='/EmployeeDashboard/Students/Edit/${data.Id}'">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button class="e-btn e-primary me-1" onclick="location.href='/EmployeeDashboard/Students/Details/${data.Id}'">
+                                <i class="fas fa-eye"></i> Details
+                            </button>
+                            <button class="e-btn e-danger" onclick="showDeleteModalById('${data.Id}', '${data.FullName}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        `;
+                    },
+                    width: 230,
+                    textAlign: 'Center'
+                }
+            ]
+        });
+
+        grid.appendTo('#Grid');
+
+        function showDeleteModalById(id, name) {
+            document.getElementById('studentName').innerText = name;
+            document.getElementById('studentIdToDelete').value = id;
+            document.getElementById('deleteForm').action = '/EmployeeDashboard/Students/Delete/' + id;
 
             var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
             modal.show();
