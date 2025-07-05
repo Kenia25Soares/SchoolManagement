@@ -49,9 +49,10 @@ namespace SchoolManagement.Web.Helpers
             }
         }
 
-        public async Task<ApplicationUser> GetUserByEmailAsync(string email)
+        public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<ApplicationUser> GetUserByIdAsync(string userId)

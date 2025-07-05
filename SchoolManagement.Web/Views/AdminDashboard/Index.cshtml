@@ -1,7 +1,11 @@
 ﻿@model AdminDashboardCombinedViewModel
 
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
 <div class="container-fluid">
-    <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mt-4 mb-4">
         <h1 class="mb-0">Admin Dashboard</h1>
     </div>
@@ -10,8 +14,7 @@
 
     <!-- Cards -->
     <div class="row mt-4">
-        <ejs-badge content="10" cssClass="e-badge e-badge-primary"></ejs-badge>
-        <!-- USERS -->
+        <!-- Users -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -30,7 +33,7 @@
             </div>
         </div>
 
-        <!-- COURSES -->
+        <!-- Courses -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -49,7 +52,7 @@
             </div>
         </div>
 
-        <!-- SUBJECTS -->
+        <!-- Subjects -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
                 <div class="position-absolute top-0 end-0 p-2">
@@ -69,80 +72,82 @@
         </div>
     </div>
 
-    <!-- Alerts Table -->
-    <div class="mt-5">
-        <h3>System Alerts</h3>
+    <!-- Alerts Grid -->
+    <div class="alerts-title">System Alerts</div>
 
-        @if (!Model.Alerts.Any())
-        {
-            <div class="alert alert-info">No alerts found.</div>
-        }
-        else
-        {
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Priority</th>
-                        <th>Created By</th>
-                        <th>Resolved</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var alert in Model.Alerts)
-                    {
-                        <tr>
-                            <td>@alert.Id</td>
-                            <td>@alert.Title</td>
-                            <td>@alert.Description</td>
-                            <td>
-                                @switch (alert.Priority)
-                                {
-                                    case SchoolManagement.Web.Data.Enums.AlertPriority.Low:
-                                        <span class="badge bg-success">Low</span>
-                                        break;
-                                    case SchoolManagement.Web.Data.Enums.AlertPriority.Medium:
-                                        <span class="badge bg-warning text-dark">Medium</span>
-                                        break;
-                                    case SchoolManagement.Web.Data.Enums.AlertPriority.High:
-                                        <span class="badge bg-danger">High</span>
-                                        break;
-                                }
-                            </td>
-                            <td>@alert.CreatedBy</td>
-                            <td>
-                                @if (alert.IsResolved)
-                                {
-                                    <span class="badge bg-success">Yes</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">No</span>
-                                }
-                            </td>
-                            <td>
-                                @if (!alert.IsResolved)
-                                {
-                                    <form method="post" asp-controller="AdminAlerts" asp-action="Resolve" asp-route-id="@alert.Id">
-                                        <ejs-button id="AdminAlerts" type="submit"
-                                                    content="Resolve"
-                                                    iconCss="fas fa-check-circle"
-                                                    cssClass="e-primary e-plus">
-                                        </ejs-button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </div>
+    @if (!Model.Alerts.Any())
+    {
+        <div class="alert alert-info text-center">No alerts found.</div>
+    }
+    else
+    {
+        <div id="AlertsGrid"></div>
+    }
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        var alerts = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Alerts));
+
+        var grid = new ej.grids.Grid({
+            dataSource: alerts,
+            allowPaging: true,
+            allowSorting: true,
+            allowFiltering: true,
+            filterSettings: { type: 'CheckBox' },
+            pageSettings: { pageSize: 10 },
+            columns: [
+                { field: 'Id', headerText: 'ID', width: 80, textAlign: 'Center' },
+                { field: 'Title', headerText: 'Title', width: 150 },
+                { field: 'Description', headerText: 'Description', width: 200 },
+                {
+                    field: 'Priority',
+                    headerText: 'Priority',
+                    width: 120,
+                    template: function(data) {
+                        const level = data.Priority;
+                        if (level === 0)
+                            return `<span class="badge bg-success">Low</span>`;
+                        if (level === 1)
+                            return `<span class="badge bg-warning text-dark">Medium</span>`;
+                        if (level === 2)
+                            return `<span class="badge bg-danger">High</span>`;
+                        return level;
+                    }
+                },
+                { field: 'CreatedBy', headerText: 'Created By', width: 150 },
+                {
+                    field: 'IsResolved',
+                    headerText: 'Resolved',
+                    width: 100,
+                    template: function(data) {
+                        return data.IsResolved
+                            ? `<span class="badge bg-success">Yes</span>`
+                            : `<span class="badge bg-secondary">No</span>`;
+                    }
+                },
+                {
+                    headerText: 'Actions',
+                    template: function(data) {
+                        if (!data.IsResolved) {
+                            return `
+                                <form method="post" action="/AdminAlerts/Resolve/${data.Id}">
+                                    <button type="submit" class="e-btn e-primary">
+                                        <i class="fas fa-check-circle"></i> Resolve
+                                    </button>
+                                </form>`;
+                        } else {
+                            return `<span class="text-muted">—</span>`;
+                        }
+                    },
+                    width: 130,
+                    textAlign: 'Center'
+                }
+            ]
+        });
+
+        grid.appendTo('#AlertsGrid');
+    </script>
+}

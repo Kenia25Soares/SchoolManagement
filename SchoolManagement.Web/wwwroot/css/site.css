@@ -92,3 +92,29 @@ body {
     color: #0d6efd !important;
     text-decoration: none !important;
 }
+
+/* Cabeçalho preto */
+.e-grid .e-headercell {
+    background-color: #1f1f1f !important;
+    color: white !important;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Linhas alternadas */
+.e-grid .e-row:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.e-grid .e-row:nth-child(odd) {
+    background-color: #eeeeee;
+}
+
+/* Centralizar o título */
+.alerts-title {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.6rem;
+}

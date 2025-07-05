@@ -303,28 +303,41 @@ namespace SchoolManagement.Web.Controllers
 
             foreach (var subject in groupedGrades)
             {
-                double weightedSum = 0, totalWeight = 0;
+                double subjectWeightedSum = 0;
+                double subjectWeightTotal = 0;
 
                 foreach (var gt in subject.GradesByType)
                 {
                     if (gt.Weight > 0 && gt.Grades.Any())
                     {
                         var avg = gt.Grades.Average();
-                        weightedSum += avg * gt.Weight;
-                        totalWeight += gt.Weight;
+                        subjectWeightedSum += avg * gt.Weight;
+                        subjectWeightTotal += gt.Weight;
                     }
                 }
 
-                subject.WeightedAverage = totalWeight > 0 ? weightedSum / totalWeight : 0;
+                subject.WeightedAverage = subjectWeightTotal > 0 ? subjectWeightedSum / subjectWeightTotal : 0;
             }
 
-            double totalWeightedSum = groupedGrades.Sum(subj =>
-                subj.GradesByType.Where(gt => gt.Weight > 0).Sum(gt => gt.Grades.Sum()) * subj.WeightedAverage);
+            double totalWeightedSum = 0;
+            double totalOverallWeight = 0;
 
-            double totalWeightCount = groupedGrades.Sum(subj =>
-                subj.GradesByType.Where(gt => gt.Weight > 0).Sum(gt => gt.Grades.Count));
+            foreach (var subject in groupedGrades)
+            {
+                foreach (var gt in subject.GradesByType)
+                {
+                    if (gt.Weight > 0 && gt.Grades.Any())
+                    {
+                        foreach (var grade in gt.Grades)
+                        {
+                            totalWeightedSum += grade * gt.Weight;
+                            totalOverallWeight += gt.Weight;
+                        }
+                    }
+                }
+            }
 
-            double totalAverage = totalWeightCount > 0 ? totalWeightedSum / totalWeightCount : 0;
+            double totalAverage = totalOverallWeight > 0 ? totalWeightedSum / totalOverallWeight : 0;
 
             var model = new StudentGradesDetailsViewModel
             {
