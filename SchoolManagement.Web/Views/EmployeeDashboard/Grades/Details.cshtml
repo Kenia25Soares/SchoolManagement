@@ -3,72 +3,131 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Grades Details for " + Model.StudentName;
+    var isClassClosed = Model.IsClassClosed;
 }
 
+<style>
+    .bg-soft-success {
+        background-color: #d1e7dd !important;
+    }
+
+    .bg-soft-danger {
+        background-color: #f8d7da !important;
+    }
+</style>
+
 <div class="container mt-4">
-    <h2>Grades Details for @Model.StudentName</h2>
+    <div class="card shadow-sm p-4">
+        <h2 class="mb-4">Grades Details for @Model.StudentName</h2>
 
-    <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
-        <strong class="fs-4">Média Total Geral:</strong>
-        <span class="badge bg-primary fs-4">@Model.TotalAverage.ToString("F2")</span>
-    </div>
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+            <strong class="fs-4">Overall Average:</strong>
+            <span class="badge bg-primary fs-4">@Model.TotalAverage.ToString("F2")</span>
+        </div>
 
-    @if (!Model.SubjectGrades.Any())
-    {
-        <div class="alert alert-info">No grades recorded for this student.</div>
-    }
-    else
-    {
-        @foreach (var subject in Model.SubjectGrades)
+        @if (!Model.SubjectGrades.Any())
         {
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">@subject.SubjectName - Média: @subject.WeightedAverage.ToString("F2")</h5>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Grade Type</th>
-                                <th>Grades</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var gradeTypeGroup in subject.GradesByType)
-                            {
-                                <tr>
-                                    <td>@gradeTypeGroup.GradeTypeName</td>
-                                    <td>
-                                        @if (gradeTypeGroup.Grades.Any())
-                                        {
-                                            foreach (var grade in gradeTypeGroup.Grades)
-                                            {
-                                                <span class="badge rounded-pill bg-primary me-1" style="color: white;">
-                                                    @grade.ToString("F2")
-                                                </span>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No grades</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="alert alert-info">No grades recorded for this student.</div>
         }
-    }
+        else
+        {
+            @foreach (var subject in Model.SubjectGrades)
+            {
+                var isFailedByAbsences = subject.TotalAbsences > subject.AllowedAbsences;
+                var isPassed = subject.WeightedAverage >= 10;
+                var backgroundClass = "";
 
-    <div class="d-flex justify-content-end gap-2 mt-4">
-        <ejs-button id="btnBackToGradesList"
-                    content="Back to Grades List"
-                    iconCss="fas fa-arrow-left"
-                    cssClass="e-secondary e-plus"
-                    iconPosition="Left"
-                    onclick="location.href='/EmployeeDashboard/Grades'">
-        </ejs-button>
+                if (isFailedByAbsences)
+                {
+                    backgroundClass = "bg-soft-danger";
+                }
+                else if (isClassClosed)
+                {
+                    backgroundClass = isPassed ? "bg-soft-success" : "bg-soft-danger";
+                }
+                <div class="card mb-4 shadow-sm border">
+                    <div class="card-header d-flex justify-content-between align-items-center @backgroundClass">
+                        <h5 class="mb-0">
+                            @subject.SubjectName - Average: @subject.WeightedAverage.ToString("F2")
+                        </h5>
+
+                        @if (isFailedByAbsences)
+                        {
+                            <span class="badge bg-danger">Failed (Absences)</span>
+                        }
+                        else if (isClassClosed)
+                        {
+                            <span class="badge @(isPassed ? "bg-success" : "bg-danger")">
+                                @(isPassed ? "Passed" : "Failed")
+                            </span>
+                        }
+                    </div>
+
+                    <div class="card-body p-0">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Grade Type
+                                        <i class="fas fa-circle-question"
+                                           tabindex="0"
+                                           role="button"
+                                           style="color: lightslategray; cursor: pointer;"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-html="true"
+                                           data-bs-placement="left"
+                                           title="Grade Weights:<br/>Test – 30%<br/>Assignment – 30%<br/>Exam – 40%">
+                                        </i>
+                                    </th>
+                                    <th>Grades</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var gradeTypeGroup in subject.GradesByType)
+                                {
+                                    <tr>
+                                        <td>@gradeTypeGroup.GradeTypeName</td>
+                                        <td>
+                                            @if (gradeTypeGroup.Grades.Any())
+                                            {
+                                                foreach (var grade in gradeTypeGroup.Grades)
+                                                {
+                                                    <span class="badge rounded-pill bg-primary me-1" style="color: white;">
+                                                        @grade.ToString("F2")
+                                                    </span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No grades</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <ejs-button id="btnBackToGradesList"
+                        content="Back to Grades List"
+                        iconCss="fas fa-arrow-left"
+                        cssClass="e-secondary e-plus"
+                        iconPosition="Left"
+                        onclick="location.href='/EmployeeDashboard/Grades'">
+            </ejs-button>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+}

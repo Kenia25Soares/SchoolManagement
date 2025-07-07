@@ -38,79 +38,18 @@
                         @if (!Model.IsClassClosed && Model.Classes.Any(c => c.Selected))
                         {
                             var selectedClassId = Model.Classes.First(c => c.Selected).Value;
-                            <button type="button" class="btn btn-danger" onclick="showCloseModal('@selectedClassId')">
-                                Close Class (End Year)
-                            </button>
+                            <ejs-button id="btnCloseClass"
+                                        content="Close Class (End Year)"
+                                        iconCss="fas fa-lock"
+                                        cssClass="e-danger e-small"
+                                        iconPosition="Left"
+                                        onclick="showCloseModal('@selectedClassId')">
+                            </ejs-button>
                         }
                     </div>
 
-                    <!-- Students Table -->
-                    <table class="table table-striped table-bordered align-middle">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Average Grade</th>
-                                <th>Absences</th>
-                                <th style="width: 30%;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var student in Model.Students)
-                            {
-                                <tr>
-                                    <td>@student.FullName</td>
-                                    <td>@student.Email</td>
-                                    <td>
-                                        @(student.AverageGrade.HasValue ? student.AverageGrade.Value.ToString("F2") : "-")
-                                    </td>
-                                    <td>
-                                        @if (student.FailedDueToAbsences)
-                                        {
-                                            <span class="badge bg-danger">Failed</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success">Good Standing</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-wrap gap-1">
-                                            <ejs-button id="btnAddGrades-@student.Id"
-                                                        content="Grades"
-                                                        iconCss="fas fa-plus"
-                                                        cssClass="e-primary e-plus"
-                                                        disabled="@(Model.IsClassClosed)"
-                                                        onclick="location.href='/EmployeeDashboard/Grades/AddGrades?studentId=@student.Id'">
-                                            </ejs-button>
-
-                                            <ejs-button id="btnViewGrades-@student.Id"
-                                                        content="View"
-                                                        iconCss="fas fa-eye"
-                                                        cssClass="e-info e-plus"
-                                                        onclick="location.href='/EmployeeDashboard/Grades/Details?studentId=@student.Id'">
-                                            </ejs-button>
-
-                                            <ejs-button id="btnAddAbsences-@student.Id"
-                                                        content="Absences"
-                                                        iconCss="fas fa-user-clock"
-                                                        cssClass="e-warning e-plus"
-                                                        disabled="@(Model.IsClassClosed)"
-                                                        onclick="location.href='/EmployeeDashboard/Grades/AddAbsences?studentId=@student.Id'">
-                                            </ejs-button>
-
-                                            <ejs-button id="btnViewAbsences-@student.Id"
-                                                        content="View Absences"
-                                                        iconCss="fas fa-eye"
-                                                        cssClass="e-warning e-plus"
-                                                        onclick="location.href='/EmployeeDashboard/Grades/ViewAbsences?studentId=@student.Id'">
-                                            </ejs-button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <!-- Students Grades Grid -->
+                    <div id="GradesGrid"></div>
 
                 </div>
             </div>
@@ -156,10 +95,66 @@
     </div>
 }
 
-<script>
-    function showCloseModal(classId) {
-        document.getElementById('classIdToClose').value = classId;
-        var modal = new bootstrap.Modal(document.getElementById('closeClassModal'));
-        modal.show();
-    }
-</script>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        var isClassClosed = @Model.IsClassClosed.ToString().ToLower();
+        var students = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Students));
+
+        var grid = new ej.grids.Grid({
+            dataSource: students,
+            allowPaging: true,
+            allowSorting: true,
+            allowFiltering: true,
+            filterSettings: { type: 'CheckBox' },
+            pageSettings: { pageSize: 10 },
+            height: "auto",
+            columns: [
+                { field: 'FullName', headerText: 'Name', width: 180 },
+                { field: 'Email', headerText: 'Email', width: 200 },
+                {
+                    field: 'AverageGrade',
+                    headerText: 'Average Grade',
+                    width: 150,
+                    textAlign: 'Right',
+                    template: function (data) {
+                        if (data.AverageGrade === null) return '-';
+                        const grade = data.AverageGrade.toFixed(2);
+                        const color = data.AverageGrade < 10 ? 'red' : 'inherit';
+                        return `<span style="color:${color}; font-weight:bold;">${grade}</span>`;
+                    }
+                },
+                {
+                    headerText: 'Actions',
+                    width: 350,
+                    textAlign: 'Center',
+                    template: function (data) {
+                        return `
+                            <button class="e-btn e-primary me-1" ${isClassClosed ? 'disabled' : ''} onclick="location.href='/EmployeeDashboard/Grades/AddGrades?studentId=${data.Id}'">
+                                <i class="fas fa-plus"></i> Grades
+                            </button>
+                            <button class="e-btn e-info me-1" onclick="location.href='/EmployeeDashboard/Grades/Details?studentId=${data.Id}'">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="e-btn e-warning me-1" ${isClassClosed ? 'disabled' : ''} onclick="location.href='/EmployeeDashboard/Grades/AddAbsences?studentId=${data.Id}'">
+                                <i class="fas fa-user-clock"></i> Absences
+                            </button>
+                            <button class="e-btn e-warning" onclick="location.href='/EmployeeDashboard/Grades/ViewAbsences?studentId=${data.Id}'">
+                                <i class="fas fa-eye"></i> View Absences
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+
+        grid.appendTo('#GradesGrid');
+
+        function showCloseModal(classId) {
+            document.getElementById('classIdToClose').value = classId;
+            var modal = new bootstrap.Modal(document.getElementById('closeClassModal'));
+            modal.show();
+        }
+    </script>
+}

@@ -9,5 +9,9 @@ namespace SchoolManagement.Web.Models
         public string SubjectName { get; set; } = null!;
         public List<GradeTypeGroupViewModel> GradesByType { get; set; } = new();
         public double WeightedAverage { get; set; }
+
+        public int AllowedAbsences { get; set; }
+        public int TotalAbsences { get; set; }
+        public bool FailedDueToAbsences { get; set; }
     }
 }

@@ -49,11 +49,12 @@
                         <label class="form-label">Current Official Photo:</label>
                         <div class="mb-2">
                             <img src="@(string.IsNullOrEmpty(Model.OfficialPhotoUrl)
-                                                                             ? "/images/default-official-photo.png"
-                                                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.OfficialPhotoUrl}")"
+                                                  ? "/images/default-official-photo.png"
+                                                  : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.OfficialPhotoUrl}")"
                                  alt="Official Photo"
                                  class="rounded"
-                                 style="width: 150px; height: 150px; object-fit: cover;" />
+                                 style="width: 150px; height: 150px; object-fit: cover;"
+                                 onerror="this.onerror=null; this.replaceWith(document.createTextNode('No Image'));" />
                         </div>
                         <label asp-for="OfficialPhoto" class="form-label">Upload New Official Photo</label>
                         <input asp-for="OfficialPhoto" type="file" class="form-control" />
@@ -64,11 +65,12 @@
                         <label class="form-label">Current Profile Picture:</label>
                         <div class="mb-2">
                             <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl)
-                                                                             ? "/images/default-profile.png"
-                                                                             : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
+                                                  ? "/images/default-profile.png"
+                                                  : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
                                  alt="Profile Picture"
                                  class="rounded-circle"
-                                 style="width: 150px; height: 150px; object-fit: cover;" />
+                                 style="width: 150px; height: 150px; object-fit: cover;"
+                                 onerror="this.onerror=null; this.replaceWith(document.createTextNode('No Image'));" />
                         </div>
                         <label asp-for="ProfilePicture" class="form-label">Upload New Profile Picture</label>
                         <input asp-for="ProfilePicture" type="file" class="form-control" />

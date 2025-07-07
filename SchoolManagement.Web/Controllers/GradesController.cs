@@ -314,10 +314,17 @@ namespace SchoolManagement.Web.Controllers
             if (student.StudentClass == null)
                 return BadRequest("Student does not have a class assigned.");
 
+            // Carregar todas as notas (com tipo de nota e disciplina)
             var grades = await _context.StudentGrades
                 .Where(g => g.StudentId == studentId && g.GradeTypeId != null)
                 .Include(g => g.Subject)
                 .Include(g => g.GradeType)
+                .ToListAsync();
+
+            // Carregar todas as faltas (mesmo se sem nota)
+            var absences = await _context.StudentGrades
+                .Where(g => g.StudentId == studentId && g.Absences > 0)
+                .Include(g => g.Subject)
                 .ToListAsync();
 
             var groupedGrades = grades
@@ -333,7 +340,9 @@ namespace SchoolManagement.Web.Controllers
                             Weight = gtGroup.Key.Weight,
                             Grades = gtGroup.Select(x => x.Grade ?? 0).ToList()
                         })
-                        .ToList()
+                        .ToList(),
+                    AllowedAbsences = g.Key.AllowedAbsences,
+                    TotalAbsences = absences.Where(a => a.SubjectId == g.Key.Id).Sum(a => a.Absences)
                 })
                 .ToList();
 
@@ -353,6 +362,7 @@ namespace SchoolManagement.Web.Controllers
                 }
 
                 subject.WeightedAverage = subjectWeightTotal > 0 ? subjectWeightedSum / subjectWeightTotal : 0;
+                subject.FailedDueToAbsences = subject.TotalAbsences > subject.AllowedAbsences;
             }
 
             double totalWeightedSum = 0;
@@ -380,7 +390,8 @@ namespace SchoolManagement.Web.Controllers
                 StudentId = student.Id,
                 StudentName = student.FullName,
                 SubjectGrades = groupedGrades,
-                TotalAverage = totalAverage
+                TotalAverage = totalAverage,
+                IsClassClosed = student.StudentClass?.IsClosed ?? false
             };
 
             return View("/Views/EmployeeDashboard/Grades/Details.cshtml", model);

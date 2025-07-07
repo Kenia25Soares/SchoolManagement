@@ -10,5 +10,6 @@ namespace SchoolManagement.Web.Models
         public string StudentName { get; set; } = null!;
         public List<SubjectGradesViewModel> SubjectGrades { get; set; } = new();
         public double TotalAverage { get; set; }
+        public bool IsClassClosed { get; set; }
     }
 }

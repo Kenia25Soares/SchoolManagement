@@ -83,10 +83,14 @@
                 {
                     headerText: 'Profile',
                     template: function (data) {
-                        const imageUrl = data.ProfilePictureUrl
-                            ? `https://blobainek.blob.core.windows.net/projetspictures/${data.ProfilePictureUrl}`
-                            : '/images/default-profile.png';
-                        return `<img src="${imageUrl}" class="rounded-circle" style="width:40px; height:40px; object-fit:cover;" />`;
+                        if (data.ProfilePictureUrl) {
+                            return `<img src="https://blobainek.blob.core.windows.net/projetspictures/${data.ProfilePictureUrl}"
+                                         class="rounded-circle"
+                                         style="width:40px; height:40px; object-fit:cover;"
+                                         onerror="this.onerror=null;this.replaceWith('<div class=\\'text-muted text-center\\'>No Image</div>')">`;
+                        } else {
+                            return `<div class="text-muted text-center">No Image</div>`;
+                        }
                     },
                     width: 100,
                     textAlign: 'Center'
