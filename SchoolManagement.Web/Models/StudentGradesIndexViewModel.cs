@@ -9,5 +9,6 @@ namespace SchoolManagement.Web.Models
     {
         public List<SelectListItem> Classes { get; set; } = new();
         public List<UserListViewModel> Students { get; set; } = new();
+        public bool IsClassClosed { get; set; }
     }
 }

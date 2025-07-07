@@ -11,21 +11,38 @@
 
     <div class="row mt-4">
         <div class="col-md-12">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm position-relative" style="border-top: 2px solid @(Model.IsClassClosed ? "#0d6efd" : "#dee2e6")">
+                @if (Model.IsClassClosed)
+                {
+                    <span class="badge bg-primary position-absolute top-0 end-0 m-2">
+                        Class Closed
+                    </span>
+                }
+
                 <div class="card-body">
                     <h5 class="card-title">Students Grades</h5>
 
-                    <!-- Class Filter -->
-                    <form method="get" asp-action="Index" class="mb-3">
-                        <select name="classId" class="form-select w-auto d-inline" onchange="this.form.submit()">
-                            @foreach (var cls in Model.Classes)
-                            {
-                                <option value="@cls.Value" selected="@(cls.Selected ? "selected" : null)">
-                                    @cls.Text
-                                </option>
-                            }
-                        </select>
-                    </form>
+                    <!-- Class Filter + Close Button -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <form method="get" asp-action="Index" class="d-inline">
+                            <select name="classId" class="form-select d-inline w-auto" onchange="this.form.submit()">
+                                @foreach (var cls in Model.Classes)
+                                {
+                                    <option value="@cls.Value" selected="@(cls.Selected ? "selected" : null)">
+                                        @cls.Text
+                                    </option>
+                                }
+                            </select>
+                        </form>
+
+                        @if (!Model.IsClassClosed && Model.Classes.Any(c => c.Selected))
+                        {
+                            var selectedClassId = Model.Classes.First(c => c.Selected).Value;
+                            <button type="button" class="btn btn-danger" onclick="showCloseModal('@selectedClassId')">
+                                Close Class (End Year)
+                            </button>
+                        }
+                    </div>
 
                     <!-- Students Table -->
                     <table class="table table-striped table-bordered align-middle">
@@ -45,7 +62,7 @@
                                     <td>@student.FullName</td>
                                     <td>@student.Email</td>
                                     <td>
-                                        @(student.AverageGrade.HasValue? student.AverageGrade.Value.ToString("F2") : "-")
+                                        @(student.AverageGrade.HasValue ? student.AverageGrade.Value.ToString("F2") : "-")
                                     </td>
                                     <td>
                                         @if (student.FailedDueToAbsences)
@@ -63,6 +80,7 @@
                                                         content="Grades"
                                                         iconCss="fas fa-plus"
                                                         cssClass="e-primary e-plus"
+                                                        disabled="@(Model.IsClassClosed)"
                                                         onclick="location.href='/EmployeeDashboard/Grades/AddGrades?studentId=@student.Id'">
                                             </ejs-button>
 
@@ -77,6 +95,7 @@
                                                         content="Absences"
                                                         iconCss="fas fa-user-clock"
                                                         cssClass="e-warning e-plus"
+                                                        disabled="@(Model.IsClassClosed)"
                                                         onclick="location.href='/EmployeeDashboard/Grades/AddAbsences?studentId=@student.Id'">
                                             </ejs-button>
 
@@ -98,3 +117,49 @@
         </div>
     </div>
 </div>
+
+<!-- Close Class Confirmation Modal -->
+@if (!Model.IsClassClosed && Model.Classes.Any(c => c.Selected))
+{
+    <div class="modal fade" id="closeClassModal" tabindex="-1" aria-labelledby="closeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="closeModalLabel">Confirm Close Class</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to close this class?</p>
+                    <p><strong>This action cannot be undone.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <form id="closeClassForm" method="post" asp-action="CloseClass">
+                        <input type="hidden" name="classId" id="classIdToClose" />
+
+                        <ejs-button id="confirmCloseBtn"
+                                    type="submit"
+                                    content="Close"
+                                    iconCss="fas fa-lock"
+                                    cssClass="e-danger">
+                        </ejs-button>
+
+                        <ejs-button id="cancelCloseBtn"
+                                    content="Cancel"
+                                    iconCss="fas fa-times"
+                                    cssClass="e-secondary"
+                                    onclick="bootstrap.Modal.getInstance(document.getElementById('closeClassModal')).hide(); return false;">
+                        </ejs-button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    function showCloseModal(classId) {
+        document.getElementById('classIdToClose').value = classId;
+        var modal = new bootstrap.Modal(document.getElementById('closeClassModal'));
+        modal.show();
+    }
+</script>

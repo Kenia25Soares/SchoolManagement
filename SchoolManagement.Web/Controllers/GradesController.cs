@@ -89,6 +89,16 @@ namespace SchoolManagement.Web.Controllers
                     return totalWeight > 0 ? weightedSum / totalWeight : 0;
                 });
 
+            bool isClassClosed = false;
+
+            if (classId.HasValue)
+            {
+                isClassClosed = await _context.StudentClasses
+                    .Where(sc => sc.Id == classId.Value)
+                    .Select(sc => sc.IsClosed)
+                    .FirstOrDefaultAsync();
+            }
+
             var model = new StudentGradesIndexViewModel
             {
                 Classes = classes,
@@ -100,7 +110,8 @@ namespace SchoolManagement.Web.Controllers
                     ProfilePictureUrl = s.ProfilePictureUrl,
                     AverageGrade = averages.ContainsKey(s.Id) ? averages[s.Id] : (double?)null,
                     FailedDueToAbsences = failedByAbsencesDict.ContainsKey(s.Id) && failedByAbsencesDict[s.Id]
-                }).ToList()
+                }).ToList(),
+                IsClassClosed = isClassClosed
             };
 
             return View("/Views/EmployeeDashboard/Grades/Index.cshtml", model);
@@ -120,6 +131,12 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = "Student not found or has no class assigned.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "This class is already closed. You cannot add grades.";
+                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
             }
 
             var subjects = await _context.CourseSubjects
@@ -161,6 +178,12 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "This class is already closed. You cannot add grades.";
+                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
+            }
+
             var courseId = student.StudentClass.CourseId;
 
             foreach (var input in model.Grades)
@@ -186,6 +209,7 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
+
         [HttpGet("AddAbsences")]
         public async Task<IActionResult> AddAbsences(string studentId)
         {
@@ -200,6 +224,12 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = "Student not found or has no class assigned.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "This class is already closed. You cannot add absences.";
+                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
             }
 
             var subjects = await _context.CourseSubjects
@@ -236,6 +266,12 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = "Student not found or not assigned to a class.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "This class is already closed. You cannot add absences.";
+                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
             }
 
             var courseId = student.StudentClass.CourseId;
@@ -386,6 +422,30 @@ namespace SchoolManagement.Web.Controllers
             };
 
             return View("/Views/EmployeeDashboard/Grades/ViewAbsences.cshtml", model);
+        }
+
+        [HttpPost("CloseClass")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CloseClass(int classId)
+        {
+            var studentClass = await _context.StudentClasses.FirstOrDefaultAsync(c => c.Id == classId);
+            if (studentClass == null)
+            {
+                TempData["ErrorMessage"] = "Class not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (studentClass.IsClosed)
+            {
+                TempData["InfoMessage"] = "Class is already closed.";
+                return RedirectToAction(nameof(Index), new { classId });
+            }
+
+            studentClass.IsClosed = true;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Class successfully closed.";
+            return RedirectToAction(nameof(Index), new { classId });
         }
     }
 }
