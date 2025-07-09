@@ -26,12 +26,15 @@
                 <div class="d-flex align-items-center gap-2">
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
-                        <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                                                  ? "/images/default-profile.png"
-                                                                  : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
-                     class="rounded-circle"
-                     style="width: 35px; height: 35px; object-fit: cover;" />
-                                }
+                        <img src="https://blobainek.blob.core.windows.net/projetspictures/@pictureUrl"
+                             class="rounded-circle"
+                             style="width: 35px; height: 35px; object-fit: cover;"
+                             onerror="this.onerror=null; this.replaceWith(document.createTextNode('No image'));" />
+                    }
+                    else
+                    {
+                        <span class="text-white">No image</span>
+                    }
 
                     <span class="text-white">@User.Identity.Name</span>
 
@@ -47,6 +50,7 @@
                     </form>
 
                     <form method="post" asp-controller="Account" asp-action="Logout">
+                        @Html.AntiForgeryToken()
                         <ejs-button id="btnLogout"
                                     type="submit"
                                     content="Logout"

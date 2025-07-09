@@ -47,9 +47,20 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="OfficialPhoto" class="form-label"></label>
-                        <input asp-for="OfficialPhoto" class="form-control" />
-                        <span asp-validation-for="OfficialPhoto" class="text-danger"></span>
+                        <label class="form-label">Official Photo</label>
+                        <div class="mb-2">
+                            @if (!string.IsNullOrEmpty(Model.OfficialPhotoUrl))
+                            {
+                                <img src="https://blobainek.blob.core.windows.net/projetspictures/@Model.OfficialPhotoUrl"
+                                     alt="Official Photo"
+                                     class="rounded"
+                                     style="width: 150px; height: 150px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span>No official photo available</span>
+                            }
+                        </div>
                     </div>
 
                     <div class="col-md-6 mb-3">

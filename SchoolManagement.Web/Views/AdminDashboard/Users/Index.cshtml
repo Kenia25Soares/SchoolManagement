@@ -84,8 +84,13 @@
                     template: function (data) {
                         const imgUrl = data.ProfilePictureUrl
                             ? `https://blobainek.blob.core.windows.net/projetspictures/${data.ProfilePictureUrl}`
-                            : '/image/default-profile.png';
-                        return `<img src="${imgUrl}" alt="Profile" class="rounded-circle" style="width:40px; height:40px; object-fit:cover;" />`;
+                            : '/images/default-profile.png';
+
+                        return `<img src="${imgUrl}"
+                                     alt="Profile"
+                                     class="rounded-circle"
+                                     style="width:40px; height:40px; object-fit:cover;"
+                                     onerror="this.onerror=null; this.replaceWith(document.createTextNode('No image'));" />`;
                     },
                     width: 100,
                     textAlign: 'Center'
@@ -97,17 +102,19 @@
                     headerText: 'Actions',
                     template: function (data) {
                         return `
-                            <button class="e-btn e-warning me-1" onclick="location.href='/AdminDashboard/Users/Edit/${data.Id}'">
-                                <i class="fas fa-pen"></i> Edit
-                            </button>
-                            <button class="e-btn e-primary me-1" onclick="location.href='/AdminDashboard/Users/Details/${data.Id}'">
-                                <i class="fas fa-eye"></i> Details
-                            </button>
-                            <button class="e-btn e-danger" onclick="showDeleteModal('${data.Id}', '${data.FullName}')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>`;
+                            <div class="d-flex justify-content-center gap-1">
+                                <button class="e-btn e-warning" onclick="location.href='/AdminDashboard/Users/Edit/${data.Id}'">
+                                    <i class="fas fa-pen"></i> Edit
+                                </button>
+                                <button class="e-btn e-primary" onclick="location.href='/AdminDashboard/Users/Details/${data.Id}'">
+                                    <i class="fas fa-eye"></i> Details
+                                </button>
+                                <button class="e-btn e-danger" onclick="showDeleteModal('${data.Id}', '${data.FullName}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>`;
                     },
-                    width: 280,
+                    width: 300,
                     textAlign: 'Center'
                 }
             ]

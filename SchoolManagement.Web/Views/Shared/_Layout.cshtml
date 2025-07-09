@@ -25,12 +25,16 @@
                 <div class="d-flex align-items-center gap-2">
                     @if (!string.IsNullOrEmpty(pictureUrl))
                     {
-                        <img src="@(string.IsNullOrEmpty(pictureUrl)
-                                                                          ? "/images/default-profile.png"
-                                                                          : $"https://blobainek.blob.core.windows.net/projetspictures/{pictureUrl}")"
-                     class="rounded-circle"
-                     style="width: 35px; height: 35px; object-fit: cover;" />
-                                }
+                        <img src="https://blobainek.blob.core.windows.net/projetspictures/@pictureUrl"
+                             alt="Profile Picture"
+                             class="rounded-circle"
+                             style="width: 35px; height: 35px; object-fit: cover;"
+                             onerror="this.onerror=null; this.replaceWith(document.createTextNode('No image'));" />
+                    }
+                    else
+                    {
+                        <span>No image</span>
+                    }
 
                     <span class="text-white">@User.Identity.Name</span>
 
@@ -76,7 +80,7 @@
     <!-- Sidebar -->
     @if (User.IsInRole("Admin") || User.IsInRole("Employee"))
     {
-        <div class="sidebar">
+        <div class="sidebar pt-5">
             @if (User.IsInRole("Admin"))
             {
                 <a asp-controller="AdminDashboard" asp-action="Index">Dashboard</a>
@@ -90,9 +94,8 @@
     }
 
     <!-- Page Content -->
-    <div class="content-wrapper">
+    <div class="content-wrapper pt-5">
         @await Html.PartialAsync("_Notification")
-
         @RenderBody()
     </div>
 

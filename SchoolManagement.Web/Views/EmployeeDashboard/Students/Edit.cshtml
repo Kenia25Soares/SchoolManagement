@@ -62,22 +62,6 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Current Profile Picture:</label>
-                        <div class="mb-2">
-                            <img src="@(string.IsNullOrEmpty(Model.ProfilePictureUrl)
-                                                  ? "/images/default-profile.png"
-                                                  : $"https://blobainek.blob.core.windows.net/projetspictures/{Model.ProfilePictureUrl}")"
-                                 alt="Profile Picture"
-                                 class="rounded-circle"
-                                 style="width: 150px; height: 150px; object-fit: cover;"
-                                 onerror="this.onerror=null; this.replaceWith(document.createTextNode('No Image'));" />
-                        </div>
-                        <label asp-for="ProfilePicture" class="form-label">Upload New Profile Picture</label>
-                        <input asp-for="ProfilePicture" type="file" class="form-control" />
-                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
                         <label asp-for="StudentClassId" class="form-label">Class</label>
                         <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
                             <option value="">-- Select Class --</option>

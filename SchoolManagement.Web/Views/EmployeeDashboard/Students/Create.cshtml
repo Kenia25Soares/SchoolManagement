@@ -51,12 +51,6 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ProfilePicture" class="form-label"></label>
-                        <input asp-for="ProfilePicture" type="file" class="form-control" />
-                        <span asp-validation-for="ProfilePicture" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
                         <label asp-for="StudentClassId" class="form-label">Class</label>
                         <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
                             <option value="">-- Select Class --</option>
