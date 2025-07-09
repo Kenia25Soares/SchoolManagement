@@ -32,6 +32,8 @@ namespace SchoolManagement.Web.Models
         public int? StudentClassId { get; set; }
 
         [Display(Name = "Current Profile Picture")]
+        [Required(ErrorMessage = "Official photo is required.")]
+        [DataType(DataType.Upload)]
         public IFormFile? OfficialPhoto { get; set; }
 
         [Display(Name = "New Profile Picture")]

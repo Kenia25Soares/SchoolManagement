@@ -78,6 +78,12 @@ public class UsersController : Controller
         var user = await _userManager.FindByIdAsync(id);
         if (user != null)
         {
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(user, roles);
+            }
+
             await _userManager.DeleteAsync(user);
             TempData["SuccessMessage"] = "User successfully removed.";
         }

@@ -10,77 +10,80 @@ namespace SchoolManagement.Web.Helpers
     public class StudentGradeHelper : IStudentGradeHelper
     {
         private readonly DataContext _context;
+        private readonly IUserHelper _userHelper;
 
-        public StudentGradeHelper(DataContext context)
+        public StudentGradeHelper(DataContext context, IUserHelper userHelper)
         {
             _context = context;
+            _userHelper = userHelper;
         }
 
         public async Task<StudentGradesDetailsViewModel> GetGradesDetailsAsync(string studentId)
         {
             var grades = await _context.StudentGrades
+                .Where(g => g.StudentId == studentId && g.GradeTypeId != null && g.Grade.HasValue)
                 .Include(g => g.Subject)
-                .Include(g => g.GradeType) 
-                .Where(g => g.StudentId == studentId)
+                .Include(g => g.GradeType)
                 .ToListAsync();
 
-            var model = new StudentGradesDetailsViewModel
-            {
-                StudentName = "",
-                SubjectGrades = new List<SubjectGradesViewModel>()
-            };
-
-            var groupedBySubject = grades.GroupBy(g => g.Subject.Name);
-
-            foreach (var subjectGroup in groupedBySubject)
-            {
-                var subjectGradesVm = new SubjectGradesViewModel
+            var groupedGrades = grades
+                .GroupBy(g => g.Subject)
+                .Select(subjectGroup => new SubjectGradesViewModel
                 {
-                    SubjectName = subjectGroup.Key,
-                    GradesByType = new List<GradeTypeGroupViewModel>()
-                };
+                    SubjectName = subjectGroup.Key.Name,
+                    GradesByType = subjectGroup
+                        .GroupBy(g => g.GradeType)
+                        .Select(gt => new GradeTypeGroupViewModel
+                        {
+                            GradeTypeName = gt.Key.Name,
+                            Weight = gt.Key.Weight,
+                            Grades = gt.Select(x => x.Grade.Value).ToList()
+                        }).ToList()
+                }).ToList();
 
-                var gradesGroupedByType = subjectGroup.GroupBy(g => g.GradeType);
+            // Calcular médias ponderadas por disciplina
+            foreach (var subject in groupedGrades)
+            {
+                double weightedSum = 0;
+                double totalWeight = 0;
 
-                foreach (var gradeTypeGroup in gradesGroupedByType)
+                foreach (var gt in subject.GradesByType)
                 {
-                    var gradeType = gradeTypeGroup.Key;
-
-                    var gradesList = gradeTypeGroup
-                        .Where(g => g.Grade.HasValue)
-                        .Select(g => g.Grade.Value)
-                        .ToList();
-
-                    var gradeTypeVm = new GradeTypeGroupViewModel
+                    if (gt.Weight > 0 && gt.Grades.Any())
                     {
-                        GradeTypeName = gradeType?.Name ?? "Unknown",
-                        Grades = gradesList,
-                        Weight = gradeType?.Weight ?? 1.0
-                    };
-
-                    subjectGradesVm.GradesByType.Add(gradeTypeVm);
+                        weightedSum += gt.Grades.Average() * gt.Weight;
+                        totalWeight += gt.Weight;
+                    }
                 }
 
-                double weightedSum = subjectGradesVm.GradesByType.Sum(gt =>
-                    gt.Grades.Sum() * gt.Weight
-                );
-
-                double totalWeight = subjectGradesVm.GradesByType.Sum(gt =>
-                    gt.Weight * gt.Grades.Count
-                );
-
-                subjectGradesVm.WeightedAverage = totalWeight == 0 ? 0 : weightedSum / totalWeight;
-
-                model.SubjectGrades.Add(subjectGradesVm);
+                subject.WeightedAverage = totalWeight > 0 ? weightedSum / totalWeight : 0;
             }
 
-            double totalWeightedSum = model.SubjectGrades.Sum(sg =>
-                sg.WeightedAverage
-            );
+            double totalSum = 0;
+            double totalWeights = 0;
 
-            model.TotalAverage = model.SubjectGrades.Count == 0 ? 0 : totalWeightedSum / model.SubjectGrades.Count;
+            foreach (var s in groupedGrades)
+            {
+                foreach (var g in s.GradesByType)
+                {
+                    if (g.Weight > 0 && g.Grades.Any())
+                    {
+                        foreach (var grade in g.Grades)
+                        {
+                            totalSum += grade * g.Weight;
+                            totalWeights += g.Weight;
+                        }
+                    }
+                }
+            }
 
-            return model;
+            return new StudentGradesDetailsViewModel
+            {
+                StudentId = studentId,
+                StudentName = (await _userHelper.GetUserByIdAsync(studentId))?.FullName ?? "",
+                SubjectGrades = groupedGrades,
+                TotalAverage = totalWeights > 0 ? totalSum / totalWeights : 0
+            };
         }
     }
 }

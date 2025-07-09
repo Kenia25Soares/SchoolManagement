@@ -13,6 +13,7 @@ namespace SchoolManagement.Web.Data.Entities
 
         public bool IsExcludedDueToAbsences { get; set; }
 
+        [Required]
         [Display(Name = "Official Photo URL")]
         public string? OfficialPhotoUrl { get; set; }
 

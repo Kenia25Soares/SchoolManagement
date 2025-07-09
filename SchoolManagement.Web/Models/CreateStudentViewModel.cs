@@ -12,11 +12,11 @@ namespace SchoolManagement.Web.Models
         public DateTime? DateOfBirth { get; set; }
         public string Address { get; set; } = string.Empty;
 
-        public string ClassName { get; set; }
-
 
         [Display(Name = "Official Photo")]
-        public IFormFile? OfficialPhoto { get; set; }
+        [Required(ErrorMessage = "Official photo is required.")]
+        [DataType(DataType.Upload)]
+        public IFormFile OfficialPhoto { get; set; }
 
 
         [Display(Name = "Profile Picture")]

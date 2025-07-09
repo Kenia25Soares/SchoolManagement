@@ -16,10 +16,12 @@ namespace SchoolManagement.Web.Models
 
         public string? Address { get; set; }
 
-        public string? OfficialPhotoUrl { get; set; }   // URL atual da foto oficial do aluno
+        public string? OfficialPhotoUrl { get; set; }
 
-        [Display(Name = "Official Photo")]  
-        public IFormFile? OfficialPhoto { get; set; }  //Nova foto oficial
+        [Display(Name = "Official Photo")]
+        [Required(ErrorMessage = "Official photo is required.")]
+        [DataType(DataType.Upload)]
+        public IFormFile? OfficialPhoto { get; set; }
 
         [Display(Name = "Class")]
         public int? StudentClassId { get; set; }

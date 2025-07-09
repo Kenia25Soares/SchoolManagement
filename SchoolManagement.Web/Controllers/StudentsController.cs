@@ -45,6 +45,7 @@ namespace SchoolManagement.Web.Controllers
             var classes = await _context.StudentClasses.OrderBy(c => c.Name).ToListAsync();
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
+
         [HttpGet()]
         public async Task<IActionResult> Index()
         {
@@ -101,30 +102,14 @@ namespace SchoolManagement.Web.Controllers
             await LoadClassesAsync();
             return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
         }
-        /// <summary>
-        /// Deletes a user based on the provided ID.
-        /// </summary>
-        [HttpPost("Delete/{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-            {
-                await _userManager.DeleteAsync(user);
-                TempData["SuccessMessage"] = "User successfully removed.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "User not found.";
-            }
-
-            return RedirectToAction("Index");
-        }
 
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateStudentViewModel model)
         {
+            ModelState.Remove(nameof(CreateStudentViewModel.ProfilePictureUrl));
+            ModelState.Remove(nameof(CreateStudentViewModel.OfficialPhotoUrl));
+
             await SetUserProfilePictureAsync();
             await LoadClassesAsync(model.StudentClassId);
 
@@ -185,6 +170,45 @@ namespace SchoolManagement.Web.Controllers
 
             TempData["SuccessMessage"] = "Student created successfully! A password setup email was sent.";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost("Delete/{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id) as StudentUser;
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Student not found.";
+                return RedirectToAction("Index");
+            }
+
+            bool hasGrades = await _context.StudentGrades.AnyAsync(g => g.StudentId == id);
+            if (hasGrades)
+            {
+                TempData["ErrorMessage"] = "Cannot delete student. There are grades associated with this student.";
+                return RedirectToAction("Index");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Any())
+            {
+                var removeRolesResult = await _userManager.RemoveFromRolesAsync(user, roles);
+                if (!removeRolesResult.Succeeded)
+                {
+                    TempData["ErrorMessage"] = "Failed to remove student roles.";
+                    return RedirectToAction("Index");
+                }
+            }
+
+            var deleteResult = await _userManager.DeleteAsync(user);
+            if (!deleteResult.Succeeded)
+            {
+                TempData["ErrorMessage"] = "Error deleting student.";
+                return RedirectToAction("Index");
+            }
+
+            TempData["SuccessMessage"] = "Student deleted successfully.";
+            return RedirectToAction("Index");
         }
 
         [HttpGet("Edit/{id}")]
@@ -282,15 +306,14 @@ namespace SchoolManagement.Web.Controllers
             if (student == null)
                 return NotFound();
 
-            var model = new CreateStudentViewModel
+            var model = new StudentDetailsViewModel
             {
                 FullName = student.FullName,
                 Email = student.Email,
                 PhoneNumber = student.PhoneNumber,
                 DateOfBirth = student.DateOfBirth,
                 Address = student.Address,
-                StudentClassId = student.StudentClassId,
-                ClassName = student.StudentClass?.Name,
+                ClassName = student.StudentClass?.Name ?? "N/A",
                 ProfilePictureUrl = student.ProfilePictureUrl,
                 OfficialPhotoUrl = student.OfficialPhotoUrl
             };
