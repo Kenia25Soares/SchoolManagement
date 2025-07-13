@@ -40,7 +40,8 @@ namespace SchoolManagement.Web.Controllers.API
         public async Task<IActionResult> GetStudentsByClass(int id)
         {
             var classWithStudents = await _context.StudentClasses
-                .Include(sc => sc.Students)
+                .Include(sc => sc.Students) // Navigation from StudentClass to StudentProfile
+                    .ThenInclude(sp => sp.User) // Navigation from StudentProfile to StudentUser
                 .Where(sc => sc.Id == id)
                 .Select(sc => new
                 {
@@ -49,10 +50,10 @@ namespace SchoolManagement.Web.Controllers.API
                     AcademicYear = sc.AcademicYear,
                     Students = sc.Students.Select(s => new
                     {
-                        s.Id,
-                        s.FullName,
-                        s.Email,
-                        s.PhoneNumber,
+                        s.User.Id,
+                        s.User.FullName,
+                        s.User.Email,
+                        s.User.PhoneNumber,
                         s.DateOfBirth
                     })
                 })

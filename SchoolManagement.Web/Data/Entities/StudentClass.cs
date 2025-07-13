@@ -19,6 +19,6 @@ namespace SchoolManagement.Web.Data.Entities
         public Course Course { get; set; }
 
         public bool IsClosed { get; set; }
-        public ICollection<StudentUser> Students { get; set; }
+        public ICollection<StudentProfile> Students { get; set; }
     }
 }

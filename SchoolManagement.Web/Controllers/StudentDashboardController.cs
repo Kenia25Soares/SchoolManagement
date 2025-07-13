@@ -46,6 +46,8 @@ namespace SchoolManagement.Web.Controllers
 
         public async Task<IActionResult> Grades()
         {
+            await SetUserProfilePictureAsync();
+
             var user = await _userHelper.GetUserAsync(User);
 
             var gradesModel = await _studentGradeHelper.GetGradesDetailsAsync(user.Id);
@@ -55,6 +57,8 @@ namespace SchoolManagement.Web.Controllers
 
         public async Task<IActionResult> Absences()
         {
+            await SetUserProfilePictureAsync();
+
             var user = await _userHelper.GetUserAsync(User);
 
             var absencesModel = await _studentAbsenceHelper.GetAbsencesAsync(user.Id);

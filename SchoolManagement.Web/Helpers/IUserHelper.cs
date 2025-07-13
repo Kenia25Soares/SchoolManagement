@@ -25,5 +25,10 @@ namespace SchoolManagement.Web.Helpers
         Task<SelectList> GetClassesSelectListAsync(int? selectedClassId);
         Task<int> GetUsersCountAsync();
         Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password);
+        Task<List<ApplicationUser>> GetAllUsersAsync();
+
+        Task<IList<string>> GetUserRolesAsync(ApplicationUser user);
+        Task<IdentityResult> DeleteUserAsync(ApplicationUser user);
+        Task<IdentityResult> RemoveUserFromRolesAsync(ApplicationUser user, IEnumerable<string> roles);
     }
 }

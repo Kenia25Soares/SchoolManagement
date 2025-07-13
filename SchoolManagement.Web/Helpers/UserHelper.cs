@@ -123,5 +123,23 @@ namespace SchoolManagement.Web.Helpers
             return await _signInManager.CheckPasswordSignInAsync(user, password, false);
         }
 
+        public async Task<List<ApplicationUser>> GetAllUsersAsync()
+        {
+            return await _userManager.Users.ToListAsync();
+        }
+        public async Task<IList<string>> GetUserRolesAsync(ApplicationUser user)
+        {
+            return await _userManager.GetRolesAsync(user);
+        }
+
+        public async Task<IdentityResult> DeleteUserAsync(ApplicationUser user)
+        {
+            return await _userManager.DeleteAsync(user);
+        }
+
+        public async Task<IdentityResult> RemoveUserFromRolesAsync(ApplicationUser user, IEnumerable<string> roles)
+        {
+            return await _userManager.RemoveFromRolesAsync(user, roles);
+        }
     }
 }

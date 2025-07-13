@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
-using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -11,22 +11,17 @@ namespace SchoolManagement.Web.Controllers
     [Route("AdminDashboard/Alerts")]
     public class AdminAlertsController : Controller
     {
-        private readonly DataContext _context;
+        private readonly IAlertRepository _alertRepository;
 
-        public AdminAlertsController(DataContext context)
+        public AdminAlertsController(IAlertRepository alertRepository)
         {
-            _context = context;
+            _alertRepository = alertRepository;
         }
 
-        /// <summary>
-        /// Displays the list of alerts.
-        /// </summary>
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var alerts = _context.Alerts
-                .Include(a => a.CreatedBy)
-                .OrderByDescending(a => a.CreatedAt)
+            var alerts = _alertRepository.GetAll()
                 .Select(a => new AlertViewModel
                 {
                     Id = a.Id,
@@ -42,13 +37,10 @@ namespace SchoolManagement.Web.Controllers
             return View(alerts);
         }
 
-        /// <summary>
-        /// Marks an alert as resolved.
-        /// </summary>
         [HttpPost("Resolve/{id}")]
         public async Task<IActionResult> Resolve(int id)
         {
-            var alert = await _context.Alerts.FindAsync(id);
+            var alert = await _alertRepository.GetByIdAsync(id);
             if (alert == null)
             {
                 TempData["ErrorMessage"] = "Alert not found.";
@@ -56,7 +48,7 @@ namespace SchoolManagement.Web.Controllers
             }
 
             alert.IsResolved = true;
-            await _context.SaveChangesAsync();
+            await _alertRepository.UpdateAsync(alert);
 
             TempData["SuccessMessage"] = "Alert successfully marked as resolved.";
             return RedirectToAction("Index", "AdminDashboard");

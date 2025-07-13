@@ -126,3 +126,9 @@ body {
 .bg-soft-danger {
     background-color: #f8d7da !important;
 }
+
+.flash-message {
+    margin-top: 2.5rem;
+    z-index: 950;
+    position: relative;
+}

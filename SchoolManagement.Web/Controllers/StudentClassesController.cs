@@ -154,8 +154,8 @@ namespace SchoolManagement.Web.Controllers
 
             var assignedStudents = studentClass.Students.Select(s => new StudentAssignmentViewModel
             {
-                StudentId = s.Id,
-                StudentName = s.FullName
+                StudentId = s.User.Id,
+                StudentName = s.User.FullName
             }).ToList();
 
             var availableStudents = allStudents
@@ -185,13 +185,13 @@ namespace SchoolManagement.Web.Controllers
             if (request == null || string.IsNullOrEmpty(request.StudentId))
                 return BadRequest("Invalid request.");
 
-            var student = await _studentClassRepository.GetStudentByIdAsync(request.StudentId);
-            if (student == null)
-                return NotFound("Student not found.");
+            var profile = await _studentClassRepository.GetStudentProfileByUserIdAsync(request.StudentId);
+            if (profile == null)
+                return NotFound("Student profile not found.");
 
-            student.StudentClassId = request.StudentClassId;
+            profile.StudentClassId = request.StudentClassId;
+            await _studentClassRepository.SaveAllAsync();
 
-            await _studentClassRepository.SaveChangesAsync();
 
             return Ok(new { message = "Student assigned successfully." });
         }

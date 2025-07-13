@@ -11,5 +11,10 @@ namespace SchoolManagement.Web.Data.Repository
         {
             _context = context;
         }
+
+        public async Task<bool> IsSubjectInUseAsync(int subjectId)
+        {
+            return await _context.CourseSubjects.AnyAsync(cs => cs.SubjectId == subjectId);
+        }
     }
 }

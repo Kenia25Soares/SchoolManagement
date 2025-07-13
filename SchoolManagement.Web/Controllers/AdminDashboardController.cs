@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -13,35 +13,33 @@ namespace SchoolManagement.Web.Controllers
     {
         private readonly IUserHelper _userHelper;
         private readonly IBlobHelper _blobHelper;
-        private readonly DataContext _context;
+        private readonly IAlertRepository _alertRepository;
+        private readonly IAdminDashboardRepository _dashboardRepository;
 
-        public AdminDashboardController(IUserHelper userHelper, IBlobHelper blobHelper, DataContext context)
+        public AdminDashboardController(
+            IUserHelper userHelper,
+            IBlobHelper blobHelper,
+            IAlertRepository alertRepository,
+            IAdminDashboardRepository dashboardRepository)
         {
             _userHelper = userHelper;
             _blobHelper = blobHelper;
-            _context = context;
+            _alertRepository = alertRepository;
+            _dashboardRepository = dashboardRepository;
         }
 
-        /// <summary>
-        /// Sets the logged-in user's profile picture for display.
-        /// </summary>
         private async Task SetUserProfilePictureAsync()
         {
             var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
-        /// <summary>
-        /// Displays the main admin dashboard with stats and recent alerts.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
 
-            var alerts = await _context.Alerts
-                .Include(a => a.CreatedBy)
-                .OrderByDescending(a => a.CreatedAt)
+            var alerts = _alertRepository.GetAll()
                 .Select(a => new AlertViewModel
                 {
                     Id = a.Id,
@@ -51,13 +49,13 @@ namespace SchoolManagement.Web.Controllers
                     IsResolved = a.IsResolved,
                     CreatedBy = a.CreatedBy.FullName
                 })
-                .ToListAsync();
+                .ToList();
 
             var stats = new AdminDashboardViewModel
             {
                 TotalUsers = await _userHelper.GetUsersCountAsync(),
-                TotalCourses = await _context.Courses.CountAsync(),
-                TotalSubjects = await _context.Subjects.CountAsync()
+                TotalCourses = await _dashboardRepository.GetCoursesCountAsync(),
+                TotalSubjects = await _dashboardRepository.GetSubjectsCountAsync()
             };
 
             var model = new AdminDashboardCombinedViewModel
@@ -65,10 +63,6 @@ namespace SchoolManagement.Web.Controllers
                 Alerts = alerts,
                 Stats = stats
             };
-
-            if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
-            {
-            }
 
             return View(model);
         }

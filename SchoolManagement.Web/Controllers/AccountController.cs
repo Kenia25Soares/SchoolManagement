@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System.Threading.Tasks;
@@ -15,44 +16,38 @@ namespace SchoolManagement.Web.Controllers
         private readonly IBlobHelper _blobHelper;
         private readonly IUserHelper _userHelper;
         private readonly IMailHelper _mailHelper;
+        private readonly IStudentProfileRepository _studentProfileRepository;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IMailHelper mailHelper,
             IUserHelper userHelper,
-            IBlobHelper blobHelper)
+            IBlobHelper blobHelper,
+            IStudentProfileRepository studentProfileRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _userHelper = userHelper;
             _blobHelper = blobHelper;
             _mailHelper = mailHelper;
+            _studentProfileRepository = studentProfileRepository;
         }
 
-        // GET: Login
         public IActionResult Login() => View();
 
-        // POST: Login
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
             if (result.Succeeded)
             {
                 var user = await _userHelper.GetUserByEmailAsync(model.Email);
-
-                if (await _userHelper.IsUserInRoleAsync(user, "Admin"))
-                    return RedirectToAction("Index", "AdminDashboard");
-
-                if (await _userHelper.IsUserInRoleAsync(user, "Employee"))
-                    return RedirectToAction("Index", "EmployeeDashboard");
-
-                if (await _userHelper.IsUserInRoleAsync(user, "Student"))
-                    return RedirectToAction("Index", "StudentDashboard");
+                if (await _userHelper.IsUserInRoleAsync(user, "Admin")) return RedirectToAction("Index", "AdminDashboard");
+                if (await _userHelper.IsUserInRoleAsync(user, "Employee")) return RedirectToAction("Index", "EmployeeDashboard");
+                if (await _userHelper.IsUserInRoleAsync(user, "Student")) return RedirectToAction("Index", "StudentDashboard");
 
                 return RedirectToAction("Public", "Home");
             }
@@ -61,7 +56,6 @@ namespace SchoolManagement.Web.Controllers
             return View(model);
         }
 
-        // GET: Logout
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
@@ -69,64 +63,54 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction("Login");
         }
 
-        // GET: ResetPassword
         [HttpGet]
         public IActionResult ResetPassword(string token, string email)
         {
             if (token == null || email == null)
                 return BadRequest("Token and email are required.");
 
-            var model = new ResetPasswordViewModel
-            {
-                Token = token,
-                Email = email
-            };
-
-            return View(model);
+            return View(new ResetPasswordViewModel { Token = token, Email = email });
         }
 
-        // POST: ResetPassword
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
-            if (user == null)
-                return RedirectToAction("ResetPasswordConfirmation");
+            if (user == null) return RedirectToAction("ResetPasswordConfirmation");
 
             var result = await _userHelper.ResetPasswordAsync(user, model.Token, model.Password);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Password has been reset successfully. You can now log in.";
-                return RedirectToAction("Login", "Account");
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    await _userManager.UpdateAsync(user);
+                }
+
+                TempData["SuccessMessage"] = "Password reset successfully.";
+                return RedirectToAction("Login");
             }
 
             foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError("", error.Description);
 
             return View(model);
         }
 
-        // GET: RecoverPassword
         [HttpGet]
-        public IActionResult RecoverPassword()
-        {
-            return View();
-        }
+        public IActionResult RecoverPassword() => View();
 
-        // POST: RecoverPassword
         [HttpPost]
         public async Task<IActionResult> RecoverPassword(RecoverPasswordViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
             var user = await _userHelper.GetUserByEmailAsync(model.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Email address not found.");
+                ModelState.AddModelError("", "Email address not found.");
                 return View(model);
             }
 
@@ -135,45 +119,39 @@ namespace SchoolManagement.Web.Controllers
 
             var response = _mailHelper.SendEmail(user.Email, "Reset Your Password", $@"
                 <h2>Password Recovery</h2>
-                <p>Click the link below to set a new password:</p>
-                <p><a href='{link}'>Reset Password</a></p>
-            ");
+                <p>Click the link below to reset your password:</p>
+                <p><a href='{link}'>Reset Password</a></p>");
 
             if (response.IsSuccess)
             {
-                TempData["SuccessMessage"] = "Instructions to reset your password have been sent to your email.";
+                TempData["SuccessMessage"] = "Password reset instructions sent.";
                 return RedirectToAction("Login");
             }
 
-            ModelState.AddModelError(string.Empty, "Error sending the email. Please try again.");
+            ModelState.AddModelError("", "Error sending the email.");
             return View();
         }
 
-        // GET: Edit profile (Admin/Employee)
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            var model = new EditProfileViewModel
+            return View(new EditProfileViewModel
             {
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
                 ProfilePictureUrl = user.ProfilePictureUrl
-            };
-
-            return View(model);
+            });
         }
 
-        // POST: Edit profile (Admin/Employee)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(EditProfileViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
             var user = await _userManager.FindByIdAsync(model.Id);
             if (user == null) return NotFound();
@@ -197,17 +175,18 @@ namespace SchoolManagement.Web.Controllers
             }
 
             await _signInManager.RefreshSignInAsync(user);
-
             TempData["SuccessMessage"] = "Profile updated successfully.";
             return RedirectToAction(nameof(EditProfile));
         }
 
-        // GET: Edit student profile (Student)
         [HttpGet]
         public async Task<IActionResult> EditStudentProfile()
         {
             var user = await _userManager.GetUserAsync(User) as StudentUser;
             if (user == null) return NotFound();
+
+            var profile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
+            if (profile == null) return NotFound();
 
             var model = new EditStudentProfileViewModel
             {
@@ -215,19 +194,17 @@ namespace SchoolManagement.Web.Controllers
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                DateOfBirth = user.DateOfBirth,
-                Address = user.Address,
-                OfficialPhotoUrl = user.OfficialPhotoUrl,
-                StudentClassId = user.StudentClassId,
-                ProfilePictureUrl = user.ProfilePictureUrl
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                DateOfBirth = profile.DateOfBirth,
+                Address = profile.Address,
+                StudentClassId = profile.StudentClassId,
+                OfficialPhotoUrl = profile.OfficialPhotoUrl
             };
 
-            ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(user.StudentClassId);
-
+            ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(profile.StudentClassId);
             return View(model);
         }
 
-        // POST: Edit student profile
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStudentProfile(EditStudentProfileViewModel model)
@@ -241,14 +218,17 @@ namespace SchoolManagement.Web.Controllers
             var user = await _userManager.FindByIdAsync(model.Id) as StudentUser;
             if (user == null) return NotFound();
 
+            var profile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
+            if (profile == null) return NotFound();
+
             user.FullName = model.FullName;
             user.Email = model.Email;
             user.UserName = model.Email;
             user.PhoneNumber = model.PhoneNumber;
-            user.DateOfBirth = model.DateOfBirth;
-            user.Address = model.Address;
-            user.OfficialPhotoUrl = model.OfficialPhotoUrl;
-            user.StudentClassId = model.StudentClassId;
+
+            profile.DateOfBirth = model.DateOfBirth;
+            profile.Address = model.Address;
+            profile.StudentClassId = model.StudentClassId;
 
             if (model.ProfilePicture != null)
             {
@@ -259,22 +239,14 @@ namespace SchoolManagement.Web.Controllers
             if (model.OfficialPhoto != null)
             {
                 var blobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
-                user.OfficialPhotoUrl = blobId.ToString();
+                profile.OfficialPhotoUrl = blobId.ToString();
             }
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                foreach (var e in result.Errors)
-                    ModelState.AddModelError("", e.Description);
-
-                ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(model.StudentClassId);
-                return View(model);
-            }
-
-            await _signInManager.RefreshSignInAsync(user);
+            await _userManager.UpdateAsync(user);
+            await _studentProfileRepository.UpdateAsync(profile);
 
             TempData["SuccessMessage"] = "Student profile updated successfully.";
+            await _signInManager.RefreshSignInAsync(user);
             return RedirectToAction(nameof(EditStudentProfile));
         }
 

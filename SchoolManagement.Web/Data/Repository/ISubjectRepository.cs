@@ -4,5 +4,6 @@ namespace SchoolManagement.Web.Data.Repository
 {
     public interface ISubjectRepository : IGenericRepository<Subject>
     {
+        Task<bool> IsSubjectInUseAsync(int subjectId);
     }
 }

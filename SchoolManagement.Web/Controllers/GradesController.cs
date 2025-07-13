@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Models;
 using System;
 using System.Collections.Generic;
@@ -16,61 +16,37 @@ namespace SchoolManagement.Web.Controllers
     [Route("EmployeeDashboard/Grades")]
     public class GradesController : Controller
     {
-        private readonly DataContext _context;
+        private readonly IGradesRepository _gradesRepository;
+        private readonly IStudentClassRepository _studentClassRepository;
 
-        public GradesController(DataContext context)
+        public GradesController(IGradesRepository gradesRepository, IStudentClassRepository studentClassRepository)
         {
-            _context = context;
+            _gradesRepository = gradesRepository;
+            _studentClassRepository = studentClassRepository;
         }
 
         [HttpGet("")]
         public async Task<IActionResult> Index(int? classId)
         {
-            var classes = await _context.StudentClasses
-                .OrderBy(c => c.Name)
-                .Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name
-                }).ToListAsync();
+            var classes = await _gradesRepository.GetClassSelectListAsync(classId);
 
             if (!classId.HasValue && classes.Any())
                 classId = int.Parse(classes.First().Value);
 
-            foreach (var c in classes)
-                c.Selected = classId.HasValue && c.Value == classId.Value.ToString();
+            var students = await _gradesRepository.GetStudentsByClassAsync(classId ?? 0);
+            var studentIds = students.Select(s => s.User.Id).ToList();
 
-            var studentsQuery = _context.Users.OfType<StudentUser>();
-            if (classId.HasValue)
-                studentsQuery = studentsQuery.Where(s => s.StudentClassId == classId.Value);
-            else
-                studentsQuery = studentsQuery.Where(s => false);
+            var absences = await _gradesRepository.GetAbsencesByStudentIdsAsync(studentIds);
+            var failedByAbsencesDict = students.ToDictionary(
+                s => s.User.Id,
+                s =>
+                    absences
+                        .Where(a => a.StudentId == s.User.Id)
+                        .GroupBy(a => a.Subject)
+                        .Any(g => g.Sum(x => x.Absences) > g.Key.AllowedAbsences)
+            );
 
-            var students = await studentsQuery.ToListAsync();
-            var studentIds = students.Select(s => s.Id).ToList();
-
-            var absences = await _context.StudentGrades
-                .Where(g => studentIds.Contains(g.StudentId) && g.Absences > 0)
-                .Include(g => g.Subject)
-                .ToListAsync();
-
-            var failedByAbsencesDict = new Dictionary<string, bool>();
-            foreach (var student in students)
-            {
-                var absencesBySubject = absences
-                    .Where(a => a.StudentId == student.Id)
-                    .GroupBy(a => a.Subject)
-                    .Select(g => new { Subject = g.Key, TotalAbsences = g.Sum(x => x.Absences) });
-
-                bool failed = absencesBySubject.Any(a => a.TotalAbsences > a.Subject.AllowedAbsences);
-                failedByAbsencesDict[student.Id] = failed;
-            }
-
-            var grades = await _context.StudentGrades
-                .Where(g => studentIds.Contains(g.StudentId) && g.GradeTypeId != null)
-                .Include(g => g.GradeType)
-                .ToListAsync();
-
+            var grades = await _gradesRepository.GetGradesByStudentIdsAsync(studentIds);
             var averages = grades
                 .GroupBy(g => g.StudentId)
                 .ToDictionary(g => g.Key, g =>
@@ -89,27 +65,19 @@ namespace SchoolManagement.Web.Controllers
                     return totalWeight > 0 ? weightedSum / totalWeight : 0;
                 });
 
-            bool isClassClosed = false;
-
-            if (classId.HasValue)
-            {
-                isClassClosed = await _context.StudentClasses
-                    .Where(sc => sc.Id == classId.Value)
-                    .Select(sc => sc.IsClosed)
-                    .FirstOrDefaultAsync();
-            }
+            bool isClassClosed = classId.HasValue && await _gradesRepository.IsClassClosedAsync(classId.Value);
 
             var model = new StudentGradesIndexViewModel
             {
                 Classes = classes,
                 Students = students.Select(s => new UserListViewModel
                 {
-                    Id = s.Id,
-                    FullName = s.FullName,
-                    Email = s.Email,
-                    ProfilePictureUrl = s.ProfilePictureUrl,
-                    AverageGrade = averages.ContainsKey(s.Id) ? averages[s.Id] : (double?)null,
-                    FailedDueToAbsences = failedByAbsencesDict.ContainsKey(s.Id) && failedByAbsencesDict[s.Id]
+                    Id = s.User.Id,
+                    FullName = s.User.FullName,
+                    Email = s.User.Email,
+                    ProfilePictureUrl = s.User.ProfilePictureUrl,
+                    AverageGrade = averages.ContainsKey(s.User.Id) ? averages[s.User.Id] : (double?)null,
+                    FailedDueToAbsences = failedByAbsencesDict.ContainsKey(s.User.Id) && failedByAbsencesDict[s.User.Id]
                 }).ToList(),
                 IsClassClosed = isClassClosed
             };
@@ -120,31 +88,15 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("AddGrades")]
         public async Task<IActionResult> AddGrades(string studentId)
         {
-            if (string.IsNullOrEmpty(studentId))
-                return BadRequest();
-
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
-
-            if (student == null || student.StudentClass == null)
+            var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+            if (student?.StudentClass == null || student.StudentClass.IsClosed)
             {
-                TempData["ErrorMessage"] = "Student not found or has no class assigned.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Student not found or class is closed.";
+                return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
             }
 
-            if (student.StudentClass.IsClosed)
-            {
-                TempData["ErrorMessage"] = "This class is already closed. You cannot add grades.";
-                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
-            }
-
-            var subjects = await _context.CourseSubjects
-                .Where(cs => cs.CourseId == student.StudentClass.CourseId)
-                .Select(cs => cs.Subject)
-                .ToListAsync();
-
-            var gradeTypes = await _context.GradeTypes.ToListAsync();
+            var subjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
+            var gradeTypes = await _gradesRepository.GetGradeTypesAsync();
 
             var model = new AddGradesViewModel
             {
@@ -154,7 +106,7 @@ namespace SchoolManagement.Web.Controllers
                 GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name })
             };
 
-            ViewBag.StudentName = student.FullName;
+            ViewBag.StudentName = student.User.FullName;
             return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
         }
 
@@ -162,140 +114,56 @@ namespace SchoolManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddGrades(AddGradesViewModel model)
         {
-            if (!ModelState.IsValid)
+            var student = await _gradesRepository.GetStudentWithClassAsync(model.StudentId);
+            if (student?.StudentClass == null || student.StudentClass.IsClosed)
             {
-                TempData["ErrorMessage"] = "Invalid input. Please check the form.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Student not found or class is closed.";
+                return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
             }
 
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == model.StudentId);
-
-            if (student == null || student.StudentClass == null)
-            {
-                TempData["ErrorMessage"] = "Student not found or not assigned to a class.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (student.StudentClass.IsClosed)
-            {
-                TempData["ErrorMessage"] = "This class is already closed. You cannot add grades.";
-                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
-            }
-
-            var courseId = student.StudentClass.CourseId;
-
-            foreach (var input in model.Grades)
-            {
-                if (input.SubjectId == 0 || input.GradeTypeId == 0)
-                    continue;
-
-                _context.StudentGrades.Add(new StudentGrade
+            var grades = model.Grades
+                .Where(g => g.SubjectId > 0 && g.GradeTypeId > 0)
+                .Select(g => new StudentGrade
                 {
                     StudentId = model.StudentId,
-                    CourseId = courseId,
-                    SubjectId = input.SubjectId,
-                    GradeTypeId = input.GradeTypeId,
-                    Grade = input.Grade,
+                    CourseId = student.StudentClass.CourseId,
+                    SubjectId = g.SubjectId,
+                    GradeTypeId = g.GradeTypeId,
+                    Grade = g.Grade,
                     Absences = 0,
                     CreatedAt = DateTime.UtcNow
                 });
-            }
 
-            await _context.SaveChangesAsync();
+            await _gradesRepository.AddGradesAsync(grades);
+            await _gradesRepository.SaveAllAsync();
 
             TempData["SuccessMessage"] = "Grades added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
-
-        [HttpGet("AddAbsences")]
-        public async Task<IActionResult> AddAbsences(string studentId)
-        {
-            if (string.IsNullOrEmpty(studentId))
-                return BadRequest();
-
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
-
-            if (student == null || student.StudentClass == null)
-            {
-                TempData["ErrorMessage"] = "Student not found or has no class assigned.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (student.StudentClass.IsClosed)
-            {
-                TempData["ErrorMessage"] = "This class is already closed. You cannot add absences.";
-                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
-            }
-
-            var subjects = await _context.CourseSubjects
-                .Where(cs => cs.CourseId == student.StudentClass.CourseId)
-                .Select(cs => cs.Subject)
-                .ToListAsync();
-
-            var model = new AddAbsencesViewModel
-            {
-                StudentId = studentId,
-                Absences = new List<AbsenceInputModel> { new AbsenceInputModel() },
-                Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
-            };
-
-            ViewBag.StudentName = student.FullName;
-            return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
-        }
-
-        [HttpPost("AddAbsences")]
+        [HttpPost("CloseClass")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddAbsences(AddAbsencesViewModel model)
+        public async Task<IActionResult> CloseClass(int classId)
         {
-            if (!ModelState.IsValid)
+            var studentClass = await _studentClassRepository.GetByIdAsync(classId);
+            if (studentClass == null)
             {
-                TempData["ErrorMessage"] = "Invalid input. Please check the form.";
+                TempData["ErrorMessage"] = "Class not found.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == model.StudentId);
-
-            if (student == null || student.StudentClass == null)
+            if (studentClass.IsClosed)
             {
-                TempData["ErrorMessage"] = "Student not found or not assigned to a class.";
-                return RedirectToAction(nameof(Index));
+                TempData["InfoMessage"] = "Class is already closed.";
+                return RedirectToAction(nameof(Index), new { classId });
             }
 
-            if (student.StudentClass.IsClosed)
-            {
-                TempData["ErrorMessage"] = "This class is already closed. You cannot add absences.";
-                return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
-            }
+            studentClass.IsClosed = true;
+            await _studentClassRepository.UpdateAsync(studentClass);
+            await _studentClassRepository.SaveAllAsync();
 
-            var courseId = student.StudentClass.CourseId;
-
-            foreach (var input in model.Absences)
-            {
-                if (input.SubjectId == 0) continue;
-
-                _context.StudentGrades.Add(new StudentGrade
-                {
-                    StudentId = model.StudentId,
-                    CourseId = courseId,
-                    SubjectId = input.SubjectId,
-                    GradeTypeId = null,
-                    Grade = null,
-                    Absences = input.Absences,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Absences added successfully!";
-            return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
+            TempData["SuccessMessage"] = "Class successfully closed.";
+            return RedirectToAction(nameof(Index), new { classId });
         }
 
         [HttpGet("Details")]
@@ -304,47 +172,27 @@ namespace SchoolManagement.Web.Controllers
             if (string.IsNullOrEmpty(studentId))
                 return BadRequest();
 
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
-
-            if (student == null)
+            var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+            if (student == null || student.StudentClass == null)
                 return NotFound();
 
-            if (student.StudentClass == null)
-                return BadRequest("Student does not have a class assigned.");
-
-            // Carregar todas as notas (com tipo de nota e disciplina)
-            var grades = await _context.StudentGrades
-                .Where(g => g.StudentId == studentId && g.GradeTypeId != null)
-                .Include(g => g.Subject)
-                .Include(g => g.GradeType)
-                .ToListAsync();
-
-            // Carregar todas as faltas (mesmo se sem nota)
-            var absences = await _context.StudentGrades
-                .Where(g => g.StudentId == studentId && g.Absences > 0)
-                .Include(g => g.Subject)
-                .ToListAsync();
+            var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
+            var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
 
             var groupedGrades = grades
                 .GroupBy(g => g.Subject)
                 .Select(g => new SubjectGradesViewModel
                 {
                     SubjectName = g.Key.Name,
-                    GradesByType = g
-                        .GroupBy(x => x.GradeType)
-                        .Select(gtGroup => new GradeTypeGroupViewModel
-                        {
-                            GradeTypeName = gtGroup.Key.Name,
-                            Weight = gtGroup.Key.Weight,
-                            Grades = gtGroup.Select(x => x.Grade ?? 0).ToList()
-                        })
-                        .ToList(),
+                    GradesByType = g.GroupBy(x => x.GradeType).Select(gt => new GradeTypeGroupViewModel
+                    {
+                        GradeTypeName = gt.Key.Name,
+                        Weight = gt.Key.Weight,
+                        Grades = gt.Select(x => x.Grade ?? 0).ToList()
+                    }).ToList(),
                     AllowedAbsences = g.Key.AllowedAbsences,
                     TotalAbsences = absences.Where(a => a.SubjectId == g.Key.Id).Sum(a => a.Absences)
-                })
-                .ToList();
+                }).ToList();
 
             foreach (var subject in groupedGrades)
             {
@@ -367,7 +215,6 @@ namespace SchoolManagement.Web.Controllers
 
             double totalWeightedSum = 0;
             double totalOverallWeight = 0;
-
             foreach (var subject in groupedGrades)
             {
                 foreach (var gt in subject.GradesByType)
@@ -387,8 +234,8 @@ namespace SchoolManagement.Web.Controllers
 
             var model = new StudentGradesDetailsViewModel
             {
-                StudentId = student.Id,
-                StudentName = student.FullName,
+                StudentId = student.User.Id,
+                StudentName = student.User.FullName,
                 SubjectGrades = groupedGrades,
                 TotalAverage = totalAverage,
                 IsClassClosed = student.StudentClass?.IsClosed ?? false
@@ -397,31 +244,85 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/Details.cshtml", model);
         }
 
+        [HttpGet("AddAbsences")]
+        public async Task<IActionResult> AddAbsences(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId))
+                return BadRequest();
+
+            var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+            if (student?.StudentClass == null || student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "Student not found or class is closed.";
+                return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
+            }
+
+            var subjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
+
+            var model = new AddAbsencesViewModel
+            {
+                StudentId = studentId,
+                Absences = new List<AbsenceInputModel> { new AbsenceInputModel() },
+                Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+            };
+
+            ViewBag.StudentName = student.User.FullName;
+            return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
+        }
+
+        [HttpPost("AddAbsences")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAbsences(AddAbsencesViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Invalid input.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var student = await _gradesRepository.GetStudentWithClassAsync(model.StudentId);
+            if (student?.StudentClass == null || student.StudentClass.IsClosed)
+            {
+                TempData["ErrorMessage"] = "Student not found or class is closed.";
+                return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
+            }
+
+            var absences = model.Absences
+                .Where(a => a.SubjectId > 0)
+                .Select(a => new StudentGrade
+                {
+                    StudentId = model.StudentId,
+                    CourseId = student.StudentClass.CourseId,
+                    SubjectId = a.SubjectId,
+                    GradeTypeId = null,
+                    Grade = null,
+                    Absences = a.Absences,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+            await _gradesRepository.AddGradesAsync(absences);
+            await _gradesRepository.SaveAllAsync();
+
+            TempData["SuccessMessage"] = "Absences added successfully!";
+            return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
+        }
+
         [HttpGet("ViewAbsences")]
         public async Task<IActionResult> ViewAbsences(string studentId)
         {
             if (string.IsNullOrEmpty(studentId))
                 return BadRequest();
 
-            var student = await _context.Users.OfType<StudentUser>()
-                .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == studentId);
-
-            if (student == null)
-                return NotFound();
-
-            if (student.StudentClass == null)
+            var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+            if (student?.StudentClass == null)
                 return BadRequest("Student does not have a class assigned.");
 
-            var absences = await _context.StudentGrades
-                .Where(g => g.StudentId == studentId && g.Absences > 0)
-                .Include(g => g.Subject)
-                .ToListAsync();
+            var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
 
             var model = new StudentAbsencesViewModel
             {
                 StudentId = studentId,
-                StudentName = student.FullName,
+                StudentName = student.User.FullName,
                 Absences = absences
                     .GroupBy(a => a.Subject.Name)
                     .Select(g => new AbsenceSummaryViewModel
@@ -433,30 +334,6 @@ namespace SchoolManagement.Web.Controllers
             };
 
             return View("/Views/EmployeeDashboard/Grades/ViewAbsences.cshtml", model);
-        }
-
-        [HttpPost("CloseClass")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CloseClass(int classId)
-        {
-            var studentClass = await _context.StudentClasses.FirstOrDefaultAsync(c => c.Id == classId);
-            if (studentClass == null)
-            {
-                TempData["ErrorMessage"] = "Class not found.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (studentClass.IsClosed)
-            {
-                TempData["InfoMessage"] = "Class is already closed.";
-                return RedirectToAction(nameof(Index), new { classId });
-            }
-
-            studentClass.IsClosed = true;
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Class successfully closed.";
-            return RedirectToAction(nameof(Index), new { classId });
         }
     }
 }

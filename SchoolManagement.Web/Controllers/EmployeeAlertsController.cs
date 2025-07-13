@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -11,27 +12,21 @@ namespace SchoolManagement.Web.Controllers
     [Route("EmployeeDashboard/Alerts")]
     public class EmployeeAlertsController : Controller
     {
-        private readonly DataContext _context;
+        private readonly IAlertRepository _alertRepository;
         private readonly IUserHelper _userHelper;
 
-        public EmployeeAlertsController(DataContext context, IUserHelper userHelper)
+        public EmployeeAlertsController(IAlertRepository alertRepository, IUserHelper userHelper)
         {
-            _context = context;
+            _alertRepository = alertRepository;
             _userHelper = userHelper;
         }
 
-        /// <summary>
-        /// Displays the form to create a new alert.
-        /// </summary>
         [HttpGet("Create")]
         public IActionResult Create()
         {
             return View("/Views/EmployeeDashboard/Alerts/Create.cshtml");
         }
 
-        /// <summary>
-        /// Creates a new alert.
-        /// </summary>
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateAlertViewModel model)
         {
@@ -56,8 +51,7 @@ namespace SchoolManagement.Web.Controllers
                 CreatedById = user.Id
             };
 
-            _context.Alerts.Add(alert);
-            await _context.SaveChangesAsync();
+            await _alertRepository.CreateAsync(alert);
 
             TempData["SuccessMessage"] = "Alert successfully created.";
             return RedirectToAction("Index", "EmployeeDashboard");

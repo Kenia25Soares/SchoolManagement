@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,51 +17,42 @@ namespace SchoolManagement.Web.Controllers
     [Route("EmployeeDashboard/Students")]
     public class StudentsController : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IStudentClassRepository _classRepository;
+        private readonly IStudentGradeRepository _gradeRepository;
+        private readonly IGenericRepository<StudentProfile> _studentProfileRepository;
         private readonly IBlobHelper _blobHelper;
-        private readonly DataContext _context;
         private readonly IMailHelper _mailHelper;
 
         public StudentsController(
-            UserManager<ApplicationUser> userManager,
-            IMailHelper mailHelper,
+            IStudentClassRepository classRepository,
+            IStudentGradeRepository gradeRepository,
+            IGenericRepository<StudentProfile> studentProfileRepository,
             IBlobHelper blobHelper,
-            DataContext context)
+            IMailHelper mailHelper)
         {
-            _userManager = userManager;
+            _classRepository = classRepository;
+            _gradeRepository = gradeRepository;
+            _studentProfileRepository = studentProfileRepository;
             _blobHelper = blobHelper;
-            _context = context;
             _mailHelper = mailHelper;
-        }
-
-        private async Task SetUserProfilePictureAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
         private async Task LoadClassesAsync(object selected = null)
         {
-            var classes = await _context.StudentClasses.OrderBy(c => c.Name).ToListAsync();
+            var classes = await _classRepository.GetAllOrderedByNameAsync();
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
         [HttpGet()]
         public async Task<IActionResult> Index()
         {
-            await SetUserProfilePictureAsync();
-
-            var students = await _userManager.Users
-                .OfType<StudentUser>()
+            var students = await _studentProfileRepository.GetAll()
+                .Include(s => s.User)
                 .Include(s => s.StudentClass)
                 .ToListAsync();
 
-            var studentIds = students.Select(s => s.Id).ToList();
-
-            var grades = await _context.StudentGrades
-                .Where(g => studentIds.Contains(g.StudentId) && g.Grade.HasValue && g.GradeTypeId != null)
-                .Include(g => g.GradeType)
-                .ToListAsync();
+            var studentIds = students.Select(s => s.User.Id).ToList();
+            var grades = await _gradeRepository.GetGradesByStudentIdsAsync(studentIds);
 
             var averages = grades
                 .GroupBy(g => g.StudentId)
@@ -83,12 +74,12 @@ namespace SchoolManagement.Web.Controllers
 
             var model = students.Select(s => new UserListViewModel
             {
-                Id = s.Id,
-                FullName = s.FullName,
-                Email = s.Email,
+                Id = s.User.Id,
+                FullName = s.User.FullName,
+                Email = s.User.Email,
                 Role = "Student",
-                ProfilePictureUrl = s.ProfilePictureUrl,
-                AverageGrade = averages.ContainsKey(s.Id) ? averages[s.Id] : (double?)null,
+                ProfilePictureUrl = s.User.ProfilePictureUrl,
+                AverageGrade = averages.ContainsKey(s.User.Id) ? averages[s.User.Id] : (double?)null,
                 ClassName = s.StudentClass?.Name ?? "N/A"
             }).ToList();
 
@@ -98,7 +89,6 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
-            await SetUserProfilePictureAsync();
             await LoadClassesAsync();
             return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
         }
@@ -109,60 +99,49 @@ namespace SchoolManagement.Web.Controllers
         {
             ModelState.Remove(nameof(CreateStudentViewModel.ProfilePictureUrl));
             ModelState.Remove(nameof(CreateStudentViewModel.OfficialPhotoUrl));
-
-            await SetUserProfilePictureAsync();
             await LoadClassesAsync(model.StudentClassId);
 
             if (!ModelState.IsValid)
                 return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
 
-            Guid profilePictureBlobId = Guid.Empty;
-            Guid officialPhotoBlobId = Guid.Empty;
+            var profileBlobId = model.ProfilePicture != null
+                ? await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures")
+                : Guid.Empty;
 
-            if (model.ProfilePicture != null)
-                profilePictureBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+            var officialBlobId = model.OfficialPhoto != null
+                ? await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures")
+                : Guid.Empty;
 
-            if (model.OfficialPhoto != null)
-                officialPhotoBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
-
-            var student = new StudentUser
+            var user = new StudentUser
             {
                 UserName = model.Email,
                 Email = model.Email,
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
-                DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
+                ProfilePictureUrl = profileBlobId == Guid.Empty ? null : profileBlobId.ToString()
+            };
+
+            var student = new StudentProfile
+            {
+                User = user,
                 Address = model.Address,
+                DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
                 StudentClassId = model.StudentClassId,
-                ProfilePictureUrl = profilePictureBlobId == Guid.Empty ? null : profilePictureBlobId.ToString(),
-                OfficialPhotoUrl = officialPhotoBlobId == Guid.Empty ? null : officialPhotoBlobId.ToString(),
+                OfficialPhotoUrl = officialBlobId == Guid.Empty ? null : officialBlobId.ToString(),
                 IsExcludedDueToAbsences = false
             };
 
-            var result = await _userManager.CreateAsync(student);
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError("", error.Description);
+            await _studentProfileRepository.CreateAsync(student);
 
-                return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
-            }
-
-            await _userManager.AddToRoleAsync(student, "Student");
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(student);
-            var resetLink = Url.Action(
-                "ResetPassword",
-                "Account",
-                new { token, email = student.Email },
-                protocol: Request.Scheme);
+            var token = Guid.NewGuid().ToString();
+            var resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, Request.Scheme);
 
             var emailBody = $@"
                 <h2>Welcome to the School Management System</h2>
                 <p>To set your password, please click the link below:</p>
                 <p><a href='{resetLink}'>Set your password</a></p>";
 
-            var mailResponse = _mailHelper.SendEmail(student.Email, "Set your password", emailBody);
+            var mailResponse = _mailHelper.SendEmail(user.Email, "Set your password", emailBody);
             if (!mailResponse.IsSuccess)
             {
                 TempData["ErrorMessage"] = "Student created, but failed to send password setup email.";
@@ -175,67 +154,53 @@ namespace SchoolManagement.Web.Controllers
         [HttpPost("Delete/{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var user = await _userManager.FindByIdAsync(id) as StudentUser;
-            if (user == null)
-            {
-                TempData["ErrorMessage"] = "Student not found.";
-                return RedirectToAction("Index");
-            }
+            var student = await _studentProfileRepository.GetAll()
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.User.Id == id);
 
-            bool hasGrades = await _context.StudentGrades.AnyAsync(g => g.StudentId == id);
-            if (hasGrades)
-            {
-                TempData["ErrorMessage"] = "Cannot delete student. There are grades associated with this student.";
-                return RedirectToAction("Index");
-            }
-
-            var roles = await _userManager.GetRolesAsync(user);
-            if (roles.Any())
-            {
-                var removeRolesResult = await _userManager.RemoveFromRolesAsync(user, roles);
-                if (!removeRolesResult.Succeeded)
-                {
-                    TempData["ErrorMessage"] = "Failed to remove student roles.";
-                    return RedirectToAction("Index");
-                }
-            }
-
-            var deleteResult = await _userManager.DeleteAsync(user);
-            if (!deleteResult.Succeeded)
-            {
-                TempData["ErrorMessage"] = "Error deleting student.";
-                return RedirectToAction("Index");
-            }
-
-            TempData["SuccessMessage"] = "Student deleted successfully.";
-            return RedirectToAction("Index");
-        }
-
-        [HttpGet("Edit/{id}")]
-        public async Task<IActionResult> Edit(string id)
-        {
-            await SetUserProfilePictureAsync();
-
-            var user = await _userManager.FindByIdAsync(id) as StudentUser;
-            if (user == null)
+            if (student == null)
             {
                 TempData["ErrorMessage"] = "Student not found.";
                 return RedirectToAction(nameof(Index));
             }
 
-            await LoadClassesAsync(user.StudentClassId);
+            if (await _gradeRepository.GetGradesByStudentIdsAsync(new List<string> { id }) is { Count: > 0 })
+            {
+                TempData["ErrorMessage"] = "Cannot delete student. There are grades associated.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _studentProfileRepository.DeleteAsync(student);
+            TempData["SuccessMessage"] = "Student deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet("Edit/{id}")]
+        public async Task<IActionResult> Edit(string id)
+        {
+            var student = await _studentProfileRepository.GetAll()
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.User.Id == id);
+
+            if (student == null)
+            {
+                TempData["ErrorMessage"] = "Student not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await LoadClassesAsync(student.StudentClassId);
 
             var model = new EditStudentProfileViewModel
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                DateOfBirth = user.DateOfBirth,
-                Address = user.Address,
-                OfficialPhotoUrl = user.OfficialPhotoUrl,
-                StudentClassId = user.StudentClassId,
-                ProfilePictureUrl = user.ProfilePictureUrl
+                Id = student.User.Id,
+                FullName = student.User.FullName,
+                Email = student.User.Email,
+                PhoneNumber = student.User.PhoneNumber,
+                DateOfBirth = student.DateOfBirth,
+                Address = student.Address,
+                StudentClassId = student.StudentClassId,
+                ProfilePictureUrl = student.User.ProfilePictureUrl,
+                OfficialPhotoUrl = student.OfficialPhotoUrl
             };
 
             return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
@@ -245,48 +210,43 @@ namespace SchoolManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditStudentProfileViewModel model)
         {
-            await SetUserProfilePictureAsync();
-            await LoadClassesAsync(model.StudentClassId);
-
             if (!ModelState.IsValid)
+            {
+                await LoadClassesAsync(model.StudentClassId);
                 return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
+            }
 
-            var user = await _userManager.FindByIdAsync(model.Id) as StudentUser;
-            if (user == null)
+            var student = await _studentProfileRepository.GetAll()
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.User.Id == model.Id);
+
+            if (student == null)
             {
                 TempData["ErrorMessage"] = "Student not found.";
                 return RedirectToAction(nameof(Index));
             }
 
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-            user.UserName = model.Email;
-            user.PhoneNumber = model.PhoneNumber;
-            user.DateOfBirth = model.DateOfBirth;
-            user.Address = model.Address;
-            user.OfficialPhotoUrl = model.OfficialPhotoUrl;
-            user.StudentClassId = model.StudentClassId;
+            student.User.FullName = model.FullName;
+            student.User.Email = model.Email;
+            student.User.UserName = model.Email;
+            student.User.PhoneNumber = model.PhoneNumber;
+            student.DateOfBirth = model.DateOfBirth;
+            student.Address = model.Address;
+            student.StudentClassId = model.StudentClassId;
 
             if (model.ProfilePicture != null)
             {
-                Guid profileBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-                user.ProfilePictureUrl = profileBlobId.ToString();
+                var blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                student.User.ProfilePictureUrl = blobId.ToString();
             }
 
             if (model.OfficialPhoto != null)
             {
-                Guid officialBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
-                user.OfficialPhotoUrl = officialBlobId.ToString();
+                var blobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
+                student.OfficialPhotoUrl = blobId.ToString();
             }
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError("", error.Description);
-
-                return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
-            }
+            await _studentProfileRepository.UpdateAsync(student);
 
             TempData["SuccessMessage"] = "Student updated successfully!";
             return RedirectToAction(nameof(Index));
@@ -295,26 +255,23 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(string id)
         {
-            if (string.IsNullOrEmpty(id))
-                return NotFound();
-
-            var student = await _userManager.Users
-                .OfType<StudentUser>()
+            var student = await _studentProfileRepository.GetAll()
+                .Include(s => s.User)
                 .Include(s => s.StudentClass)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s => s.User.Id == id);
 
             if (student == null)
                 return NotFound();
 
             var model = new StudentDetailsViewModel
             {
-                FullName = student.FullName,
-                Email = student.Email,
-                PhoneNumber = student.PhoneNumber,
+                FullName = student.User.FullName,
+                Email = student.User.Email,
+                PhoneNumber = student.User.PhoneNumber,
                 DateOfBirth = student.DateOfBirth,
                 Address = student.Address,
                 ClassName = student.StudentClass?.Name ?? "N/A",
-                ProfilePictureUrl = student.ProfilePictureUrl,
+                ProfilePictureUrl = student.User.ProfilePictureUrl,
                 OfficialPhotoUrl = student.OfficialPhotoUrl
             };
 

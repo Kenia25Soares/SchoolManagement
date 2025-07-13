@@ -1,58 +1,48 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-/// <summary>
-/// Controller responsible for managing Admin and Employee users in the admin panel.
-/// Includes actions to list, create, edit, delete, and view user details.
-/// </summary>
 [Authorize(Roles = "Admin")]
 [Route("AdminDashboard/Users")]
 public class UsersController : Controller
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IUserHelper _userHelper;
     private readonly IMailHelper _mailHelper;
     private readonly IBlobHelper _blobHelper;
 
     public UsersController(
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
+        IUserHelper userHelper,
         IMailHelper mailHelper,
         IBlobHelper blobHelper)
     {
-        _userManager = userManager;
-        _roleManager = roleManager;
+        _userHelper = userHelper;
         _mailHelper = mailHelper;
         _blobHelper = blobHelper;
     }
 
-    /// <summary>
-    /// Sets the logged-in user's profile picture to be displayed in the layout.
-    /// </summary>
     private async Task SetUserProfilePictureAsync()
     {
-        var user = await _userManager.GetUserAsync(User);
-        ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        var currentUser = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+        ViewData["ProfilePictureUrl"] = currentUser?.ProfilePictureUrl;
     }
 
-    /// <summary>
-    /// Lists all users with Admin or Employee roles.
-    /// </summary>
     [HttpGet]
     public async Task<IActionResult> Index()
     {
         await SetUserProfilePictureAsync();
-        var users = await _userManager.Users.ToListAsync();
-        var model = new List<UserListViewModel>();
+        var users = await _userHelper.GetAllUsersAsync();
 
+        var model = new List<UserListViewModel>();
         foreach (var user in users)
         {
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userHelper.GetUserRolesAsync(user);
             if (roles.Contains("Admin") || roles.Contains("Employee"))
             {
                 model.Add(new UserListViewModel
@@ -69,49 +59,37 @@ public class UsersController : Controller
         return View("/Views/AdminDashboard/Users/Index.cshtml", model);
     }
 
-    /// <summary>
-    /// Deletes a user based on the provided ID.
-    /// </summary>
     [HttpPost("Delete/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user != null)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
-            if (roles.Any())
-            {
-                await _userManager.RemoveFromRolesAsync(user, roles);
-            }
-
-            await _userManager.DeleteAsync(user);
-            TempData["SuccessMessage"] = "User successfully removed.";
-        }
-        else
+        var user = await _userHelper.GetUserByIdAsync(id);
+        if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction("Index");
         }
 
+        var roles = await _userHelper.GetUserRolesAsync(user);
+        if (roles.Any())
+        {
+            await _userHelper.RemoveUserFromRolesAsync(user, roles);
+        }
+
+        var result = await _userHelper.DeleteUserAsync(user);
+        TempData["SuccessMessage"] = result.Succeeded
+            ? "User successfully removed."
+            : "Error deleting user.";
         return RedirectToAction("Index");
     }
 
-    /// <summary>
-    /// Displays the form to create a new user.
-    /// </summary>
     [HttpGet("Create")]
     public async Task<IActionResult> Create()
     {
         await SetUserProfilePictureAsync();
-        var model = new CreateUserViewModel
-        {
-            Roles = new List<string> { "Admin", "Employee" }
-        };
+        var model = new CreateUserViewModel { Roles = new List<string> { "Admin", "Employee" } };
         return View("/Views/AdminDashboard/Users/Create.cshtml", model);
     }
 
-    /// <summary>
-    /// Creates a new user based on submitted form data.
-    /// </summary>
     [HttpPost("Create")]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
@@ -123,9 +101,7 @@ public class UsersController : Controller
 
         Guid blobId = Guid.Empty;
         if (model.ProfilePicture != null)
-        {
             blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-        }
 
         var user = new ApplicationUser
         {
@@ -136,25 +112,20 @@ public class UsersController : Controller
             ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString()
         };
 
-        var result = await _userManager.CreateAsync(user);
+        var result = await _userHelper.AddUserAsync(user, "Default123!"); // Placeholder password
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
-
+            ModelState.AddModelError(string.Empty, "User creation failed.");
             return View("/Views/AdminDashboard/Users/Create.cshtml", model);
         }
 
-        await _userManager.AddToRoleAsync(user, model.Role);
+        await _userHelper.AddUserToRoleAsync(user, model.Role);
 
-        string token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        string resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, protocol: HttpContext.Request.Scheme);
+        var token = await _userHelper.GeneratePasswordResetTokenAsync(user);
+        var resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, Request.Scheme);
 
-        var response = _mailHelper.SendEmail(user.Email, "Set your password", $@"
-            <h1>Welcome to School Management!</h1>
-            <p>To set your password, click the link below:</p>
-            <p><a href='{resetLink}'>Set Password</a></p>
-        ");
+        var response = _mailHelper.SendEmail(user.Email, "Set your password",
+            $@"<h1>Welcome to School Management!</h1><p>To set your password, click the link below:</p><p><a href='{resetLink}'>Set Password</a></p>");
 
         if (!response.IsSuccess)
         {
@@ -166,22 +137,19 @@ public class UsersController : Controller
         return RedirectToAction("Index");
     }
 
-    /// <summary>
-    /// Displays the form to edit an existing user.
-    /// </summary>
     [HttpGet("Edit/{id}")]
     public async Task<IActionResult> Edit(string id)
     {
         await SetUserProfilePictureAsync();
+        var user = await _userHelper.GetUserByIdAsync(id);
 
-        var user = await _userManager.FindByIdAsync(id);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction("Index");
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await _userHelper.GetUserRolesAsync(user);
 
         var model = new EditUserViewModel
         {
@@ -197,9 +165,6 @@ public class UsersController : Controller
         return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
     }
 
-    /// <summary>
-    /// Saves changes made to a user.
-    /// </summary>
     [HttpPost("Edit/{id}")]
     public async Task<IActionResult> Edit(EditUserViewModel model)
     {
@@ -209,7 +174,7 @@ public class UsersController : Controller
         if (!ModelState.IsValid)
             return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
 
-        var user = await _userManager.FindByIdAsync(model.Id);
+        var user = await _userHelper.GetUserByIdAsync(model.Id);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
@@ -227,47 +192,41 @@ public class UsersController : Controller
             user.ProfilePictureUrl = blobId.ToString();
         }
 
-        var result = await _userManager.UpdateAsync(user);
+        var currentRoles = await _userHelper.GetUserRolesAsync(user);
+        await _userHelper.RemoveUserFromRolesAsync(user, currentRoles);
+        await _userHelper.AddUserToRoleAsync(user, model.Role);
+
+        var result = await _userHelper.UpdateUserAsync(user);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-                ModelState.AddModelError("", error.Description);
-
+            ModelState.AddModelError(string.Empty, "Failed to update user.");
             return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
         }
-
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        await _userManager.RemoveFromRolesAsync(user, currentRoles);
-        await _userManager.AddToRoleAsync(user, model.Role);
 
         TempData["SuccessMessage"] = "User successfully updated!";
         return RedirectToAction("Index");
     }
 
-    /// <summary>
-    /// Displays detailed information about a specific user.
-    /// </summary>
     [HttpGet("Details/{id}")]
     public async Task<IActionResult> Details(string id)
     {
-        if (string.IsNullOrEmpty(id))
-            return NotFound();
+        if (string.IsNullOrEmpty(id)) return NotFound();
 
-        var user = await _userManager.FindByIdAsync(id);
+        var user = await _userHelper.GetUserByIdAsync(id);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction("Index");
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await _userHelper.GetUserRolesAsync(user);
 
         var model = new CreateUserViewModel
         {
             FullName = user.FullName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            Role = roles.FirstOrDefault() ?? "",
+            Role = roles.FirstOrDefault() ?? string.Empty,
             ProfilePictureUrl = user.ProfilePictureUrl,
             Roles = new List<string> { "Admin", "Employee" }
         };

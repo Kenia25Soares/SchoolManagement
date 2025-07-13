@@ -16,5 +16,9 @@ namespace SchoolManagement.Web.Data.Repository
         Task DeleteAsync(T entity);
 
         Task<bool> ExistAsync(int id);
+
+        Task<bool> SaveAllAsync();
+
+        Task CreateRangeAsync(IEnumerable<T> entities);
     }
 }

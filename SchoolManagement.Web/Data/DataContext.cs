@@ -18,6 +18,7 @@ namespace SchoolManagement.Web.Data
         public DbSet<Alert> Alerts { get; set; }
 
         public DbSet<GradeType> GradeTypes { get; set; }
+        public DbSet<StudentProfile> StudentProfiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

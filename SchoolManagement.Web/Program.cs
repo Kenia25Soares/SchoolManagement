@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using Swashbuckle.AspNetCore.Swagger;
@@ -155,12 +156,15 @@ builder.Services.AddScoped<ICourseHelper, CourseHelper>();
 builder.Services.AddScoped<IStudentGradeHelper, StudentGradeHelper>();
 builder.Services.AddScoped<IStudentAbsenceHelper, StudentAbsenceHelper>();
 // Repositories
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
-
+builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+builder.Services.AddScoped<IGradesRepository, GradesRepository>();
+builder.Services.AddScoped<IStudentGradeRepository, StudentGradeRepository>();
+builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
+builder.Services.AddScoped<IGenericRepository<StudentProfile>, GenericRepository<StudentProfile>>();
 
 var app = builder.Build();
 

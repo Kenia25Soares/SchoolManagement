@@ -66,13 +66,13 @@ namespace SchoolManagement.Web.Helpers
 
         public async Task<IEnumerable<StudentUserViewModel>> GetAllStudentsAsync()
         {
-            return await _context.Users
-                .OfType<SchoolManagement.Web.Data.Entities.StudentUser>()
-                .Select(s => new StudentUserViewModel
+            return await _context.StudentProfiles
+                .Include(sp => sp.User)
+                .Select(sp => new StudentUserViewModel
                 {
-                    Id = s.Id,
-                    FullName = s.FullName,
-                    StudentClassId = s.StudentClassId
+                    Id = sp.User.Id,
+                    FullName = sp.User.FullName,
+                    StudentClassId = sp.StudentClassId
                 })
                 .ToListAsync();
         }

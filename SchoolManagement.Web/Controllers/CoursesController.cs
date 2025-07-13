@@ -20,15 +20,24 @@ namespace SchoolManagement.Web.Controllers
         private readonly ICourseRepository _courseRepository;
         private readonly IConverterHelper _converterHelper;
         private readonly ICourseHelper _courseHelper;
+        private readonly IUserHelper _userHelper;
 
         public CoursesController(
             ICourseRepository courseRepository,
             IConverterHelper converterHelper,
-            ICourseHelper courseHelper)
+            ICourseHelper courseHelper,
+            IUserHelper userHelper)
         {
             _courseRepository = courseRepository;
             _converterHelper = converterHelper;
             _courseHelper = courseHelper;
+            _userHelper = userHelper;
+        }
+
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
         /// <summary>
@@ -37,6 +46,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            await SetUserProfilePictureAsync();
+
             var courses = await _courseRepository.GetAll()
                 .Include(c => c.CourseSubjects)
                 .ToListAsync();
@@ -49,8 +60,9 @@ namespace SchoolManagement.Web.Controllers
         /// Shows the form to create a new course.
         /// </summary>
         [HttpGet("Create")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            await SetUserProfilePictureAsync();
             return View("Views/AdminDashboard/Courses/Create.cshtml");
         }
 
@@ -79,6 +91,7 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
+            await SetUserProfilePictureAsync();
             var course = await _courseRepository.GetByIdAsync(id);
             if (course == null)
             {
@@ -115,6 +128,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            await SetUserProfilePictureAsync();
+
             var course = await _courseRepository.GetByIdAsync(id);
             if (course == null)
             {
@@ -153,6 +168,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
+            await SetUserProfilePictureAsync();
+
             var model = await _courseHelper.GetCourseManagementAsync(id);
             if (model == null)
             {
@@ -199,6 +216,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
+            await SetUserProfilePictureAsync();
+
             var course = await _courseRepository.GetByIdAsync(id);
             if (course == null)
             {
@@ -209,12 +228,6 @@ namespace SchoolManagement.Web.Controllers
             var model = _converterHelper.ToCourseViewModel(course);
 
             return View("Views/AdminDashboard/Courses/Details.cshtml", model);
-        }
-
-        public class AssignSubjectRequest
-        {
-            public int CourseId { get; set; }
-            public int SubjectId { get; set; }
         }
     }
 }
