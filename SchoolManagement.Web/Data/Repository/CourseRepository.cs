@@ -13,5 +13,26 @@ namespace SchoolManagement.Data.Repositories
         {
             _context = context;
         }
+
+        public async Task<Course> GetByIdWithAllRelationsAsync(int id)
+        {
+            return await _context.Courses
+                .Include(c => c.CourseSubjects)
+                .Include(c => c.StudentClasses)
+                .Include(c => c.StudentGrades)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task RemoveCourseSubjectsAsync(IEnumerable<CourseSubject> courseSubjects)
+        {
+            _context.CourseSubjects.RemoveRange(courseSubjects);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveStudentClassesAsync(IEnumerable<StudentClass> studentClasses)
+        {
+            _context.StudentClasses.RemoveRange(studentClasses);
+            await _context.SaveChangesAsync();
+        }
     }
 }

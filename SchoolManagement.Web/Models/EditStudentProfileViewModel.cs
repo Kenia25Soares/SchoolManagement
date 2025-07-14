@@ -19,7 +19,6 @@ namespace SchoolManagement.Web.Models
         public string? OfficialPhotoUrl { get; set; }
 
         [Display(Name = "Official Photo")]
-        [Required(ErrorMessage = "Official photo is required.")]
         [DataType(DataType.Upload)]
         public IFormFile? OfficialPhoto { get; set; }
 

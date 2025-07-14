@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using SchoolManagement.Web.Data.Entities;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
+using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -12,33 +13,34 @@ namespace SchoolManagement.Web.Controllers
     [Authorize(Roles = "Employee")]
     public class EmployeeDashboardController : Controller
     {
+        private readonly IGenericRepository<StudentProfile> _studentProfileRepo;
+        private readonly IStudentClassRepository _studentClassRepo;
         private readonly IUserHelper _userHelper;
 
-        public EmployeeDashboardController(IUserHelper userHelper)
+        public EmployeeDashboardController(
+            IGenericRepository<StudentProfile> studentProfileRepo,
+            IStudentClassRepository studentClassRepo,
+            IUserHelper userHelper)
         {
+            _studentProfileRepo = studentProfileRepo;
+            _studentClassRepo = studentClassRepo;
             _userHelper = userHelper;
         }
 
-
-        /// <summary>
-        /// Atribui a foto de perfil à ViewData.
-        /// </summary>
-        private async Task SetUserProfilePictureAsync()
-        {
-            
-            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
-            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
-        }
-
-
-        /// <summary>
-        /// GET: Dashboard do Employee
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            await SetUserProfilePictureAsync();
-            return View();
+            var students = await _studentProfileRepo.GetAll().ToListAsync();
+            var classes = await _studentClassRepo.GetAll().ToListAsync();
+
+            var model = new EmployeeDashboardViewModel
+            {
+                TotalStudents = students.Count,
+                OpenClasses = classes.Count(c => !c.IsClosed),
+                ClosedClasses = classes.Count(c => c.IsClosed)
+            };
+
+            return View("Views/EmployeeDashboard/Index.cshtml", model);
         }
     }
 }

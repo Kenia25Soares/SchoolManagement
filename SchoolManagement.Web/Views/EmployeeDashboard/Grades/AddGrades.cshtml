@@ -31,74 +31,78 @@
     <h1 class="mt-4">Employee Dashboard</h1>
     <p>Add grades for <strong>@ViewBag.StudentName</strong> here.</p>
 
-    <form asp-action="AddGrades" method="post">
-        <input type="hidden" asp-for="StudentId" />
+    <div class="card shadow-sm p-4 mt-3">
+        <h5 class="card-title mb-4">Add Grades</h5>
 
-        <table class="table table-bordered" id="gradesTable">
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Grade Type</th>
-                    <th>Grade</th>
-                    <th class="text-center">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.Grades.Count; i++)
-                {
+        <form asp-action="AddGrades" method="post">
+            <input type="hidden" asp-for="StudentId" />
+
+            <table class="table table-bordered" id="gradesTable">
+                <thead>
                     <tr>
-                        <td>
-                            <select name="Grades[@i].SubjectId" class="form-select" required>
-                                <option value="">-- Select Subject --</option>
-                                @Html.Raw(GetSubjectOptions(Model.Grades[i].SubjectId))
-                            </select>
-                        </td>
-                        <td>
-                            <select name="Grades[@i].GradeTypeId" class="form-select" required>
-                                <option value="">-- Select Grade Type --</option>
-                                @Html.Raw(GetGradeTypeOptions(Model.Grades[i].GradeTypeId))
-                            </select>
-                        </td>
-                        <td>
-                            <input name="Grades[@i].Grade" class="form-control" type="number" step="0.01" min="0" max="20" value="@Model.Grades[i].Grade" />
-                        </td>
-                        <td id="removeBtnCell-@i" class="d-flex justify-content-center align-items-center py-2">
-                            <ejs-button id="btnRemoveRow-@i"
-                                        type="button"
-                                        iconCss="fas fa-minus"
-                                        cssClass="e-danger e-plus"
-                                        onclick="removeRow(this)">
-                            </ejs-button>
-                        </td>
+                        <th>Subject</th>
+                        <th>Grade Type</th>
+                        <th>Grade</th>
+                        <th class="text-center">Action</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Grades.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <select name="Grades[@i].SubjectId" class="form-select" required>
+                                    <option value="">-- Select Subject --</option>
+                                    @Html.Raw(GetSubjectOptions(Model.Grades[i].SubjectId))
+                                </select>
+                            </td>
+                            <td>
+                                <select name="Grades[@i].GradeTypeId" class="form-select" required>
+                                    <option value="">-- Select Grade Type --</option>
+                                    @Html.Raw(GetGradeTypeOptions(Model.Grades[i].GradeTypeId))
+                                </select>
+                            </td>
+                            <td>
+                                <input name="Grades[@i].Grade" class="form-control" type="number" step="0.01" min="0" max="20" value="@Model.Grades[i].Grade" />
+                            </td>
+                            <td id="removeBtnCell-@i" class="d-flex justify-content-center align-items-center py-2">
+                                <ejs-button id="btnRemoveRow-@i"
+                                            type="button"
+                                            iconCss="fas fa-minus"
+                                            cssClass="e-danger e-plus"
+                                            onclick="removeRow(this)">
+                                </ejs-button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
 
-        <ejs-button id="btnAddGradeRow"
-                    content="Add Row"
-                    iconCss="fas fa-plus"
-                    cssClass="e-success e-plus mb-3"
-                    iconPosition="Left"
-                    onclick="addRow()">
-        </ejs-button>
-
-        <div class="d-flex justify-content-end gap-2 mt-4">
-            <ejs-button id="btnSaveGrades"
-                        type="submit"
-                        content="Save Grades"
-                        iconCss="fas fa-save"
-                        cssClass="e-primary e-plus">
+            <ejs-button id="btnAddGradeRow"
+                        content="Add Row"
+                        iconCss="fas fa-plus"
+                        cssClass="e-success e-plus mb-3"
+                        iconPosition="Left"
+                        onclick="addRow()">
             </ejs-button>
 
-            <ejs-button id="btnBackGrades"
-                        content="Back"
-                        iconCss="fas fa-arrow-left"
-                        cssClass="e-secondary e-plus"
-                        onclick="location.href='/EmployeeDashboard/Grades'">
-            </ejs-button>
-        </div>
-    </form>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <ejs-button id="btnSaveGrades"
+                            type="submit"
+                            content="Save Grades"
+                            iconCss="fas fa-save"
+                            cssClass="e-primary e-plus">
+                </ejs-button>
+
+                <ejs-button id="btnBackGrades"
+                            content="Back"
+                            iconCss="fas fa-arrow-left"
+                            cssClass="e-secondary e-plus"
+                            onclick="location.href='/EmployeeDashboard/Grades'">
+                </ejs-button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @section Scripts {

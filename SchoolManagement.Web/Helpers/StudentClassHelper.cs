@@ -21,6 +21,7 @@ namespace SchoolManagement.Web.Helpers
         {
             var list = await _context.StudentClasses
                 .Include(sc => sc.Course)
+                .Include(sc => sc.Students)
                 .ToListAsync();
 
             return list.Select(sc => new StudentClassViewModel
@@ -30,7 +31,8 @@ namespace SchoolManagement.Web.Helpers
                 AcademicYear = sc.AcademicYear,
                 Shift = sc.Shift,
                 CourseId = sc.CourseId,
-                CourseName = sc.Course?.Name
+                CourseName = sc.Course?.Name,
+                StudentCount = sc.Students?.Count ?? 0
             });
         }
 
@@ -68,6 +70,7 @@ namespace SchoolManagement.Web.Helpers
         {
             return await _context.StudentProfiles
                 .Include(sp => sp.User)
+                .Where(sp => sp.User != null)
                 .Select(sp => new StudentUserViewModel
                 {
                     Id = sp.User.Id,

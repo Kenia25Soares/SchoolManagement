@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolManagement.Web.Data;
 
@@ -11,9 +12,11 @@ using SchoolManagement.Web.Data;
 namespace SchoolManagement.Web.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250713105435_AddStudentGradesToCourse")]
+    partial class AddStudentGradesToCourse
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -267,6 +270,8 @@ namespace SchoolManagement.Web.Migrations
                     b.ToTable("AspNetUsers", (string)null);
 
                     b.HasDiscriminator<string>("UserType").HasValue("ApplicationUser");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("SchoolManagement.Web.Data.Entities.Course", b =>
@@ -462,6 +467,13 @@ namespace SchoolManagement.Web.Migrations
                     b.ToTable("StudentProfiles");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Web.Data.Entities.StudentUser", b =>
+                {
+                    b.HasBaseType("SchoolManagement.Web.Data.Entities.ApplicationUser");
+
+                    b.HasDiscriminator().HasValue("StudentUser");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -571,7 +583,7 @@ namespace SchoolManagement.Web.Migrations
                         .HasForeignKey("GradeTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("SchoolManagement.Web.Data.Entities.ApplicationUser", "Student")
+                    b.HasOne("SchoolManagement.Web.Data.Entities.StudentUser", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -599,7 +611,7 @@ namespace SchoolManagement.Web.Migrations
                         .HasForeignKey("StudentClassId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("SchoolManagement.Web.Data.Entities.ApplicationUser", "User")
+                    b.HasOne("SchoolManagement.Web.Data.Entities.StudentUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)

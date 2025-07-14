@@ -113,9 +113,14 @@ namespace SchoolManagement.Web.Helpers
             return await _userManager.GetUserAsync(principal);
         }
 
-        public async Task<int> GetUsersCountAsync()
+        public async Task<int> GetUsersCountByRolesAsync()
         {
-            return await _userManager.Users.CountAsync();
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+            var employeeUsers = await _userManager.GetUsersInRoleAsync("Employee");
+
+            var total = adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
+
+            return total;
         }
 
         public async Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password)

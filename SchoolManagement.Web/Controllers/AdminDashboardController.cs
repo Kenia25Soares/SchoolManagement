@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
@@ -53,7 +53,7 @@ namespace SchoolManagement.Web.Controllers
 
             var stats = new AdminDashboardViewModel
             {
-                TotalUsers = await _userHelper.GetUsersCountAsync(),
+                TotalUsers = await _userHelper.GetUsersCountByRolesAsync(),
                 TotalCourses = await _dashboardRepository.GetCoursesCountAsync(),
                 TotalSubjects = await _dashboardRepository.GetSubjectsCountAsync()
             };

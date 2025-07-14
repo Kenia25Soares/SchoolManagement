@@ -3,6 +3,7 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Students Grades Management";
+    var selectedClassId = Model.Classes.FirstOrDefault(c => c.Selected)?.Value ?? Model.Classes.First().Value;
 }
 
 <div class="container-fluid">
@@ -35,9 +36,8 @@
                             </select>
                         </form>
 
-                        @if (!Model.IsClassClosed && Model.Classes.Any(c => c.Selected))
+                        @if (!Model.IsClassClosed)
                         {
-                            var selectedClassId = Model.Classes.First(c => c.Selected).Value;
                             <ejs-button id="btnCloseClass"
                                         content="Close Class (End Year)"
                                         iconCss="fas fa-lock"
@@ -50,7 +50,6 @@
 
                     <!-- Students Grades Grid -->
                     <div id="GradesGrid"></div>
-
                 </div>
             </div>
         </div>
@@ -58,7 +57,7 @@
 </div>
 
 <!-- Close Class Confirmation Modal -->
-@if (!Model.IsClassClosed && Model.Classes.Any(c => c.Selected))
+@if (!Model.IsClassClosed)
 {
     <div class="modal fade" id="closeClassModal" tabindex="-1" aria-labelledby="closeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">

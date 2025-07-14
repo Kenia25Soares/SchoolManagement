@@ -7,7 +7,7 @@ public class StudentProfile : IEntity
 
     [Required]
     public string UserId { get; set; } = null!;
-    public StudentUser User { get; set; } = null!;
+    public ApplicationUser User { get; set; } = null!;
 
     [Required]
     public DateTime DateOfBirth { get; set; }
@@ -16,7 +16,6 @@ public class StudentProfile : IEntity
 
     public bool IsExcludedDueToAbsences { get; set; }
 
-    [Required]
     public string? OfficialPhotoUrl { get; set; }
 
     public int? StudentClassId { get; set; }

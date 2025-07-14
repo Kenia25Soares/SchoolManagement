@@ -7,29 +7,20 @@ namespace SchoolManagement.Web.Data.Entities
     {
         public int Id { get; set; }
 
-
         [Required]
         public string Title { get; set; } = null!;
-
 
         [Required]
         public string Description { get; set; } = null!;
 
-
         [Required]
         public AlertPriority Priority { get; set; }
 
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
 
         public bool IsResolved { get; set; } = false;
 
-
-        // FK para Employee que criou
-        public string CreatedById { get; set; } = null!;
-
-
-        public ApplicationUser CreatedBy { get; set; } = null!;
+        public string? CreatedById { get; set; }
+        public ApplicationUser? CreatedBy { get; set; }
     }
 }

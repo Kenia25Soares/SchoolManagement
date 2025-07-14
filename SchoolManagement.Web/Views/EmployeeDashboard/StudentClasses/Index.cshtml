@@ -86,6 +86,15 @@
                 { field: 'Shift', headerText: 'Shift', width: 120 },
                 { field: 'CourseName', headerText: 'Course', width: 180 },
                 {
+                    field: 'StudentCount',
+                    headerText: 'Students',
+                    width: 120,
+                    textAlign: 'Center',
+                    template: function(data) {
+                        return `<span class="badge bg-primary">${data.StudentCount}</span>`;
+                    }
+                },
+                {
                     headerText: 'Actions',
                     width: 260,
                     textAlign: 'Center',

@@ -27,5 +27,7 @@ namespace SchoolManagement.Web.Models
         public string CourseName { get; set; }
         [ValidateNever]
         public IEnumerable<SelectListItem> Courses { get; set; }
+
+        public int StudentCount { get; set; }
     }
 }

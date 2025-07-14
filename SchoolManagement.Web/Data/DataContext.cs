@@ -27,8 +27,7 @@ namespace SchoolManagement.Web.Data
             // Discriminador p diferentes tipos de utilizador
             builder.Entity<ApplicationUser>()
                 .HasDiscriminator<string>("UserType")
-                .HasValue<ApplicationUser>("ApplicationUser")
-                .HasValue<StudentUser>("StudentUser");
+                .HasValue<ApplicationUser>("ApplicationUser");
 
             // Chave composta para CourseSubject
             builder.Entity<CourseSubject>()
@@ -54,6 +53,12 @@ namespace SchoolManagement.Web.Data
                 .WithMany()
                 .HasForeignKey(sg => sg.CourseId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Alert>()
+                .HasOne(a => a.CreatedBy)
+                .WithMany()
+                .HasForeignKey(a => a.CreatedById)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Impede delete em cascata 
             foreach (var relationship in builder.Model.GetEntityTypes()

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -6,10 +7,6 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -22,19 +19,22 @@ namespace SchoolManagement.Web.Controllers
         private readonly IGenericRepository<StudentProfile> _studentProfileRepository;
         private readonly IBlobHelper _blobHelper;
         private readonly IMailHelper _mailHelper;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public StudentsController(
             IStudentClassRepository classRepository,
             IStudentGradeRepository gradeRepository,
             IGenericRepository<StudentProfile> studentProfileRepository,
             IBlobHelper blobHelper,
-            IMailHelper mailHelper)
+            IMailHelper mailHelper,
+            UserManager<ApplicationUser> userManager)
         {
             _classRepository = classRepository;
             _gradeRepository = gradeRepository;
             _studentProfileRepository = studentProfileRepository;
             _blobHelper = blobHelper;
             _mailHelper = mailHelper;
+            _userManager = userManager;
         }
 
         private async Task LoadClassesAsync(object selected = null)
@@ -43,7 +43,7 @@ namespace SchoolManagement.Web.Controllers
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
-        [HttpGet()]
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var students = await _studentProfileRepository.GetAll()
@@ -112,7 +112,7 @@ namespace SchoolManagement.Web.Controllers
                 ? await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures")
                 : Guid.Empty;
 
-            var user = new StudentUser
+            var user = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
@@ -121,9 +121,18 @@ namespace SchoolManagement.Web.Controllers
                 ProfilePictureUrl = profileBlobId == Guid.Empty ? null : profileBlobId.ToString()
             };
 
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
+            }
+
+            await _userManager.AddToRoleAsync(user, "Student");
+
             var student = new StudentProfile
             {
-                User = user,
+                UserId = user.Id,
                 Address = model.Address,
                 DateOfBirth = model.DateOfBirth ?? DateTime.MinValue,
                 StudentClassId = model.StudentClassId,
@@ -133,7 +142,7 @@ namespace SchoolManagement.Web.Controllers
 
             await _studentProfileRepository.CreateAsync(student);
 
-            var token = Guid.NewGuid().ToString();
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var resetLink = Url.Action("ResetPassword", "Account", new { token, email = user.Email }, Request.Scheme);
 
             var emailBody = $@"

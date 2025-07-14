@@ -148,17 +148,35 @@ namespace SchoolManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var entity = await _courseRepository.GetByIdAsync(id);
-            if (entity != null)
-            {
-                await _courseRepository.DeleteAsync(entity);
-                TempData["SuccessMessage"] = "Course successfully deleted.";
-            }
-            else
+            var course = await _courseRepository.GetByIdWithAllRelationsAsync(id);
+            if (course == null)
             {
                 TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
             }
 
+            // Se houver notas associadas, não permitir a exclusão
+            if (course.StudentGrades != null && course.StudentGrades.Any())
+            {
+                TempData["ErrorMessage"] = "This course has student grades assigned and cannot be deleted.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Remove outras entidades relacionadas (subjects, classes)
+            if (course.CourseSubjects != null && course.CourseSubjects.Any())
+            {
+                await _courseRepository.RemoveCourseSubjectsAsync(course.CourseSubjects);
+            }
+
+            if (course.StudentClasses != null && course.StudentClasses.Any())
+            {
+                TempData["ErrorMessage"] = "This course has student classes assigned and cannot be deleted.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Agora pode excluir o curso
+            await _courseRepository.DeleteAsync(course);
+            TempData["SuccessMessage"] = "Course successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
 

@@ -23,7 +23,7 @@ namespace SchoolManagement.Web.Helpers
         Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string password);
         Task<ApplicationUser> GetUserAsync(ClaimsPrincipal principal);
         Task<SelectList> GetClassesSelectListAsync(int? selectedClassId);
-        Task<int> GetUsersCountAsync();
+        Task<int> GetUsersCountByRolesAsync();
         Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password);
         Task<List<ApplicationUser>> GetAllUsersAsync();
 

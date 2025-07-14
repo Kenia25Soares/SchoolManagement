@@ -112,11 +112,17 @@ public class UsersController : Controller
             ProfilePictureUrl = blobId == Guid.Empty ? null : blobId.ToString()
         };
 
-        var result = await _userHelper.AddUserAsync(user, "Default123!"); // Placeholder password
+        var result = await _userHelper.AddUserAsync(user, "Default123!");
         if (!result.Succeeded)
         {
-            ModelState.AddModelError(string.Empty, "User creation failed.");
-            return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+            }
         }
 
         await _userHelper.AddUserToRoleAsync(user, model.Role);

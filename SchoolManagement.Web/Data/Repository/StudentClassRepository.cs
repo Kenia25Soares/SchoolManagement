@@ -23,21 +23,22 @@ public class StudentClassRepository : GenericRepository<StudentClass>, IStudentC
     public async Task<StudentClass> GetByIdWithDetailsAsync(int id)
     {
         return await _context.StudentClasses
-            .Include(c => c.Students)
-            .FirstOrDefaultAsync(c => c.Id == id);
+        .Include(sc => sc.Students)
+        .ThenInclude(sp => sp.User)
+        .FirstOrDefaultAsync(sc => sc.Id == id);
     }
 
-    public async Task<List<StudentUser>> GetAllStudentEntitiesAsync()
+    public async Task<List<ApplicationUser>> GetAllStudentEntitiesAsync()
     {
         return await _context.Users
-            .OfType<StudentUser>()
+            .OfType<ApplicationUser>()
             .ToListAsync();
     }
 
-    public async Task<StudentUser> GetStudentByIdAsync(string studentId)
+    public async Task<ApplicationUser> GetStudentByIdAsync(string studentId)
     {
         return await _context.Users
-            .OfType<StudentUser>()
+            .OfType<ApplicationUser>()
             .FirstOrDefaultAsync(s => s.Id == studentId);
     }
 

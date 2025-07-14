@@ -48,22 +48,27 @@ namespace SchoolManagement.Web.Controllers
 
             var grades = await _gradesRepository.GetGradesByStudentIdsAsync(studentIds);
             var averages = grades
-                .GroupBy(g => g.StudentId)
-                .ToDictionary(g => g.Key, g =>
-                {
-                    double weightedSum = 0, totalWeight = 0;
-                    foreach (var group in g.GroupBy(x => x.GradeType))
-                    {
-                        var weight = group.Key?.Weight ?? 0;
-                        if (weight > 0)
-                        {
-                            var avg = group.Average(x => x.Grade ?? 0);
-                            weightedSum += avg * weight;
-                            totalWeight += weight;
-                        }
-                    }
-                    return totalWeight > 0 ? weightedSum / totalWeight : 0;
-                });
+                             .GroupBy(g => g.StudentId)
+                             .ToDictionary(g => g.Key, g =>
+                             {
+                                 double weightedSum = 0, totalWeight = 0;
+                                 foreach (var group in g.GroupBy(x => x.GradeType))
+                                 {
+                                     var weight = group.Key?.Weight ?? 0;
+                                     if (weight > 0)
+                                     {
+                                         foreach (var grade in group)
+                                         {
+                                             if (grade.Grade.HasValue)
+                                             {
+                                                 weightedSum += grade.Grade.Value * weight;
+                                                 totalWeight += weight;
+                                             }
+                                         }
+                                     }
+                                 }
+                                 return totalWeight > 0 ? weightedSum / totalWeight : 0;
+                             });
 
             bool isClassClosed = classId.HasValue && await _gradesRepository.IsClassClosedAsync(classId.Value);
 

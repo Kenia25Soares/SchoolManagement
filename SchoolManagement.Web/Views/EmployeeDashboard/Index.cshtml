@@ -1,4 +1,6 @@
-﻿@{
+﻿@model EmployeeDashboardViewModel
+
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Employee Dashboard";
 }
@@ -11,6 +13,9 @@
         <!-- STUDENTS -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
+                <div class="position-absolute top-0 end-0 p-2">
+                    <span class="badge bg-primary">@Model.TotalStudents</span>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">Students</h5>
                     <p class="card-text">Manage student enrollment.</p>
@@ -27,6 +32,10 @@
         <!-- STUDENT CLASSES -->
         <div class="col-md-4 position-relative">
             <div class="card shadow-sm">
+                <div class="position-absolute top-0 end-0 p-2 d-flex gap-1">
+                    <span class="badge bg-success" title="Open">@Model.OpenClasses</span>
+                    <span class="badge bg-danger" title="Closed">@Model.ClosedClasses</span>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">Student Classes</h5>
                     <p class="card-text">Create and manage student classes.</p>

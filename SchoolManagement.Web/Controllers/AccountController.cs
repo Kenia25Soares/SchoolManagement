@@ -34,6 +34,12 @@ namespace SchoolManagement.Web.Controllers
             _studentProfileRepository = studentProfileRepository;
         }
 
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
+
         public IActionResult Login() => View();
 
         [HttpPost]
@@ -135,6 +141,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
+            await SetUserProfilePictureAsync();
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
@@ -179,10 +187,13 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
+        [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> EditStudentProfile()
         {
-            var user = await _userManager.GetUserAsync(User) as StudentUser;
+            await SetUserProfilePictureAsync();
+
+            var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
             var profile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
@@ -205,21 +216,29 @@ namespace SchoolManagement.Web.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "Student")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStudentProfile(EditStudentProfileViewModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(model.StudentClassId);
-                return View(model);
-            }
-
-            var user = await _userManager.FindByIdAsync(model.Id) as StudentUser;
+            var user = await _userManager.FindByIdAsync(model.Id);
             if (user == null) return NotFound();
 
             var profile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
             if (profile == null) return NotFound();
+
+            if (model.OfficialPhoto == null && string.IsNullOrEmpty(profile.OfficialPhotoUrl))
+            {
+                ModelState.AddModelError(nameof(model.OfficialPhoto), "Official photo is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                model.OfficialPhotoUrl = profile.OfficialPhotoUrl;
+
+                ViewBag.Classes = await _userHelper.GetClassesSelectListAsync(model.StudentClassId);
+                return View(model);
+            }
 
             user.FullName = model.FullName;
             user.Email = model.Email;

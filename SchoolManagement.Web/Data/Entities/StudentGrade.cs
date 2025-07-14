@@ -8,7 +8,7 @@ namespace SchoolManagement.Web.Data.Entities
         public int Id { get; set; }
 
         public string StudentId { get; set; }
-        public StudentUser Student { get; set; }
+        public ApplicationUser Student { get; set; }
 
         public int SubjectId { get; set; }
         public Subject Subject { get; set; }
