@@ -25,6 +25,7 @@ namespace SchoolManagement.Web.Controllers
             _studentClassRepository = studentClassRepository;
         }
 
+
         [HttpGet("")]
         public async Task<IActionResult> Index(int? classId)
         {
@@ -90,6 +91,7 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/Index.cshtml", model);
         }
 
+
         [HttpGet("AddGrades")]
         public async Task<IActionResult> AddGrades(string studentId)
         {
@@ -115,6 +117,7 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
         }
 
+
         [HttpPost("AddGrades")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddGrades(AddGradesViewModel model)
@@ -124,6 +127,23 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = "Student not found or class is closed.";
                 return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
+            }
+
+            // Validação de notas
+            foreach (var g in model.Grades)
+            {
+                if (g.Grade.HasValue && g.Grade.Value > 20)
+                {
+                    ModelState.AddModelError("", "Grades cannot be greater than 20.");
+                    var subjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
+                    var gradeTypes = await _gradesRepository.GetGradeTypesAsync();
+
+                    model.Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name });
+                    model.GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name });
+
+                    ViewBag.StudentName = student.User.FullName;
+                    return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
+                }
             }
 
             var grades = model.Grades
@@ -145,6 +165,8 @@ namespace SchoolManagement.Web.Controllers
             TempData["SuccessMessage"] = "Grades added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
+
+
 
         [HttpPost("CloseClass")]
         [ValidateAntiForgeryToken]
@@ -170,6 +192,7 @@ namespace SchoolManagement.Web.Controllers
             TempData["SuccessMessage"] = "Class successfully closed.";
             return RedirectToAction(nameof(Index), new { classId });
         }
+
 
         [HttpGet("Details")]
         public async Task<IActionResult> Details(string studentId)
@@ -249,6 +272,7 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Grades/Details.cshtml", model);
         }
 
+
         [HttpGet("AddAbsences")]
         public async Task<IActionResult> AddAbsences(string studentId)
         {
@@ -274,6 +298,7 @@ namespace SchoolManagement.Web.Controllers
             ViewBag.StudentName = student.User.FullName;
             return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
         }
+
 
         [HttpPost("AddAbsences")]
         [ValidateAntiForgeryToken]
@@ -311,6 +336,7 @@ namespace SchoolManagement.Web.Controllers
             TempData["SuccessMessage"] = "Absences added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
+
 
         [HttpGet("ViewAbsences")]
         public async Task<IActionResult> ViewAbsences(string studentId)
