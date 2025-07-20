@@ -8,7 +8,7 @@ namespace SchoolManagement.Web.Data
 {
     public class SeedDb
     {
-        private readonly DataContext _context;
+        private readonly DataContext _context;  // ligaçao a base dados
         private readonly IUserHelper _userHelper;
 
         public SeedDb(DataContext context, IUserHelper userHelper)
@@ -26,7 +26,7 @@ namespace SchoolManagement.Web.Data
             await _userHelper.CheckRoleAsync("Employee");
             await _userHelper.CheckRoleAsync("Student");
 
-            // Criar o utilizador Admin se não existir
+            // Criar o Admin se não existir
             var email = "admin@school.com";
             var user = await _userHelper.GetUserByEmailAsync(email);
 

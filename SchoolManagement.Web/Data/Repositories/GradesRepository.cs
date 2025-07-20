@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -82,33 +81,10 @@ namespace SchoolManagement.Web.Data.Repositories
             return await _context.GradeTypes.ToListAsync();
         }
 
-        public async Task<List<StudentGrade>> GetGradesWithSubjectAndTypeAsync(string studentId)
-        {
-            return await _context.StudentGrades
-                .Where(g => g.StudentId == studentId)
-                .Include(g => g.Subject)
-                .Include(g => g.GradeType)
-                .ToListAsync();
-        }
-
-        public async Task<List<StudentGrade>> GetAbsencesWithSubjectAsync(string studentId)
-        {
-            return await _context.StudentGrades
-                .Where(g => g.StudentId == studentId && g.Absences > 0)
-                .Include(g => g.Subject)
-                .ToListAsync();
-        }
-
-        public async Task<StudentClass> GetClassByIdAsync(int classId)
-        {
-            return await _context.StudentClasses
-                .FirstOrDefaultAsync(c => c.Id == classId);
-        }
-
         public async Task<List<StudentGrade>> GetGradesWithSubjectsAndTypesAsync(string studentId)
         {
             return await _context.StudentGrades
-                .Where(g => g.StudentId == studentId && g.GradeTypeId != null)
+                .Where(g => g.StudentId == studentId)
                 .Include(g => g.Subject)
                 .Include(g => g.GradeType)
                 .ToListAsync();
@@ -121,16 +97,21 @@ namespace SchoolManagement.Web.Data.Repositories
                 .Include(g => g.Subject)
                 .ToListAsync();
         }
+
+        public async Task<StudentClass?> GetClassByIdAsync(int classId)
+        {
+            return await _context.StudentClasses
+                .FirstOrDefaultAsync(c => c.Id == classId);
+        }
+
         public async Task AddGradesAsync(IEnumerable<StudentGrade> grades)
         {
-            await CreateRangeAsync(grades);
+            await CreateRangeAsync(grades); 
         }
 
         public async Task AddAbsencesAsync(IEnumerable<StudentGrade> absences)
         {
-            await CreateRangeAsync(absences);
+            await CreateRangeAsync(absences); 
         }
-
-
     }
 }

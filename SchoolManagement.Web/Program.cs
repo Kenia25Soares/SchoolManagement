@@ -7,11 +7,8 @@ using SchoolManagement.Data.Repositories;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
-using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
-using Swashbuckle.AspNetCore.Swagger;
 using Syncfusion.Licensing;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 
@@ -145,8 +142,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Helpers
+// Services
 builder.Services.AddTransient<SeedDb>();
+
+// Helpers
 builder.Services.AddScoped<IBlobHelper, BlobHelper>();
 builder.Services.AddScoped<IUserHelper, UserHelper>();
 builder.Services.AddTransient<IMailHelper, MailHelper>();
@@ -162,7 +161,6 @@ builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
 builder.Services.AddScoped<IGradesRepository, GradesRepository>();
-builder.Services.AddScoped<IStudentGradeRepository, StudentGradeRepository>();
 builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
 builder.Services.AddScoped<IGenericRepository<StudentProfile>, GenericRepository<StudentProfile>>();
 
@@ -208,7 +206,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var seeder = services.GetRequiredService<SeedDb>();
-    await seeder.SeedAsync(); // <- Cria o Admin user
+    await seeder.SeedAsync(); // Cria o Admin user
 }
 
-await app.RunAsync(); 
+await app.RunAsync();

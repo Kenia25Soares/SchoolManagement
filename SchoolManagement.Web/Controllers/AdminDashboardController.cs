@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -28,28 +26,47 @@ namespace SchoolManagement.Web.Controllers
             _dashboardRepository = dashboardRepository;
         }
 
+        /// <summary>
+        /// Sets the current user's profile picture in the view data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         private async Task SetUserProfilePictureAsync()
         {
-            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
+
+        /// <summary>
+        /// Displays the main dashboard view for the admin, including alerts and statistics.
+        /// </summary>
+        /// <returns>The admin dashboard view with alert and statistics data.</returns>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             await SetUserProfilePictureAsync();
 
-            var alerts = _alertRepository.GetAll()
-                .Select(a => new AlertViewModel
-                {
-                    Id = a.Id,
-                    Title = a.Title,
-                    Description = a.Description,
-                    Priority = a.Priority,
-                    IsResolved = a.IsResolved,
-                    CreatedBy = a.CreatedBy.FullName
-                })
-                .ToList();
+            var alertsData = await _alertRepository.GetAllWithCreatorAsync();
+
+            var alerts = alertsData.Select(a => new AlertViewModel
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Priority = a.Priority,
+                IsResolved = a.IsResolved,
+                CreatedBy = a.CreatedBy?.FullName ?? "Unknown" 
+            }).ToList();
+            //.Select(a => new AlertViewModel
+            //{
+            //    Id = a.Id,
+            //    Title = a.Title,
+            //    Description = a.Description,
+            //    Priority = a.Priority,
+            //    IsResolved = a.IsResolved,
+            //    CreatedBy = a.CreatedBy.FullName
+            //})
+            //.ToList();
 
             var stats = new AdminDashboardViewModel
             {
@@ -65,6 +82,7 @@ namespace SchoolManagement.Web.Controllers
             };
 
             return View(model);
+            //return View("Views/AdminDashboard/Index.cshtml", model);
         }
     }
 }

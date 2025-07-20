@@ -1,83 +1,109 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
+using SchoolManagement.Data.Repositories;
+using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Helpers
 {
     public class StudentClassHelper : IStudentClassHelper
     {
-        private readonly DataContext _context;
+        private readonly IStudentClassRepository _studentClassRepository;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IStudentProfileRepository _studentProfileRepository;
 
-        public StudentClassHelper(DataContext context)
+        public StudentClassHelper(
+            IStudentClassRepository studentClassRepository,
+            ICourseRepository courseRepository,
+            IStudentProfileRepository studentProfileRepository)
         {
-            _context = context;
+            _studentClassRepository = studentClassRepository;
+            _courseRepository = courseRepository;
+            _studentProfileRepository = studentProfileRepository;
         }
 
-        public async Task<IEnumerable<StudentClassViewModel>> GetAllAsync()
-        {
-            var list = await _context.StudentClasses
-                .Include(sc => sc.Course)
-                .Include(sc => sc.Students)
-                .ToListAsync();
 
-            return list.Select(sc => new StudentClassViewModel
+        public async Task<List<StudentClassViewModel>> GetAllAsync()
+        {
+            var classes = await _studentClassRepository.GetAll()
+                                                        .Include(c => c.Course)
+                                                        .Include(c => c.Students)
+                                                        .OrderBy(c => c.Name)
+                                                        .ToListAsync();
+
+            return classes.Select(c => new StudentClassViewModel
             {
-                Id = sc.Id,
-                Name = sc.Name,
-                AcademicYear = sc.AcademicYear,
-                Shift = sc.Shift,
-                CourseId = sc.CourseId,
-                CourseName = sc.Course?.Name,
-                StudentCount = sc.Students?.Count ?? 0
-            });
+                Id = c.Id,
+                Name = c.Name,
+                AcademicYear = c.AcademicYear,
+                Shift = c.Shift,
+                CourseId = c.CourseId,
+                CourseName = c.Course?.Name ?? "—",
+                StudentCount = c.Students?.Count ?? 0
+            }).ToList();
         }
 
-        public async Task<StudentClassViewModel> GetByIdAsync(int id)
+        public async Task<StudentClassViewModel?> GetByIdAsync(int id)
         {
-            var sc = await _context.StudentClasses
-                .Include(s => s.Course)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (sc == null) return null;
+            var entity = await _studentClassRepository.GetByIdWithDetailsAsync(id);
+            if (entity == null) return null;
 
             return new StudentClassViewModel
             {
-                Id = sc.Id,
-                Name = sc.Name,
-                AcademicYear = sc.AcademicYear,
-                Shift = sc.Shift,
-                CourseId = sc.CourseId,
-                CourseName = sc.Course?.Name
+                Id = entity.Id,
+                Name = entity.Name,
+                AcademicYear = entity.AcademicYear,
+                Shift = entity.Shift,
+                CourseId = entity.CourseId,
+                Students = entity.Students?.Select(s => s.User.FullName).ToList() ?? new List<string>()
             };
         }
 
+       
         public async Task<IEnumerable<SelectListItem>> GetCoursesSelectListAsync(int? selectedCourseId = null)
         {
-            var courses = await _context.Courses.OrderBy(c => c.Name).ToListAsync();
+            var courses = await _courseRepository.GetAll().OrderBy(c => c.Name).ToListAsync();
             return courses.Select(c => new SelectListItem
             {
-                Text = c.Name,
                 Value = c.Id.ToString(),
+                Text = c.Name,
                 Selected = selectedCourseId.HasValue && selectedCourseId.Value == c.Id
-            });
+            }).ToList();
         }
 
-        public async Task<IEnumerable<StudentUserViewModel>> GetAllStudentsAsync()
+        
+        public async Task<List<ApplicationUser>> GetAllStudentsAsync()
         {
-            return await _context.StudentProfiles
-                .Include(sp => sp.User)
-                .Where(sp => sp.User != null)
-                .Select(sp => new StudentUserViewModel
-                {
-                    Id = sp.User.Id,
-                    FullName = sp.User.FullName,
-                    StudentClassId = sp.StudentClassId
-                })
-                .ToListAsync();
+            return await _studentClassRepository.GetAllStudentEntitiesAsync();
+        }
+
+
+        public async Task<StudentProfile?> GetStudentProfileByUserIdAsync(string userId)
+        {
+            return await _studentClassRepository.GetStudentProfileByUserIdAsync(userId);
+        }
+
+       
+        public async Task AssignStudentToClassAsync(string studentId, int classId)
+        {
+            var profile = await _studentProfileRepository.GetByUserIdAsync(studentId);
+            if (profile != null)
+            {
+                profile.StudentClassId = classId;
+                await _studentProfileRepository.UpdateAsync(profile);
+            }
+        }
+
+        
+        public async Task RemoveStudentFromClassAsync(string studentId)
+        {
+            var profile = await _studentProfileRepository.GetByUserIdAsync(studentId);
+            if (profile != null)
+            {
+                profile.StudentClassId = null;
+                await _studentProfileRepository.UpdateAsync(profile);
+            }
         }
     }
 }

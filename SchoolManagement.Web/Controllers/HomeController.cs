@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Data.Repositories;
-using SchoolManagement.Web.Data.Repository;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System.Diagnostics;
@@ -21,11 +21,21 @@ namespace SchoolManagement.Web.Controllers
             _classRepository = classRepository;
         }
 
+
+        /// <summary>
+        /// Displays the main landing page.
+        /// </summary>
+        /// <returns>The home view.</returns>
         public IActionResult Index()
         {
             return View();
         }
 
+
+        /// <summary>
+        /// Displays a list of all available courses.
+        /// </summary>
+        /// <returns>Courses view with list of course view models.</returns>
         public async Task<IActionResult> Courses()
         {
             var courses = await _courseRepository.GetAll()
@@ -38,6 +48,10 @@ namespace SchoolManagement.Web.Controllers
         }
 
 
+        /// <summary>
+        /// Displays a list of all student classes, including course and subject data.
+        /// </summary>
+        /// <returns>Student classes view.</returns>
         public async Task<IActionResult> StudentClasses()
         {
             var classes = await _classRepository.GetAll()
@@ -49,20 +63,23 @@ namespace SchoolManagement.Web.Controllers
             return View(classes); 
         }
 
+
+        /// <summary>
+        /// Displays the privacy policy page.
+        /// </summary>
+        /// <returns>The privacy view.</returns>
         public IActionResult Privacy()
         {
             return View();
         }
 
+        /// <summary>
+        /// Displays the public page (accessible without authentication).
+        /// </summary>
+        /// <returns>The public view.</returns>
         public IActionResult Public()
         {
             return View();
         }
-
-        //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        //public IActionResult Error()
-        //{
-        //    //return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        //}
     }
 }

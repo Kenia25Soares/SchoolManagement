@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data.Repository;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
@@ -27,6 +27,11 @@ namespace SchoolManagement.Web.Controllers
             _userHelper = userHelper;
         }
 
+
+        /// <summary>
+        /// Displays statistics on the employee dashboard, including total students and class status.
+        /// </summary>
+        /// <returns>The dashboard view with statistics.</returns>
         [HttpGet]
         public async Task<IActionResult> Index()
         {

@@ -3,12 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
-using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -19,14 +14,20 @@ namespace SchoolManagement.Web.Controllers
         private readonly IGradesRepository _gradesRepository;
         private readonly IStudentClassRepository _studentClassRepository;
 
-        public GradesController(IGradesRepository gradesRepository, IStudentClassRepository studentClassRepository)
+        public GradesController(IGradesRepository gradesRepository,
+            IStudentClassRepository studentClassRepository)
         {
             _gradesRepository = gradesRepository;
             _studentClassRepository = studentClassRepository;
         }
 
-
-        [HttpGet("")]
+        
+        /// <summary>
+        /// Displays a list of students, their average grades, and absence status for a selected class.
+        /// </summary>
+        /// <param name="classId">Optional class ID to filter students.</param>
+        /// <returns>Index view with student grade summaries.</returns>
+        [HttpGet]
         public async Task<IActionResult> Index(int? classId)
         {
             var classes = await _gradesRepository.GetClassSelectListAsync(classId);
@@ -40,8 +41,7 @@ namespace SchoolManagement.Web.Controllers
             var absences = await _gradesRepository.GetAbsencesByStudentIdsAsync(studentIds);
             var failedByAbsencesDict = students.ToDictionary(
                 s => s.User.Id,
-                s =>
-                    absences
+                s => absences
                         .Where(a => a.StudentId == s.User.Id)
                         .GroupBy(a => a.Subject)
                         .Any(g => g.Sum(x => x.Absences) > g.Key.AllowedAbsences)
@@ -80,10 +80,15 @@ namespace SchoolManagement.Web.Controllers
                 {
                     Id = s.User.Id,
                     FullName = s.User.FullName,
-                    Email = s.User.Email,
-                    ProfilePictureUrl = s.User.ProfilePictureUrl,
-                    AverageGrade = averages.ContainsKey(s.User.Id) ? averages[s.User.Id] : (double?)null,
-                    FailedDueToAbsences = failedByAbsencesDict.ContainsKey(s.User.Id) && failedByAbsencesDict[s.User.Id]
+                    Email = s.User?.Email ?? string.Empty,
+                    ProfilePictureUrl = s.User?.ProfilePictureUrl ?? string.Empty,
+                    AverageGrade = (s.User != null && averages.ContainsKey(s.User.Id))
+                        ? averages[s.User.Id]
+                        : (double?)null,
+                    FailedDueToAbsences = s.User != null &&
+                        failedByAbsencesDict.ContainsKey(s.User.Id) &&
+                        failedByAbsencesDict[s.User.Id],
+
                 }).ToList(),
                 IsClassClosed = isClassClosed
             };
@@ -92,6 +97,11 @@ namespace SchoolManagement.Web.Controllers
         }
 
 
+        /// <summary>
+        /// Displays the form to add grades for a student.
+        /// </summary>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>Grade input form view.</returns>
         [HttpGet("AddGrades")]
         public async Task<IActionResult> AddGrades(string studentId)
         {
@@ -118,6 +128,11 @@ namespace SchoolManagement.Web.Controllers
         }
 
 
+        /// <summary>
+        /// Processes grade submission for a student, with validation.
+        /// </summary>
+        /// <param name="model">Grade input model.</param>
+        /// <returns>Redirects to index or redisplays form on error.</returns>
         [HttpPost("AddGrades")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddGrades(AddGradesViewModel model)
@@ -129,7 +144,7 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
             }
 
-            // Validação de notas
+            // Validação das notas
             foreach (var g in model.Grades)
             {
                 if (g.Grade.HasValue && g.Grade.Value > 20)
@@ -160,14 +175,18 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(grades);
-            await _gradesRepository.SaveAllAsync();
+            //await _gradesRepository.SaveAllAsync();
 
             TempData["SuccessMessage"] = "Grades added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
 
-
+        /// <summary>
+        /// Marks a class as closed to prevent further grade/absence entries.
+        /// </summary>
+        /// <param name="classId">The ID of the class to close.</param>
+        /// <returns>Redirects to class overview.</returns>
         [HttpPost("CloseClass")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CloseClass(int classId)
@@ -187,13 +206,18 @@ namespace SchoolManagement.Web.Controllers
 
             studentClass.IsClosed = true;
             await _studentClassRepository.UpdateAsync(studentClass);
-            await _studentClassRepository.SaveAllAsync();
+            //await _studentClassRepository.SaveAllAsync();
 
             TempData["SuccessMessage"] = "Class successfully closed.";
             return RedirectToAction(nameof(Index), new { classId });
         }
 
 
+        /// <summary>
+        /// Shows detailed grade and absence information for a specific student.
+        /// </summary>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>Detailed view of subject grades and absences.</returns>
         [HttpGet("Details")]
         public async Task<IActionResult> Details(string studentId)
         {
@@ -211,15 +235,15 @@ namespace SchoolManagement.Web.Controllers
                 .GroupBy(g => g.Subject)
                 .Select(g => new SubjectGradesViewModel
                 {
-                    SubjectName = g.Key.Name,
+                    SubjectName = g.Key?.Name ?? "Unkmown",
                     GradesByType = g.GroupBy(x => x.GradeType).Select(gt => new GradeTypeGroupViewModel
                     {
-                        GradeTypeName = gt.Key.Name,
-                        Weight = gt.Key.Weight,
+                        GradeTypeName = gt.Key?.Name ??"N/A",
+                        Weight = gt.Key?.Weight?? 0,
                         Grades = gt.Select(x => x.Grade ?? 0).ToList()
                     }).ToList(),
-                    AllowedAbsences = g.Key.AllowedAbsences,
-                    TotalAbsences = absences.Where(a => a.SubjectId == g.Key.Id).Sum(a => a.Absences)
+                    AllowedAbsences = g.Key?.AllowedAbsences ?? 0,
+                    TotalAbsences = absences.Where(a => a.SubjectId == g.Key!.Id).Sum(a => a.Absences)
                 }).ToList();
 
             foreach (var subject in groupedGrades)
@@ -243,6 +267,7 @@ namespace SchoolManagement.Web.Controllers
 
             double totalWeightedSum = 0;
             double totalOverallWeight = 0;
+
             foreach (var subject in groupedGrades)
             {
                 foreach (var gt in subject.GradesByType)
@@ -273,6 +298,11 @@ namespace SchoolManagement.Web.Controllers
         }
 
 
+        /// <summary>
+        /// Displays the form to add absences for a student.
+        /// </summary>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>Absence input form view.</returns>
         [HttpGet("AddAbsences")]
         public async Task<IActionResult> AddAbsences(string studentId)
         {
@@ -300,6 +330,11 @@ namespace SchoolManagement.Web.Controllers
         }
 
 
+        /// <summary>
+        /// Processes absence data submission for a student.
+        /// </summary>
+        /// <param name="model">Absence input model.</param>
+        /// <returns>Redirects to index or redisplays form on error.</returns>
         [HttpPost("AddAbsences")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAbsences(AddAbsencesViewModel model)
@@ -331,13 +366,18 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(absences);
-            await _gradesRepository.SaveAllAsync();
+           /* await _gradesRepository.SaveAllAsync()*/;
 
             TempData["SuccessMessage"] = "Absences added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
         }
 
 
+        /// <summary>
+        /// Displays a summary of absences per subject for a student.
+        /// </summary>
+        /// <param name="studentId">The ID of the student.</param>
+        /// <returns>View with summarized absences.</returns>
         [HttpGet("ViewAbsences")]
         public async Task<IActionResult> ViewAbsences(string studentId)
         {

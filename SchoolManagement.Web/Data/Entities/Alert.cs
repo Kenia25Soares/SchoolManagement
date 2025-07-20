@@ -3,7 +3,7 @@ using SchoolManagement.Web.Data.Enums;
 
 namespace SchoolManagement.Web.Data.Entities
 {
-    public class Alert
+    public class Alert : IEntity
     {
         public int Id { get; set; }
 

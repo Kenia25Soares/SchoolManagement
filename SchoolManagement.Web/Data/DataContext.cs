@@ -33,21 +33,21 @@ namespace SchoolManagement.Web.Data
             builder.Entity<CourseSubject>()
                 .HasKey(cs => new { cs.CourseId, cs.SubjectId });
 
-            // Relacionamento CourseSubject -> Course
+            // Relacionamento CourseSubject - Course
             builder.Entity<CourseSubject>()
                 .HasOne(cs => cs.Course)
                 .WithMany(c => c.CourseSubjects)
                 .HasForeignKey(cs => cs.CourseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Relacionamento CourseSubject -> Subject
+            // Relacionamento CourseSubject - Subject
             builder.Entity<CourseSubject>()
                 .HasOne(cs => cs.Subject)
                 .WithMany(s => s.CourseSubjects)
                 .HasForeignKey(cs => cs.SubjectId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // StudentGrade -> Course
+            // StudentGrade - Course
             builder.Entity<StudentGrade>()
                 .HasOne(sg => sg.Course)
                 .WithMany()

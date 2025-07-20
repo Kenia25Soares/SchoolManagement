@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
@@ -14,13 +14,22 @@ namespace SchoolManagement.Web.Controllers
     {
         private readonly IStudentClassHelper _studentClassHelper;
         private readonly IStudentClassRepository _studentClassRepository;
+        private readonly IStudentProfileRepository _studentProfileRepository;
 
-        public StudentClassesController(IStudentClassHelper studentClassHelper, IStudentClassRepository studentClassRepository)
+        public StudentClassesController(
+            IStudentClassHelper studentClassHelper,
+            IStudentClassRepository studentClassRepository,
+            IStudentProfileRepository studentProfileRepository)
         {
             _studentClassHelper = studentClassHelper;
             _studentClassRepository = studentClassRepository;
+            _studentProfileRepository = studentProfileRepository;
         }
 
+
+        /// <summary>
+        /// Displays the list of all student classes.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -28,6 +37,10 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Index.cshtml", model);
         }
 
+
+        /// <summary>
+        /// Displays the form to create a new student class.
+        /// </summary>
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -38,6 +51,10 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", vm);
         }
 
+
+        /// <summary>
+        /// Creates a new student class.
+        /// </summary>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(StudentClassViewModel model)
@@ -62,6 +79,10 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Displays the form to edit a student class.
+        /// </summary>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -76,6 +97,10 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
         }
 
+
+        /// <summary>
+        /// Updates an existing student class.
+        /// </summary>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(StudentClassViewModel model)
@@ -104,6 +129,10 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Displays the confirmation page to delete a student class.
+        /// </summary>
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -117,6 +146,10 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Delete.cshtml", model);
         }
 
+
+        /// <summary>
+        /// Deletes a student class after confirmation.
+        /// </summary>
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -140,6 +173,10 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Displays the interface to manage students assigned to a class.
+        /// </summary>
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
@@ -150,7 +187,7 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var allStudents = await _studentClassHelper.GetAllStudentsAsync();
+            var allProfiles = await _studentProfileRepository.GetAll().Include(p => p.User).ToListAsync();
 
             var assignedStudents = studentClass.Students.Select(s => new StudentAssignmentViewModel
             {
@@ -158,14 +195,13 @@ namespace SchoolManagement.Web.Controllers
                 StudentName = s.User.FullName
             }).ToList();
 
-            var availableStudents = allStudents
-                .Where(s => s.StudentClassId == null)
-                .Select(s => new StudentAssignmentViewModel
+            var availableStudents = allProfiles
+                .Where(p => p.StudentClassId == null)
+                .Select(p => new StudentAssignmentViewModel
                 {
-                    StudentId = s.Id,
-                    StudentName = s.FullName
-                })
-                .ToList();
+                    StudentId = p.User.Id,
+                    StudentName = p.User.FullName
+                }).ToList();
 
             var vm = new ManageStudentClassViewModel
             {
@@ -178,6 +214,10 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/EmployeeDashboard/StudentClasses/Manage.cshtml", vm);
         }
 
+
+        /// <summary>
+        /// Assigns a student to a class.
+        /// </summary>
         [HttpPost("AssignStudent")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignStudent([FromBody] AssignStudentRequest request)
@@ -190,12 +230,16 @@ namespace SchoolManagement.Web.Controllers
                 return NotFound("Student profile not found.");
 
             profile.StudentClassId = request.StudentClassId;
-            await _studentClassRepository.SaveAllAsync();
+
+            await _studentClassRepository.UpdateStudentProfileAsync(profile);
 
 
             return Ok(new { message = "Student assigned successfully." });
         }
 
+        /// <summary>
+        /// Displays the details of a student class, including course and subject info.
+        /// </summary>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {

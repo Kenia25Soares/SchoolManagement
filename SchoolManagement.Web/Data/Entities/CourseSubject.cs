@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SchoolManagement.Web.Data.Entities
 {
-    public class CourseSubject
+    public class CourseSubject 
     {
         [Required]
         public int CourseId { get; set; }

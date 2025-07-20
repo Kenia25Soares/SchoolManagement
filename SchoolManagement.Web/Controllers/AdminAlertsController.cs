@@ -13,30 +13,47 @@ namespace SchoolManagement.Web.Controllers
     {
         private readonly IAlertRepository _alertRepository;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AdminAlertsController"/> class.
+        /// </summary>
+        /// <param name="alertRepository">Repository for accessing alert data.</param>
         public AdminAlertsController(IAlertRepository alertRepository)
         {
             _alertRepository = alertRepository;
         }
 
+
+        /// <summary>
+        /// Displays a list of all alerts for administrators.
+        /// </summary>
+        /// <returns>Returns the alerts view with a list of alerts.</returns>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var alerts = _alertRepository.GetAll()
-                .Select(a => new AlertViewModel
-                {
-                    Id = a.Id,
-                    Title = a.Title,
-                    Description = a.Description,
-                    Priority = a.Priority,
-                    CreatedBy = a.CreatedBy.FullName,
-                    CreatedAt = a.CreatedAt,
-                    IsResolved = a.IsResolved
-                })
-                .ToList();
+            //var alerts = _alertRepository.GetAll()
+            var alerts = await _alertRepository.GetAllWithCreatorAsync();
 
-            return View(alerts);
+            var model = alerts.Select(a => new AlertViewModel
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Priority = a.Priority,
+                CreatedBy = a.CreatedBy?.FullName ?? "Unknown",
+                CreatedAt = a.CreatedAt,
+                IsResolved = a.IsResolved
+            }).ToList();
+
+            return View("Views/AdminDashboard/Alerts/Index.cshtml", model);
+            //return View(alerts);
         }
 
+
+        /// <summary>
+        /// Marks a specific alert as resolved.
+        /// </summary>
+        /// <param name="id">The ID of the alert to resolve.</param>
+        /// <returns>Redirects to the admin dashboard with a success or error message.</returns>
         [HttpPost("Resolve/{id}")]
         public async Task<IActionResult> Resolve(int id)
         {

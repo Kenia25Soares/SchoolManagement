@@ -10,24 +10,36 @@ namespace SchoolManagement.Web.Models
     {
         public int Id { get; set; }
 
+
         [Required(ErrorMessage = "Name is required")]
         public string Name { get; set; }
+
 
         [Required(ErrorMessage = "Academic Year is required")]
         [Display(Name = "Academic Year")]
         public string AcademicYear { get; set; }
 
+
         [Required(ErrorMessage = "Shift is required")]
         public string Shift { get; set; }
+
 
         [Required(ErrorMessage = "Please select a course")]
         [Display(Name = "Course")]
         public int CourseId { get; set; }
+
+
         [ValidateNever]
         public string CourseName { get; set; }
+
+
         [ValidateNever]
         public IEnumerable<SelectListItem> Courses { get; set; }
 
         public int StudentCount { get; set; }
+
+
+        [ValidateNever]
+        public List<string> Students { get; set; } = new List<string>();
     }
 }

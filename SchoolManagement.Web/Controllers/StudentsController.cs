@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
@@ -15,7 +15,7 @@ namespace SchoolManagement.Web.Controllers
     public class StudentsController : Controller
     {
         private readonly IStudentClassRepository _classRepository;
-        private readonly IStudentGradeRepository _gradeRepository;
+        private readonly IGradesRepository _gradeRepository;
         private readonly IGenericRepository<StudentProfile> _studentProfileRepository;
         private readonly IBlobHelper _blobHelper;
         private readonly IMailHelper _mailHelper;
@@ -23,7 +23,7 @@ namespace SchoolManagement.Web.Controllers
 
         public StudentsController(
             IStudentClassRepository classRepository,
-            IStudentGradeRepository gradeRepository,
+            IGradesRepository gradeRepository,
             IGenericRepository<StudentProfile> studentProfileRepository,
             IBlobHelper blobHelper,
             IMailHelper mailHelper,
@@ -37,12 +37,21 @@ namespace SchoolManagement.Web.Controllers
             _userManager = userManager;
         }
 
+        /// <summary>
+        /// Loads the list of classes to populate the view's dropdown.
+        /// </summary>
+        /// <param name="selected">The selected class ID (optional).</param>
         private async Task LoadClassesAsync(object selected = null)
         {
             var classes = await _classRepository.GetAllOrderedByNameAsync();
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
         }
 
+
+        /// <summary>
+        /// Displays a list of all student profiles with calculated average grades.
+        /// </summary>
+        /// <returns>The student list view.</returns>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -86,6 +95,11 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Students/Index.cshtml", model);
         }
 
+
+        /// <summary>
+        /// Displays the form to create a new student.
+        /// </summary>
+        /// <returns>The create student form view.</returns>
         [HttpGet("Create")]
         public async Task<IActionResult> Create()
         {
@@ -93,6 +107,12 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
         }
 
+
+        /// <summary>
+        /// Handles the creation of a new student profile and user account.
+        /// </summary>
+        /// <param name="model">The form model for creating the student.</param>
+        /// <returns>Redirects to Index or reloads form on error.</returns>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateStudentViewModel model)
@@ -160,6 +180,12 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Deletes a student profile and user, if no grades are associated.
+        /// </summary>
+        /// <param name="id">The ID of the student to delete.</param>
+        /// <returns>Redirects to Index with result message.</returns>
         [HttpPost("Delete/{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -184,6 +210,12 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Displays the edit form for a student profile.
+        /// </summary>
+        /// <param name="id">The student user ID.</param>
+        /// <returns>The edit student form view.</returns>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(string id)
         {
@@ -215,6 +247,13 @@ namespace SchoolManagement.Web.Controllers
             return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
         }
 
+
+
+        /// <summary>
+        /// Handles the update of student profile and user data.
+        /// </summary>
+        /// <param name="model">The edited student data.</param>
+        /// <returns>Redirects to Index or reloads form on error.</returns>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditStudentProfileViewModel model)
@@ -261,6 +300,12 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
+        /// <summary>
+        /// Displays detailed information about a specific student.
+        /// </summary>
+        /// <param name="id">The student user ID.</param>
+        /// <returns>The student detail view.</returns>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(string id)
         {

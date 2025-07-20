@@ -19,6 +19,8 @@ namespace SchoolManagement.Web.Models
         public string? ProfilePictureUrl { get; set; }
 
         public string? OfficialPhotoUrl { get; set; }
+
+        public List<SubjectGradeViewModel> SubjectGrades { get; set; } = new();
     }
 }
 

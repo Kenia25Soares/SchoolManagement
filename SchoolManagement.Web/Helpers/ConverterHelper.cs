@@ -11,7 +11,8 @@ namespace SchoolManagement.Web.Helpers
             {
                 Id = course.Id,
                 Name = course.Name,
-                SubjectsCount = course.CourseSubjects?.Count ?? 0
+                SubjectsCount = course.CourseSubjects?.Count ?? 0,
+                Subjects = course.CourseSubjects?.Where(cs => cs.Subject != null).Select(cs => cs.Subject.Name).ToList() ?? new List<string>()
             };
         }
 
@@ -25,34 +26,20 @@ namespace SchoolManagement.Web.Helpers
         }
         public SubjectViewModel ToSubjectViewModel(Subject subject)
         {
-            if (subject == null) return null;
-
             return new SubjectViewModel
             {
                 Id = subject.Id,
-                Name = subject.Name,
-                Workload = subject.Workload,
-                AllowedAbsences = subject.AllowedAbsences
+                Name = subject.Name
             };
         }
 
         public Subject ToSubjectEntity(SubjectViewModel model, bool isNew)
         {
-            if (model == null) return null;
-
-            var subject = new Subject
+            return new Subject
             {
-                Name = model.Name,
-                Workload = model.Workload,
-                AllowedAbsences = model.AllowedAbsences
+                Id = isNew ? 0 : model.Id,
+                Name = model.Name
             };
-
-            if (!isNew)
-            {
-                subject.Id = model.Id;
-            }
-
-            return subject;
         }
 
         public StudentClassViewModel ToStudentClassViewModel(StudentClass studentClass)

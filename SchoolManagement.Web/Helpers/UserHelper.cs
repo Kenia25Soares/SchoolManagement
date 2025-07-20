@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Models;
 using System.Security.Claims;
 
@@ -13,18 +14,27 @@ namespace SchoolManagement.Web.Helpers
         private readonly UserManager<ApplicationUser> _userManager;  //faz a gestão dos utilizadores
         private readonly SignInManager<ApplicationUser> _signInManager;  //faz a gestão do login e logout dos utilizadores
         private readonly RoleManager<IdentityRole> _roleManager;  //faz a gestão dos papéis (roles) dos utilizadores
-        private readonly DataContext _context;
+                                                                  //private readonly DataContext _context;
+        private readonly IStudentClassRepository _studentClassRepository;  //faz a gestão das turmas dos alunos
 
         public UserHelper(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
-            DataContext context)
+           /* DataContext context*/IStudentClassRepository studentClassRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-            _context = context;
+            //_context = context;
+            _studentClassRepository = studentClassRepository;
+        }
+
+
+        public async Task<SelectList> GetClassesSelectListAsync(int? selectedClassId)
+        {
+            var classes = await _studentClassRepository.GetClassesSelectListAsync(selectedClassId);
+            return new SelectList(classes, "Value", "Text", selectedClassId);
         }
 
         public async Task<IdentityResult> AddUserAsync(ApplicationUser user, string password)
@@ -51,11 +61,10 @@ namespace SchoolManagement.Web.Helpers
 
         public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+            return await _userManager.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<ApplicationUser> GetUserByIdAsync(string userId)
+        public async Task<ApplicationUser?> GetUserByIdAsync(string userId)
         {
             return await _userManager.FindByIdAsync(userId);
         }
@@ -99,16 +108,16 @@ namespace SchoolManagement.Web.Helpers
             return await _userManager.ResetPasswordAsync(user, token, password);
         }
 
-        public async Task<SelectList> GetClassesSelectListAsync(int? selectedClassId)
-        {
-            var classes = await _context.StudentClasses
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+        //public async Task<SelectList> GetClassesSelectListAsync(int? selectedClassId)
+        //{
+        //    var classes = await _context.StudentClasses
+        //        .OrderBy(c => c.Name)
+        //        .ToListAsync();
 
-            return new SelectList(classes, "Id", "Name", selectedClassId);
-        }
+        //    return new SelectList(classes, "Id", "Name", selectedClassId);
+        //}
 
-        public async Task<ApplicationUser> GetUserAsync(ClaimsPrincipal principal)
+        public async Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal principal)
         {
             return await _userManager.GetUserAsync(principal);
         }
@@ -118,9 +127,10 @@ namespace SchoolManagement.Web.Helpers
             var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
             var employeeUsers = await _userManager.GetUsersInRoleAsync("Employee");
 
-            var total = adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
+            return adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
+            //var total = adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
 
-            return total;
+            //return total;
         }
 
         public async Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password)

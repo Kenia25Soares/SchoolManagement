@@ -27,12 +27,21 @@ public class UsersController : Controller
         _blobHelper = blobHelper;
     }
 
+    /// <summary>
+    /// Sets the currently logged-in user's profile picture URL into the ViewData for layout display.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task SetUserProfilePictureAsync()
     {
-        var currentUser = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+        var currentUser = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
         ViewData["ProfilePictureUrl"] = currentUser?.ProfilePictureUrl;
     }
 
+
+    /// <summary>
+    /// Displays a list of all Admin and Employee users.
+    /// </summary>
+    /// <returns>The index view with user list.</returns>
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -59,6 +68,12 @@ public class UsersController : Controller
         return View("/Views/AdminDashboard/Users/Index.cshtml", model);
     }
 
+
+    /// <summary>
+    /// Deletes a user by ID after removing all associated roles.
+    /// </summary>
+    /// <param name="id">The ID of the user to delete.</param>
+    /// <returns>Redirects to the user index with a status message.</returns>
     [HttpPost("Delete/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
@@ -82,6 +97,11 @@ public class UsersController : Controller
         return RedirectToAction("Index");
     }
 
+
+    /// <summary>
+    /// Displays the form to create a new user.
+    /// </summary>
+    /// <returns>The create user view.</returns>
     [HttpGet("Create")]
     public async Task<IActionResult> Create()
     {
@@ -90,6 +110,12 @@ public class UsersController : Controller
         return View("/Views/AdminDashboard/Users/Create.cshtml", model);
     }
 
+
+    /// <summary>
+    /// Handles the creation of a new Admin or Employee user.
+    /// </summary>
+    /// <param name="model">The model containing new user data.</param>
+    /// <returns>Redirects to index or reloads the form with errors.</returns>
     [HttpPost("Create")]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
@@ -143,6 +169,12 @@ public class UsersController : Controller
         return RedirectToAction("Index");
     }
 
+
+    /// <summary>
+    /// Displays the form to edit an existing user.
+    /// </summary>
+    /// <param name="id">The ID of the user to edit.</param>
+    /// <returns>The edit user view with pre-filled data.</returns>
     [HttpGet("Edit/{id}")]
     public async Task<IActionResult> Edit(string id)
     {
@@ -171,6 +203,12 @@ public class UsersController : Controller
         return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
     }
 
+
+    /// <summary>
+    /// Handles updating an existing user's data and role.
+    /// </summary>
+    /// <param name="model">The model with updated user info.</param>
+    /// <returns>Redirects to index or reloads the form on error.</returns>
     [HttpPost("Edit/{id}")]
     public async Task<IActionResult> Edit(EditUserViewModel model)
     {
@@ -213,6 +251,12 @@ public class UsersController : Controller
         return RedirectToAction("Index");
     }
 
+
+    /// <summary>
+    /// Displays detailed information about a specific user.
+    /// </summary>
+    /// <param name="id">The ID of the user to view.</param>
+    /// <returns>The user details view.</returns>
     [HttpGet("Details/{id}")]
     public async Task<IActionResult> Details(string id)
     {

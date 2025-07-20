@@ -3,7 +3,7 @@ using SchoolManagement.Web.Data.Enums;
 
 namespace SchoolManagement.Web.Data.Entities
 {
-    public class GradeType
+    public class GradeType : IEntity
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;

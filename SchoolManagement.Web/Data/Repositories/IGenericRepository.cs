@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 
-namespace SchoolManagement.Web.Data.Repository
+namespace SchoolManagement.Web.Data.Repositories
 {
     public interface IGenericRepository<T> where T : class
     {
@@ -17,7 +17,7 @@ namespace SchoolManagement.Web.Data.Repository
 
         Task<bool> ExistAsync(int id);
 
-        Task<bool> SaveAllAsync();
+        //Task<bool> SaveAllAsync();
 
         Task CreateRangeAsync(IEnumerable<T> entities);
     }

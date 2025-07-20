@@ -4,7 +4,6 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using System.Threading.Tasks;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -15,19 +14,30 @@ namespace SchoolManagement.Web.Controllers
         private readonly IAlertRepository _alertRepository;
         private readonly IUserHelper _userHelper;
 
-        public EmployeeAlertsController(IAlertRepository alertRepository, IUserHelper userHelper)
+        public EmployeeAlertsController(IAlertRepository alertRepository, 
+            IUserHelper userHelper)
         {
             _alertRepository = alertRepository;
             _userHelper = userHelper;
         }
 
+        /// <summary>
+        /// Displays the form to create a new alert.
+        /// </summary>
         [HttpGet("Create")]
         public IActionResult Create()
         {
             return View("/Views/EmployeeDashboard/Alerts/Create.cshtml");
         }
 
+
+        /// <summary>
+        /// Handles the submission of a new alert form.
+        /// </summary>
+        /// <param name="model">The alert data submitted by the user.</param>
+        /// <returns>Redirects to dashboard on success, or reloads form on failure.</returns>
         [HttpPost("Create")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateAlertViewModel model)
         {
             if (!ModelState.IsValid)
@@ -36,7 +46,7 @@ namespace SchoolManagement.Web.Controllers
                 return View("/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
             }
 
-            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name??  string.Empty);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Unable to identify the logged-in user.";
@@ -48,7 +58,8 @@ namespace SchoolManagement.Web.Controllers
                 Title = model.Title,
                 Description = model.Description,
                 Priority = model.Priority,
-                CreatedById = user.Id
+                CreatedById = user.Id,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _alertRepository.CreateAsync(alert);

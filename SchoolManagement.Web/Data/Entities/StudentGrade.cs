@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Data.Entities
 {
-    public class StudentGrade
+    public class StudentGrade : IEntity
     {
         public int Id { get; set; }
 

@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
-using System.Threading.Tasks;
+using SchoolManagement.Web.Data.Repositories;
+
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -40,8 +40,18 @@ namespace SchoolManagement.Web.Controllers
             ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
         }
 
+
+        /// <summary>
+        /// Displays the login view.
+        /// </summary>
         public IActionResult Login() => View();
 
+
+        /// <summary>
+        /// Processes the login form and authenticates the user.
+        /// </summary>
+        /// <param name="model">Login form data.</param>
+        /// <returns>Redirects based on user role or redisplays the form on failure.</returns>
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -62,6 +72,10 @@ namespace SchoolManagement.Web.Controllers
             return View(model);
         }
 
+
+        /// <summary>
+        /// Logs the user out and redirects to the login page.
+        /// </summary>
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
@@ -69,6 +83,13 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction("Login");
         }
 
+
+        /// <summary>
+        /// Displays the password reset form.
+        /// </summary>
+        /// <param name="token">Password reset token.</param>
+        /// <param name="email">User email address.</param>
+        /// <returns>Password reset view.</returns>
         [HttpGet]
         public IActionResult ResetPassword(string token, string email)
         {
@@ -78,6 +99,12 @@ namespace SchoolManagement.Web.Controllers
             return View(new ResetPasswordViewModel { Token = token, Email = email });
         }
 
+
+        /// <summary>
+        /// Processes the password reset form.
+        /// </summary>
+        /// <param name="model">Password reset form data.</param>
+        /// <returns>Redirects on success or redisplays the form with errors.</returns>
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
@@ -105,9 +132,19 @@ namespace SchoolManagement.Web.Controllers
             return View(model);
         }
 
+
+        /// <summary>
+        /// Displays the recover password form.
+        /// </summary>
         [HttpGet]
         public IActionResult RecoverPassword() => View();
 
+
+        /// <summary>
+        /// Sends a password reset link to the user's email.
+        /// </summary>
+        /// <param name="model">Recover password form data.</param>
+        /// <returns>Redirects or redisplays the form based on result.</returns>
         [HttpPost]
         public async Task<IActionResult> RecoverPassword(RecoverPasswordViewModel model)
         {
@@ -138,6 +175,10 @@ namespace SchoolManagement.Web.Controllers
             return View();
         }
 
+
+        /// <summary>
+        /// Displays the profile edit form for general users.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
@@ -155,6 +196,12 @@ namespace SchoolManagement.Web.Controllers
             });
         }
 
+
+        /// <summary>
+        /// Updates the user's profile information.
+        /// </summary>
+        /// <param name="model">Profile data to update.</param>
+        /// <returns>Redirects or redisplays the form with errors.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(EditProfileViewModel model)
@@ -187,6 +234,10 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
+
+        /// <summary>
+        /// Displays the student profile edit form.
+        /// </summary>
         [Authorize(Roles = "Student")]
         [HttpGet]
         public async Task<IActionResult> EditStudentProfile()
@@ -216,6 +267,12 @@ namespace SchoolManagement.Web.Controllers
             return View(model);
         }
 
+
+        /// <summary>
+        /// Updates the student profile with personal and academic info.
+        /// </summary>
+        /// <param name="model">Student profile data.</param>
+        /// <returns>Redirects or redisplays the form with validation errors.</returns>
         [Authorize(Roles = "Student")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -269,6 +326,10 @@ namespace SchoolManagement.Web.Controllers
             return RedirectToAction(nameof(EditStudentProfile));
         }
 
+
+        /// <summary>
+        /// Displays the 403 forbidden error page.
+        /// </summary>
         public IActionResult NotAuthorized()
         {
             return View("~/Views/Errors/403.cshtml");

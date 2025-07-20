@@ -9,7 +9,7 @@
 <div class="container mt-4">
     <div class="card shadow-sm p-4">
         <h2 class="mb-4">Grades Details for @Model.StudentName</h2>
-        
+
         <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
             <strong class="fs-4">Overall Average:</strong>
             <span class="badge bg-primary fs-4">@Model.TotalAverage.ToString("F2")</span>
@@ -23,17 +23,17 @@
         {
             @foreach (var subject in Model.SubjectGrades)
             {
-                var isFailedByAbsences = subject.TotalAbsences > subject.AllowedAbsences;
+                var isFailedByAbsences = subject.FailedDueToAbsences;
                 var isPassed = subject.WeightedAverage >= 10;
                 var backgroundClass = "";
 
                 if (isFailedByAbsences)
                 {
-                    backgroundClass = "bg-soft-danger";
+                    backgroundClass = "bg-danger text-white";
                 }
                 else if (isClassClosed)
                 {
-                    backgroundClass = isPassed ? "bg-soft-success" : "bg-soft-danger";
+                    backgroundClass = isPassed ? "bg-success text-white" : "bg-danger text-white";
                 }
 
                 <div class="card mb-4 shadow-sm border">
@@ -102,7 +102,9 @@
             }
         }
 
-        <a asp-action="Index" class="btn btn-secondary mt-4">Back to Dashboard</a>
+        <a asp-action="Index" class="btn btn-secondary mt-4">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
     </div>
 </div>
 

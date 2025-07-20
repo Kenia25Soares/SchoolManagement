@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace SchoolManagement.Web.Models
 {
@@ -10,6 +12,15 @@ namespace SchoolManagement.Web.Models
         [Display(Name = "Course Name")]
         public string Name { get; set; }
 
+
         public int SubjectsCount { get; set; }
+
+
+        [ValidateNever]
+        public List<string> Subjects { get; set; } = new();
+
+        
+        [ValidateNever]
+        public IEnumerable<SelectListItem> AvailableSubjects { get; set; } = new List<SelectListItem>();
     }
 }

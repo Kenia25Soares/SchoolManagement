@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Data.Repositories;
-using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repository;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
@@ -34,10 +32,13 @@ namespace SchoolManagement.Web.Controllers
             _userHelper = userHelper;
         }
 
+        /// <summary>
+        /// Sets the currently logged-in user's profile picture in the view data.
+        /// </summary>
         private async Task SetUserProfilePictureAsync()
         {
-            var user = await _userHelper.GetUserByEmailAsync(User.Identity.Name);
-            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl; ;
         }
 
         /// <summary>
@@ -69,29 +70,33 @@ namespace SchoolManagement.Web.Controllers
         /// <summary>
         /// Creates a new course.
         /// </summary>
+        /// <param name="model">The course view model containing input data.</param>
         [HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var course = _converterHelper.ToCourseEntity(model, true);
-                await _courseRepository.CreateAsync(course);
-                TempData["SuccessMessage"] = "Course successfully created.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Failed to create course. Please check the form.";
+                return View("Views/AdminDashboard/Courses/Create.cshtml", model);
             }
 
-            TempData["ErrorMessage"] = "Failed to create course. Please check the form.";
-            return View("Views/AdminDashboard/Courses/Create.cshtml", model);
+            var entity = _converterHelper.ToCourseEntity(model, true);
+            await _courseRepository.CreateAsync(entity);
+
+            TempData["SuccessMessage"] = "Course successfully created.";
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
         /// Shows the form to edit an existing course.
         /// </summary>
+        /// <param name="id">The ID of the course to edit.</param>
         [HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int id)
         {
             await SetUserProfilePictureAsync();
+
             var course = await _courseRepository.GetByIdAsync(id);
             if (course == null)
             {
@@ -103,28 +108,32 @@ namespace SchoolManagement.Web.Controllers
             return View("Views/AdminDashboard/Courses/Edit.cshtml", viewModel);
         }
 
+
         /// <summary>
         /// Updates an existing course.
         /// </summary>
+        /// <param name="model">The updated course view model.</param>
         [HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CourseViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var course = _converterHelper.ToCourseEntity(model, false);
-                await _courseRepository.UpdateAsync(course);
-                TempData["SuccessMessage"] = "Course successfully updated.";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = "Failed to update course. Please check the form.";
+                return View("Views/AdminDashboard/Courses/Edit.cshtml", model);
             }
 
-            TempData["ErrorMessage"] = "Failed to update course. Please check the form.";
-            return View("Views/AdminDashboard/Courses/Edit.cshtml", model);
+            var entity = _converterHelper.ToCourseEntity(model, false);
+            await _courseRepository.UpdateAsync(entity);
+
+            TempData["SuccessMessage"] = "Course successfully updated.";
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
         /// Shows confirmation page for deleting a course.
         /// </summary>
+        /// <param name="id">The ID of the course to delete.</param>
         [HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -142,47 +151,39 @@ namespace SchoolManagement.Web.Controllers
         }
 
         /// <summary>
-        /// Deletes the course.
+        /// Deletes the course after confirmation.
         /// </summary>
+        /// <param name="id">The ID of the course to delete.</param>
         [HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var course = await _courseRepository.GetByIdWithAllRelationsAsync(id);
+
             if (course == null)
             {
                 TempData["ErrorMessage"] = "Course not found.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Se houver notas associadas, não permitir a exclusão
-            if (course.StudentGrades != null && course.StudentGrades.Any())
+            try
             {
-                TempData["ErrorMessage"] = "This course has student grades assigned and cannot be deleted.";
-                return RedirectToAction(nameof(Index));
+
+                await _courseRepository.DeleteAsync(course);
+                TempData["SuccessMessage"] = "Course successfully deleted.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
             }
 
-            // Remove outras entidades relacionadas (subjects, classes)
-            if (course.CourseSubjects != null && course.CourseSubjects.Any())
-            {
-                await _courseRepository.RemoveCourseSubjectsAsync(course.CourseSubjects);
-            }
-
-            if (course.StudentClasses != null && course.StudentClasses.Any())
-            {
-                TempData["ErrorMessage"] = "This course has student classes assigned and cannot be deleted.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Agora pode excluir o curso
-            await _courseRepository.DeleteAsync(course);
-            TempData["SuccessMessage"] = "Course successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
         /// Manages the subjects assigned to a course.
         /// </summary>
+        /// <param name="id">The ID of the course to manage.</param>
         [HttpGet("Manage/{id}")]
         public async Task<IActionResult> Manage(int id)
         {
@@ -201,6 +202,7 @@ namespace SchoolManagement.Web.Controllers
         /// <summary>
         /// Assigns a subject to a course.
         /// </summary>
+        /// <param name="request">Request containing course and subject IDs.</param>
         [HttpPost("AssignSubject")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignSubject([FromBody] AssignSubjectRequest request)
@@ -216,6 +218,7 @@ namespace SchoolManagement.Web.Controllers
         /// <summary>
         /// Removes a subject from a course.
         /// </summary>
+        /// <param name="request">Request containing course and subject IDs.</param>
         [HttpPost("RemoveSubject")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveSubject([FromBody] AssignSubjectRequest request)
@@ -229,8 +232,9 @@ namespace SchoolManagement.Web.Controllers
         }
 
         /// <summary>
-        /// Displays course details.
+        /// Displays detailed information about a course.
         /// </summary>
+        /// <param name="id">The ID of the course.</param>
         [HttpGet("Details/{id}")]
         public async Task<IActionResult> Details(int id)
         {
