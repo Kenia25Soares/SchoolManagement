@@ -32,7 +32,7 @@ namespace SchoolManagement.Web.Controllers
         {
             var classes = await _gradesRepository.GetClassSelectListAsync(classId);
 
-            if (!classId.HasValue && classes.Any())
+            if (!classId.HasValue && classes.Count > 0/*Any()*/)
                 classId = int.Parse(classes.First().Value);
 
             var students = await _gradesRepository.GetStudentsByClassAsync(classId ?? 0);
@@ -82,13 +82,13 @@ namespace SchoolManagement.Web.Controllers
                     FullName = s.User.FullName,
                     Email = s.User?.Email ?? string.Empty,
                     ProfilePictureUrl = s.User?.ProfilePictureUrl ?? string.Empty,
-                    AverageGrade = (s.User != null && averages.ContainsKey(s.User.Id))
-                        ? averages[s.User.Id]
-                        : (double?)null,
+                    //AverageGrade = (s.User != null && averages.ContainsKey(s.User.Id))
+                    //    ? averages[s.User.Id]
+                    //    : (double?)null,
+                    AverageGrade = s.User != null && averages.TryGetValue(s.User.Id, out var avg) ? avg : (double?)null,
                     FailedDueToAbsences = s.User != null &&
                         failedByAbsencesDict.ContainsKey(s.User.Id) &&
                         failedByAbsencesDict[s.User.Id],
-
                 }).ToList(),
                 IsClassClosed = isClassClosed
             };
@@ -118,7 +118,8 @@ namespace SchoolManagement.Web.Controllers
             var model = new AddGradesViewModel
             {
                 StudentId = studentId,
-                Grades = new List<GradeInputModel> { new GradeInputModel() },
+                Grades = [new()],
+                //Grades = new List<GradeInputModel> { new GradeInputModel() },
                 Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }),
                 GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name })
             };
@@ -321,7 +322,8 @@ namespace SchoolManagement.Web.Controllers
             var model = new AddAbsencesViewModel
             {
                 StudentId = studentId,
-                Absences = new List<AbsenceInputModel> { new AbsenceInputModel() },
+                Absences = [new()],
+                //Absences = new List<AbsenceInputModel> { new AbsenceInputModel() },
                 Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
             };
 

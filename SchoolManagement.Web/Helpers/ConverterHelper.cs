@@ -29,7 +29,9 @@ namespace SchoolManagement.Web.Helpers
             return new SubjectViewModel
             {
                 Id = subject.Id,
-                Name = subject.Name
+                Name = subject.Name,
+                Workload = subject.Workload,
+                AllowedAbsences = subject.AllowedAbsences
             };
         }
 
@@ -38,7 +40,9 @@ namespace SchoolManagement.Web.Helpers
             return new Subject
             {
                 Id = isNew ? 0 : model.Id,
-                Name = model.Name
+                Name = model.Name,
+                Workload = model.Workload,
+                AllowedAbsences = model.AllowedAbsences
             };
         }
 

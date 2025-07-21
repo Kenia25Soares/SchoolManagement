@@ -78,7 +78,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Add MVC
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages(); // se usares Razor também
+builder.Services.AddRazorPages(); 
 
 
 // Configuração do Swagger 
@@ -162,7 +162,7 @@ builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
 builder.Services.AddScoped<IGradesRepository, GradesRepository>();
 builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
-builder.Services.AddScoped<IGenericRepository<StudentProfile>, GenericRepository<StudentProfile>>();
+//builder.Services.AddScoped<IGenericRepository<StudentProfile>, GenericRepository<StudentProfile>>();
 
 var app = builder.Build();
 
