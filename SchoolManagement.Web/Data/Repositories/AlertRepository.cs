@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
-using SchoolManagement.Web.Data.Repositories;
 
-namespace SchoolManagement.Data.Repositories
+namespace SchoolManagement.Web.Data.Repositories
 {
     public class AlertRepository : GenericRepository<Alert>, IAlertRepository
     {
@@ -13,7 +11,7 @@ namespace SchoolManagement.Data.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Alert>> GetAllWithCreatorAsync()
+        public async Task<IEnumerable<Alert?>> GetAllWithCreatorAsync()
         {
             return await _context.Alerts
                 .Include(a => a.CreatedBy)

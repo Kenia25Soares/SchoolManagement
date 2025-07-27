@@ -57,16 +57,6 @@ namespace SchoolManagement.Web.Controllers
                 IsResolved = a.IsResolved,
                 CreatedBy = a.CreatedBy?.FullName ?? "Unknown" 
             }).ToList();
-            //.Select(a => new AlertViewModel
-            //{
-            //    Id = a.Id,
-            //    Title = a.Title,
-            //    Description = a.Description,
-            //    Priority = a.Priority,
-            //    IsResolved = a.IsResolved,
-            //    CreatedBy = a.CreatedBy.FullName
-            //})
-            //.ToList();
 
             var stats = new AdminDashboardViewModel
             {
@@ -82,7 +72,7 @@ namespace SchoolManagement.Web.Controllers
             };
 
             return View(model);
-            //return View("Views/AdminDashboard/Index.cshtml", model);
+            //Views/AdminDashboard/Index
         }
     }
 }

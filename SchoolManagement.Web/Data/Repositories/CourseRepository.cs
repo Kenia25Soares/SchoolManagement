@@ -38,61 +38,32 @@ namespace SchoolManagement.Data.Repositories
 
         public new async Task DeleteAsync(Course course)
         {
-            //// Bloquear se houver notas diretamente ligadas ao curso
-            //var hasGrades = await _context.StudentGrades.AnyAsync(g => g.CourseId == course.Id);
-            //if (hasGrades)
-            //{
-            //    throw new InvalidOperationException("Cannot delete a course that has student grades.");
-            //}
+            // Bloqueia se existirem turmas associadas
+            if (course.StudentClasses != null && course.StudentClasses.Any())
+                throw new InvalidOperationException("Cannot delete a course that has student classes assigned.");
 
-            //// Bloqueia se houver notas ligadas às disciplinas do curso
-            //var subjectIds = course.CourseSubjects.Select(cs => cs.SubjectId).ToList();
-            //var hasSubjectGrades = await _context.StudentGrades.AnyAsync(g => subjectIds.Contains(g.SubjectId));
-            //if (hasSubjectGrades)
-            //{
-            //    throw new InvalidOperationException("Cannot delete this course because some of its subjects have student grades assigned.");
-            //}
-
-            ////var hasClasses = await _context.StudentClasses.AnyAsync(c => c.CourseId == course.Id);
-            ////if (hasClasses)
-            ////{
-            ////    throw new InvalidOperationException("Cannot delete a course that has student classes.");
-            ////}
-            ///
-
-            // Apagar manualmente as relações CourseSubjects para evitar conflito de FK
+            // Apagar as relações CourseSubjects 
             if (course.CourseSubjects != null && course.CourseSubjects.Any())
             {
                 _context.CourseSubjects.RemoveRange(course.CourseSubjects);
                 await _context.SaveChangesAsync();
             }
 
-            // Verifica notas diretamente ligadas ao curso
+            // Bloqueia se houver notas diretamente ligadas ao curso
             var hasGrades = await _context.StudentGrades.AnyAsync(g => g.CourseId == course.Id);
             if (hasGrades)
                 throw new InvalidOperationException("Cannot delete a course that has student grades.");
 
-            // Verifica notas ligadas às disciplinas do curso
+            // Bloqueia se houver notas ligadas às disciplinas do curso
             var subjectIds = course.CourseSubjects.Select(cs => cs.SubjectId).ToList();
             var hasSubjectGrades = await _context.StudentGrades.AnyAsync(g => subjectIds.Contains(g.SubjectId));
-
             if (hasSubjectGrades)
                 throw new InvalidOperationException("Cannot delete this course because some of its subjects have student grades assigned.");
 
-            //// Verifica se há turmas associadas (não permite exclusão)
-            //var hasClasses = await _context.StudentClasses.AnyAsync(c => c.CourseId == course.Id);
-            //if (hasClasses)
-            //    throw new InvalidOperationException("Cannot delete a course that has student classes.");
-
-            //// Remove associações manuais (CourseSubjects e StudentClasses) se permitido
-            //if (course.CourseSubjects.Any())
-            //    _context.CourseSubjects.RemoveRange(course.CourseSubjects);
-
-            //if (course.StudentClasses.Any())
-            //    _context.StudentClasses.RemoveRange(course.StudentClasses);
-
+            // Remover o curso
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
+          
         }
     }
 }

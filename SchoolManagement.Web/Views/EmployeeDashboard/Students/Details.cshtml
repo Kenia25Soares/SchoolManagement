@@ -71,40 +71,6 @@
                     </div>
                 </div>
 
-                @if (Model.SubjectGrades != null && Model.SubjectGrades.Any())
-                {
-                    <div class="mt-4">
-                        <h4>Academic Status</h4>
-                        @foreach (var subject in Model.SubjectGrades)
-                        {
-                            var isFailedByAbsences = subject.TotalAbsences > subject.AllowedAbsences;
-                            var isPassed = subject.WeightedAverage >= 10;
-
-                            <div class="card mb-3 shadow-sm border">
-                                <div class="card-header d-flex justify-content-between align-items-center @(isFailedByAbsences ? "bg-soft-danger" : "")">
-                                    <h5 class="mb-0">
-                                        @subject.SubjectName - Average: @subject.WeightedAverage.ToString("F2")
-                                    </h5>
-                                    @if (isFailedByAbsences)
-                                    {
-                                        <span class="badge bg-danger">Failed (Absences)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge @(isPassed ? "bg-success" : "bg-danger")">
-                                            @(isPassed ? "Passed" : "Failed")
-                                        </span>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-info mt-4">No grades or subjects available for this student.</div>
-                }
-
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <ejs-button id="btnBackToStudents"
                                 type="button"

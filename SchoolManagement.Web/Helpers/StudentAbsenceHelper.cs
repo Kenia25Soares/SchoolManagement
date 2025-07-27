@@ -43,28 +43,7 @@ namespace SchoolManagement.Web.Helpers
                 StudentName = student?.FullName ?? "Unknown",
                 Absences = groupedAbsences
             };
-            //var absencesData = await _context.StudentGrades
-            //    .Include(sg => sg.Subject)
-            //    .Where(sg => sg.StudentId == studentId)
-            //    .GroupBy(sg => sg.Subject)
-            //    .Select(g => new AbsenceSummaryViewModel
-            //    {
-            //        SubjectName = g.Key.Name,
-            //        TotalAbsences = g.Sum(x => x.Absences)
-            //    })
-            //    .ToListAsync();
 
-            //var student = await _context.Users
-            //    .FirstOrDefaultAsync(u => u.Id == studentId);
-
-            //var model = new StudentAbsencesViewModel
-            //{
-            //    StudentId = studentId,
-            //    StudentName = student?.FullName ?? "Unknown",
-            //    Absences = absencesData
-            //};
-
-            //return model;
         }
     }
 }

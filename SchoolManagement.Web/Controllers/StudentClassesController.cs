@@ -12,20 +12,32 @@ namespace SchoolManagement.Web.Controllers
     [Route("EmployeeDashboard/StudentClasses")]
     public class StudentClassesController : Controller
     {
+        private readonly IUserHelper _userHelper;
         private readonly IStudentClassHelper _studentClassHelper;
         private readonly IStudentClassRepository _studentClassRepository;
         private readonly IStudentProfileRepository _studentProfileRepository;
 
         public StudentClassesController(
+            IUserHelper userHelper,
             IStudentClassHelper studentClassHelper,
             IStudentClassRepository studentClassRepository,
             IStudentProfileRepository studentProfileRepository)
         {
+            _userHelper = userHelper;
             _studentClassHelper = studentClassHelper;
             _studentClassRepository = studentClassRepository;
             _studentProfileRepository = studentProfileRepository;
         }
 
+        /// <summary>
+        /// Sets the current user's profile picture in the view data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
 
         /// <summary>
         /// Displays the list of all student classes.
@@ -33,8 +45,11 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            await SetUserProfilePictureAsync();
+
             var model = await _studentClassHelper.GetAllAsync();
-            return View("Views/EmployeeDashboard/StudentClasses/Index.cshtml", model);
+            //Views/EmployeeDashboard/StudentClasses/Index
+            return View(model);
         }
 
 
@@ -48,7 +63,8 @@ namespace SchoolManagement.Web.Controllers
             {
                 Courses = await _studentClassHelper.GetCoursesSelectListAsync()
             };
-            return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", vm);
+            //Views/EmployeeDashboard/StudentClasses/Create
+            return View(vm);
         }
 
 
@@ -63,7 +79,8 @@ namespace SchoolManagement.Web.Controllers
             {
                 model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
                 TempData["ErrorMessage"] = "Invalid input. Please correct the form.";
-                return View("Views/EmployeeDashboard/StudentClasses/Create.cshtml", model);
+                //Views/EmployeeDashboard/StudentClasses/Create
+                return View(model);
             }
 
             var entity = new StudentClass
@@ -94,7 +111,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
-            return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
+            //Views/EmployeeDashboard/StudentClasses/Edit
+            return View(model);
         }
 
 
@@ -109,7 +127,8 @@ namespace SchoolManagement.Web.Controllers
             {
                 model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
                 TempData["ErrorMessage"] = "Invalid input. Please correct the form.";
-                return View("Views/EmployeeDashboard/StudentClasses/Edit.cshtml", model);
+                //Views/EmployeeDashboard/StudentClasses/Edit
+                return View(model);
             }
 
             var entity = await _studentClassRepository.GetByIdAsync(model.Id);
@@ -143,7 +162,8 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View("Views/EmployeeDashboard/StudentClasses/Delete.cshtml", model);
+            //Views/EmployeeDashboard/StudentClasses/Delete
+            return View(model);
         }
 
 
@@ -211,7 +231,8 @@ namespace SchoolManagement.Web.Controllers
                 AvailableStudents = availableStudents
             };
 
-            return View("Views/EmployeeDashboard/StudentClasses/Manage.cshtml", vm);
+            //Views/EmployeeDashboard/StudentClasses/Manage
+            return View(vm);
         }
 
 
@@ -268,12 +289,13 @@ namespace SchoolManagement.Web.Controllers
                 Name = studentClass.Name,
                 AcademicYear = studentClass.AcademicYear,
                 Shift = studentClass.Shift,
-                CourseName = studentClass.Course?.Name
+                CourseName = studentClass.Course.Name
             };
 
             ViewBag.Subjects = studentClass.Subjects.ToList();
 
-            return View("Views/EmployeeDashboard/StudentClasses/Details.cshtml", model);
+            //Views/EmployeeDashboard/StudentClasses/Details
+            return View(model);
         }
     }
 }

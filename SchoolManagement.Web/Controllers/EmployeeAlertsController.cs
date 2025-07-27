@@ -27,6 +27,7 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Create")]
         public IActionResult Create()
         {
+            //return View();
             return View("/Views/EmployeeDashboard/Alerts/Create.cshtml");
         }
 
@@ -44,9 +45,10 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = "Please correct the form and try again.";
                 return View("/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
+                //    return View(model);
             }
 
-            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name??  string.Empty);
+                var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name??  string.Empty);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Unable to identify the logged-in user.";

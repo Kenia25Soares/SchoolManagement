@@ -1,12 +1,13 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.WindowsAzure.Storage;
 
 namespace SchoolManagement.Web.Helpers
 {
     public class BlobHelper : IBlobHelper
     {
         private readonly BlobServiceClient _blobClient;
-
+      
         public BlobHelper(IConfiguration configuration)
         {
             string keys = configuration["Blob:ConnectionString"];

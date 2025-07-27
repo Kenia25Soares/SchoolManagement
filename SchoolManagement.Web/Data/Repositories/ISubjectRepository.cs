@@ -8,7 +8,6 @@ namespace SchoolManagement.Web.Data.Repositories
 
         Task<bool> IsSubjectInUseAsync(int subjectId);
 
-        //Task<bool> HasGradesAsync(int subjectId);
     }
 }
 

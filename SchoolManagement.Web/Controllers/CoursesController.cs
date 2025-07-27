@@ -54,7 +54,8 @@ namespace SchoolManagement.Web.Controllers
                 .ToListAsync();
 
             var viewModel = courses.Select(c => _converterHelper.ToCourseViewModel(c)).ToList();
-            return View("Views/AdminDashboard/Courses/Index.cshtml", viewModel);
+            return View(viewModel);
+            //Views/AdminDashboard/Courses/Index
         }
 
         /// <summary>
@@ -64,7 +65,9 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Create()
         {
             await SetUserProfilePictureAsync();
-            return View("Views/AdminDashboard/Courses/Create.cshtml");
+
+            //Views/AdminDashboard/Courses/Create
+            return View();
         }
 
         /// <summary>
@@ -78,7 +81,8 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Failed to create course. Please check the form.";
-                return View("Views/AdminDashboard/Courses/Create.cshtml", model);
+                return View(model);
+                //Views/AdminDashboard/Courses/Create
             }
 
             var entity = _converterHelper.ToCourseEntity(model, true);
@@ -105,7 +109,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             var viewModel = _converterHelper.ToCourseViewModel(course);
-            return View("Views/AdminDashboard/Courses/Edit.cshtml", viewModel);
+            //Views/AdminDashboard/Courses/Edit
+            return View(viewModel);
         }
 
 
@@ -120,7 +125,8 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Failed to update course. Please check the form.";
-                return View("Views/AdminDashboard/Courses/Edit.cshtml", model);
+                return View(model);
+                //Views/AdminDashboard/Courses/Edit
             }
 
             var entity = _converterHelper.ToCourseEntity(model, false);
@@ -147,7 +153,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             var viewModel = _converterHelper.ToCourseViewModel(course);
-            return View("Views/AdminDashboard/Courses/Delete.cshtml", viewModel);
+            return View(viewModel);
+            //Views/AdminDashboard/Courses/Delete
         }
 
         /// <summary>
@@ -168,17 +175,21 @@ namespace SchoolManagement.Web.Controllers
 
             try
             {
-
                 await _courseRepository.DeleteAsync(course);
                 TempData["SuccessMessage"] = "Course successfully deleted.";
             }
             catch (InvalidOperationException ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                if (ex.Message.Contains("student classes"))
+                    TempData["ErrorMessage"] = "Cannot delete a course that has student classes assigned. Remove or reassign the classes first.";
+                else
+                    TempData["ErrorMessage"] = ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
+            
         }
+
 
         /// <summary>
         /// Manages the subjects assigned to a course.
@@ -196,8 +207,10 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View("Views/AdminDashboard/Courses/Manage.cshtml", model);
+            return View(model);
+           //Views/AdminDashboard/Courses/Manage   
         }
+
 
         /// <summary>
         /// Assigns a subject to a course.
@@ -215,6 +228,7 @@ namespace SchoolManagement.Web.Controllers
             return Ok(new { message = "Subject successfully assigned to course." });
         }
 
+
         /// <summary>
         /// Removes a subject from a course.
         /// </summary>
@@ -230,6 +244,7 @@ namespace SchoolManagement.Web.Controllers
 
             return Ok(new { message = "Subject successfully removed from course." });
         }
+
 
         /// <summary>
         /// Displays detailed information about a course.
@@ -249,7 +264,8 @@ namespace SchoolManagement.Web.Controllers
 
             var model = _converterHelper.ToCourseViewModel(course);
 
-            return View("Views/AdminDashboard/Courses/Details.cshtml", model);
+            //Views/AdminDashboard/Courses/Details
+            return View(model);
         }
     }
 }

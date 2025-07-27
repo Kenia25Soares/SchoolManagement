@@ -8,14 +8,20 @@ namespace SchoolManagement.Web.Data.Repositories
     public interface IStudentClassRepository : IGenericRepository<StudentClass>
     {
         Task<StudentClass?> GetByIdWithDetailsAsync(int id);
+
         Task<List<ApplicationUser>> GetAllStudentEntitiesAsync();
+
         Task<ApplicationUser?> GetStudentByIdAsync(string studentId);
+
         Task<List<StudentClass>> GetAllOrderedByNameAsync();
+
         Task<StudentProfile?> GetStudentProfileByUserIdAsync(string userId);
 
         Task UpdateStudentProfileAsync(StudentProfile profile);
-        //Task<bool> SaveAllAsync();
 
         Task<List<SelectListItem>> GetClassesSelectListAsync(int? selectedClassId);
+
+        Task<object?> GetClassWithStudentsAsync(int classId);
+
     }
 }

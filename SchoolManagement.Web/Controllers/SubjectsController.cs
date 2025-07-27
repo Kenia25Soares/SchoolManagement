@@ -42,7 +42,8 @@ namespace SchoolManagement.Web.Controllers
 
             var subjects = await _subjectRepository.GetAll().ToListAsync();
             var viewModel = subjects.Select(s => _converterHelper.ToSubjectViewModel(s)).ToList();
-            return View("/Views/AdminDashboard/Subjects/Index.cshtml", viewModel);
+            //Views/AdminDashboard/Subjects/Index
+            return View(viewModel);
         }
 
 
@@ -54,7 +55,8 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Create()
         {
             await SetUserProfilePictureAsync();
-            return View("/Views/AdminDashboard/Subjects/Create.cshtml");
+            //Views/AdminDashboard/Subjects/Create
+            return View();
         }
 
 
@@ -74,7 +76,8 @@ namespace SchoolManagement.Web.Controllers
                 TempData["SuccessMessage"] = "Subject created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            return View("/Views/AdminDashboard/Subjects/Create.cshtml", model);
+            //Views/AdminDashboard/Subjects/Create
+            return View(model);
         }
 
 
@@ -96,7 +99,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             var model = _converterHelper.ToSubjectViewModel(subject);
-            return View("/Views/AdminDashboard/Subjects/Edit.cshtml", model);
+            //Views/AdminDashboard/Subjects/Edit
+            return View(model);
         }
 
 
@@ -116,7 +120,8 @@ namespace SchoolManagement.Web.Controllers
                 TempData["SuccessMessage"] = "Subject updated successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            return View("/Views/AdminDashboard/Subjects/Edit.cshtml", model);
+            //Views/AdminDashboard/Subjects/Edit
+            return View(model);
         }
 
 
@@ -138,7 +143,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             var model = _converterHelper.ToSubjectViewModel(subject);
-            return View("/Views/AdminDashboard/Subjects/Delete.cshtml", model);
+            //Views/AdminDashboard/Subjects/Delete
+            return View(model);
         }
 
 
@@ -167,16 +173,7 @@ namespace SchoolManagement.Web.Controllers
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
-            //// Verifica se o subject está em uso em algum CourseSubject, para evitar exclusão de um subject que está associado a cursos.
-            //var isInUse = await _subjectRepository.IsSubjectInUseAsync(id);
-            //if (isInUse)
-            //{
-            //    TempData["ErrorMessage"] = "Cannot delete this subject because it is associated with courses.";
-            //    return RedirectToAction(nameof(Index));
-            //}
-
-            //await _subjectRepository.DeleteAsync(subject);
-            //TempData["SuccessMessage"] = "Subject deleted successfully.";
+         
             return RedirectToAction(nameof(Index));
         }
 
@@ -198,7 +195,8 @@ namespace SchoolManagement.Web.Controllers
             }
 
             var model = _converterHelper.ToSubjectViewModel(subject);
-            return View("Views/AdminDashboard/Subjects/Details.cshtml", model);
+            //Views/AdminDashboard/Subjects/Details
+            return View(model);
         }
     }
 }

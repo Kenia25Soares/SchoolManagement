@@ -15,6 +15,7 @@ namespace SchoolManagement.Web.Data.Repositories
         public async Task<List<StudentClass>> GetAllOrderedByNameAsync()
         {
             return await _context.StudentClasses
+                .Where(c => !c.IsClosed)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -64,5 +65,29 @@ namespace SchoolManagement.Web.Data.Repositories
                 })
                 .ToListAsync();
         }
+
+        public async Task<object?> GetClassWithStudentsAsync(int classId)
+        {
+            return await _context.StudentClasses
+                .Include(sc => sc.Students)
+                    .ThenInclude(sp => sp.User)
+                .Where(sc => sc.Id == classId)
+                .Select(sc => new
+                {
+                    ClassId = sc.Id,
+                    ClassName = sc.Name,
+                    AcademicYear = sc.AcademicYear,
+                    Students = sc.Students.Select(s => new
+                    {
+                        s.User.Id,
+                        s.User.FullName,
+                        s.User.Email,
+                        s.User.PhoneNumber,
+                        s.DateOfBirth
+                    })
+                })
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

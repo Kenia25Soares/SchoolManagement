@@ -40,7 +40,8 @@ namespace SchoolManagement.Web.Helpers
                 Shift = c.Shift,
                 CourseId = c.CourseId,
                 CourseName = c.Course?.Name ?? "—",
-                StudentCount = c.Students?.Count ?? 0
+                StudentCount = c.Students?.Count ?? 0,
+                IsClosed = c.IsClosed
             }).ToList();
         }
 

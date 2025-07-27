@@ -32,25 +32,6 @@ namespace SchoolManagement.Web.Data.Repositories
                     "Cannot delete this subject because it is associated with courses.");
             }
 
-            //if (subject == null)
-            //    throw new ArgumentNullException(nameof(subject));
-
-            //// Verifica se o subject tem notas
-            //var hasGrades = await _context.StudentGrades.AnyAsync(g => g.SubjectId == subject.Id);
-            //if (hasGrades)
-            //{
-            //    throw new InvalidOperationException("Cannot delete this subject because it has grades assigned.");
-            //}
-
-            //// Remove CourseSubjects associados antes de excluir a disciplina
-            //var courseSubjects = await _context.CourseSubjects
-            //    .Where(cs => cs.SubjectId == subject.Id)
-            //    .ToListAsync();
-
-            //if (courseSubjects.Any())
-            //    _context.CourseSubjects.RemoveRange(courseSubjects);
-
-
             _context.Subjects.Remove(subject);
             await _context.SaveChangesAsync();
         }

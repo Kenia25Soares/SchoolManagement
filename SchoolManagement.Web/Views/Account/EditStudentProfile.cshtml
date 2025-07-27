@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = "Edit Student";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    bool isStudent = User.IsInRole("Student");
 }
 
 <div class="container mt-5">
@@ -65,9 +67,24 @@
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="StudentClassId" class="form-label">Class</label>
-                        <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
-                            <option value="">-- Select Class --</option>
-                        </select>
+
+                        @if (isStudent)
+                        {
+                            <!-- Se for aluno, o dropdown fica desativada -->
+                            <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes" disabled>
+                                <option value="">-- Select Class --</option>
+                            </select>
+                            
+                            <input type="hidden" asp-for="StudentClassId" />
+                        }
+                        else
+                        {
+                            
+                            <select asp-for="StudentClassId" class="form-select" asp-items="ViewBag.Classes">
+                                <option value="">-- Select Class --</option>
+                            </select>
+                        }
+
                         <span asp-validation-for="StudentClassId" class="text-danger"></span>
                     </div>
 
@@ -75,10 +92,9 @@
                         <label>Current Profile Picture</label><br />
                         @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
                         {
-                            <img src="https://blobainek.blob.core.windows.net/projetspictures/@Model.ProfilePictureUrl" 
-     alt="Profile Picture"
-     style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
-
+                            <img src="https://blobainek.blob.core.windows.net/projetspictures/@Model.ProfilePictureUrl"
+                                 alt="Profile Picture"
+                                 style="width:100px; height:100px; object-fit:cover; border-radius:50%;" />
                         }
                         else
                         {

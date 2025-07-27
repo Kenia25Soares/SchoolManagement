@@ -12,22 +12,24 @@ namespace SchoolManagement.Web.Helpers
     public class UserHelper : IUserHelper
     {
         private readonly UserManager<ApplicationUser> _userManager;  //faz a gestão dos utilizadores
-        private readonly SignInManager<ApplicationUser> _signInManager;  //faz a gestão do login e logout dos utilizadores
-        private readonly RoleManager<IdentityRole> _roleManager;  //faz a gestão dos papéis (roles) dos utilizadores
-                                                                  //private readonly DataContext _context;
+        private readonly SignInManager<ApplicationUser> _signInManager;  //faz a gestão do login e logout dos utilizadores, que injeta o UserManager<ApplicationUser> para gerir os utilizadores
+        private readonly RoleManager<IdentityRole> _roleManager;  //faz a gestão  (roles) dos utilizadores
+                                                                
         private readonly IStudentClassRepository _studentClassRepository;  //faz a gestão das turmas dos alunos
+        private readonly IAlertRepository _alertRepository;
 
         public UserHelper(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             RoleManager<IdentityRole> roleManager,
-           /* DataContext context*/IStudentClassRepository studentClassRepository)
+           IStudentClassRepository studentClassRepository,
+           IAlertRepository alertRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-            //_context = context;
             _studentClassRepository = studentClassRepository;
+            _alertRepository = alertRepository;
         }
 
 
@@ -128,9 +130,7 @@ namespace SchoolManagement.Web.Helpers
             var employeeUsers = await _userManager.GetUsersInRoleAsync("Employee");
 
             return adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
-            //var total = adminUsers.Concat(employeeUsers).Select(u => u.Id).Distinct().Count();
-
-            //return total;
+            
         }
 
         public async Task<SignInResult> ValidatePasswordAsync(ApplicationUser user, string password)
@@ -149,6 +149,17 @@ namespace SchoolManagement.Web.Helpers
 
         public async Task<IdentityResult> DeleteUserAsync(ApplicationUser user)
         {
+            var alerts = await _alertRepository.GetAll()
+                .Where(a => a.CreatedById == user.Id)
+                .ToListAsync();
+
+            foreach (var alert in alerts)
+            {
+                alert.CreatedById = null;
+                await _alertRepository.UpdateAsync(alert);
+            }
+
+            // Remove o user de todas as roles
             return await _userManager.DeleteAsync(user);
         }
 

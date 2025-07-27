@@ -21,13 +21,13 @@ namespace SchoolManagement.Web.Helpers
 
         public async Task<StudentGradesDetailsViewModel> GetGradesDetailsAsync(string studentId)
         {
-            // Busca todas as notas com disciplinas e os tipos via repository
+            // Busca todas as notas com disciplinas e os tipos pelo repository
             var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
 
-            // Busca o perfil do estudante para pegar infomação de classe e nome
+            // Busca o perfil do estudante para pegar infomação da classe e nome
             var studentProfile = await _studentProfileRepository.GetByUserIdAsync(studentId);
 
-            // Agrupa notas por disciplina
+            // Agrupa as notas por disciplina
             var groupedGrades = grades
                 .Where(g => g.Subject != null)
                 .GroupBy(g => g.Subject)

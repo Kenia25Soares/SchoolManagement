@@ -16,19 +16,22 @@ namespace SchoolManagement.Web.Controllers
     {
         private readonly IStudentClassRepository _classRepository;
         private readonly IGradesRepository _gradeRepository;
-        private readonly IGenericRepository<StudentProfile> _studentProfileRepository;
+        private readonly IStudentProfileRepository _studentProfileRepository;
         private readonly IBlobHelper _blobHelper;
         private readonly IMailHelper _mailHelper;
+        private readonly IUserHelper _userHelper;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public StudentsController(
+            IUserHelper userHelper,
             IStudentClassRepository classRepository,
             IGradesRepository gradeRepository,
-            IGenericRepository<StudentProfile> studentProfileRepository,
+            IStudentProfileRepository studentProfileRepository,
             IBlobHelper blobHelper,
             IMailHelper mailHelper,
             UserManager<ApplicationUser> userManager)
         {
+            _userHelper = userHelper;
             _classRepository = classRepository;
             _gradeRepository = gradeRepository;
             _studentProfileRepository = studentProfileRepository;
@@ -38,10 +41,20 @@ namespace SchoolManagement.Web.Controllers
         }
 
         /// <summary>
+        /// Sets the current user's profile picture in the view data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
+
+        /// <summary>
         /// Loads the list of classes to populate the view's dropdown.
         /// </summary>
         /// <param name="selected">The selected class ID (optional).</param>
-        private async Task LoadClassesAsync(object selected = null)
+        private async Task LoadClassesAsync(object? selected = null)
         {
             var classes = await _classRepository.GetAllOrderedByNameAsync();
             ViewBag.Classes = new SelectList(classes, "Id", "Name", selected);
@@ -55,6 +68,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            await SetUserProfilePictureAsync();
+
             var students = await _studentProfileRepository.GetAll()
                 .Include(s => s.User)
                 .Include(s => s.StudentClass)
@@ -85,14 +100,15 @@ namespace SchoolManagement.Web.Controllers
             {
                 Id = s.User.Id,
                 FullName = s.User.FullName,
-                Email = s.User.Email,
+                Email = s.User.Email ?? string.Empty,
                 Role = "Student",
                 ProfilePictureUrl = s.User.ProfilePictureUrl,
                 AverageGrade = averages.ContainsKey(s.User.Id) ? averages[s.User.Id] : (double?)null,
-                ClassName = s.StudentClass?.Name ?? "N/A"
+                ClassName = s.StudentClass?.Name ?? "--"
             }).ToList();
 
-            return View("/Views/EmployeeDashboard/Students/Index.cshtml", model);
+            return View(model);
+            //Views/EmployeeDashboard/Students/Index
         }
 
 
@@ -104,7 +120,8 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Create()
         {
             await LoadClassesAsync();
-            return View("/Views/EmployeeDashboard/Students/Create.cshtml", new CreateStudentViewModel());
+            return View(new CreateStudentViewModel());
+            //Views/EmployeeDashboard/Students/Create
         }
 
 
@@ -122,7 +139,8 @@ namespace SchoolManagement.Web.Controllers
             await LoadClassesAsync(model.StudentClassId);
 
             if (!ModelState.IsValid)
-                return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
+                return View(model);
+            //Views/EmployeeDashboard/Students/Create
 
             var profileBlobId = model.ProfilePicture != null
                 ? await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures")
@@ -145,7 +163,8 @@ namespace SchoolManagement.Web.Controllers
             if (!result.Succeeded)
             {
                 TempData["ErrorMessage"] = $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}";
-                return View("/Views/EmployeeDashboard/Students/Create.cshtml", model);
+                //Views/EmployeeDashboard/Students/Create
+                return View(model);
             }
 
             await _userManager.AddToRoleAsync(user, "Student");
@@ -190,8 +209,7 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             var student = await _studentProfileRepository.GetAll()
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.User.Id == id);
+                .FirstOrDefaultAsync(s => s.UserId == id);
 
             if (student == null)
             {
@@ -205,11 +223,26 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            var user = await _userManager.FindByIdAsync(id);
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(user, roles);
+            }
+
             await _studentProfileRepository.DeleteAsync(student);
-            TempData["SuccessMessage"] = "Student deleted successfully.";
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = "Failed to delete the user from Identity.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            TempData["SuccessMessage"] = "Student and user deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
-
 
         /// <summary>
         /// Displays the edit form for a student profile.
@@ -235,7 +268,7 @@ namespace SchoolManagement.Web.Controllers
             {
                 Id = student.User.Id,
                 FullName = student.User.FullName,
-                Email = student.User.Email,
+                Email = student.User.Email ?? string.Empty,
                 PhoneNumber = student.User.PhoneNumber,
                 DateOfBirth = student.DateOfBirth,
                 Address = student.Address,
@@ -244,7 +277,8 @@ namespace SchoolManagement.Web.Controllers
                 OfficialPhotoUrl = student.OfficialPhotoUrl
             };
 
-            return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
+            //Views/EmployeeDashboard/Students/Edit
+            return View(model);
         }
 
 
@@ -261,7 +295,8 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 await LoadClassesAsync(model.StudentClassId);
-                return View("/Views/EmployeeDashboard/Students/Edit.cshtml", model);
+                //Views/EmployeeDashboard/Students/Edit
+                return View(model);
             }
 
             var student = await _studentProfileRepository.GetAll()
@@ -280,7 +315,11 @@ namespace SchoolManagement.Web.Controllers
             student.User.PhoneNumber = model.PhoneNumber;
             student.DateOfBirth = model.DateOfBirth;
             student.Address = model.Address;
-            student.StudentClassId = model.StudentClassId;
+
+            if (!User.IsInRole("Student"))
+            {
+                student.StudentClassId = model.StudentClassId;
+            }
 
             if (model.ProfilePicture != null)
             {
@@ -320,16 +359,17 @@ namespace SchoolManagement.Web.Controllers
             var model = new StudentDetailsViewModel
             {
                 FullName = student.User.FullName,
-                Email = student.User.Email,
-                PhoneNumber = student.User.PhoneNumber,
+                Email = student.User.Email ?? string.Empty,
+                PhoneNumber = student.User.PhoneNumber ?? string.Empty,
                 DateOfBirth = student.DateOfBirth,
-                Address = student.Address,
-                ClassName = student.StudentClass?.Name ?? "N/A",
+                Address = student.Address ?? string.Empty,
+                ClassName = student.StudentClass?.Name ?? "--",
                 ProfilePictureUrl = student.User.ProfilePictureUrl,
                 OfficialPhotoUrl = student.OfficialPhotoUrl
             };
 
-            return View("/Views/EmployeeDashboard/Students/Details.cshtml", model);
+            return View(model);
+            //Views/EmployeeDashboard/Students/Details
         }
     }
 }

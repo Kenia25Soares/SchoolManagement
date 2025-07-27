@@ -36,6 +36,6 @@ namespace SchoolManagement.Web.Models
         public IFormFile? OfficialPhoto { get; set; }
 
         [Display(Name = "New Profile Picture")]
-        public IFormFile? ProfilePicture { get; set; }
+        public IFormFile? ProfilePicture { get; set; }  // Uso para pdf, imagens, e outros ficheiros que o utilizador possa querer enviar
     }
 }

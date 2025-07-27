@@ -23,7 +23,8 @@ namespace SchoolManagement.Web.Controllers.API
         /// </summary>
         /// <param name="userHelper">Service for user operations</param>
         /// <param name="configuration">Application configuration</param>
-        public AccountAPIController(IUserHelper userHelper, IConfiguration configuration)
+        public AccountAPIController(IUserHelper userHelper, 
+            IConfiguration configuration)
         {
             _userHelper = userHelper;
             _configuration = configuration;
@@ -57,12 +58,13 @@ namespace SchoolManagement.Web.Controllers.API
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Role, "Employee") // replace with actual role if necessary
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
+            var jwtKey = _configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT:Key is not configured.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(

@@ -61,9 +61,14 @@ namespace SchoolManagement.Web.Controllers
             if (result.Succeeded)
             {
                 var user = await _userHelper.GetUserByEmailAsync(model.Email);
-                if (await _userHelper.IsUserInRoleAsync(user, "Admin")) return RedirectToAction("Index", "AdminDashboard");
-                if (await _userHelper.IsUserInRoleAsync(user, "Employee")) return RedirectToAction("Index", "EmployeeDashboard");
-                if (await _userHelper.IsUserInRoleAsync(user, "Student")) return RedirectToAction("Index", "StudentDashboard");
+                if (await _userHelper.IsUserInRoleAsync(user, "Admin")) 
+                    return RedirectToAction("Index", "AdminDashboard");
+
+                if (await _userHelper.IsUserInRoleAsync(user, "Employee")) 
+                    return RedirectToAction("Index", "EmployeeDashboard");
+
+                if (await _userHelper.IsUserInRoleAsync(user, "Student"))
+                    return RedirectToAction("Index", "StudentDashboard");
 
                 return RedirectToAction("Public", "Home");
             }
@@ -79,7 +84,7 @@ namespace SchoolManagement.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            TempData["SuccessMessage"] = "You have been logged out successfully.";
+      
             return RedirectToAction("Login");
         }
 
@@ -332,7 +337,7 @@ namespace SchoolManagement.Web.Controllers
         /// </summary>
         public IActionResult NotAuthorized()
         {
-            return View("~/Views/Errors/403.cshtml");
+            return View("403");
         }
     }
 }

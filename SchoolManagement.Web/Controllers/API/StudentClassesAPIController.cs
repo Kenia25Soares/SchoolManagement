@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 
 namespace SchoolManagement.Web.Controllers.API
@@ -16,15 +17,14 @@ namespace SchoolManagement.Web.Controllers.API
     [Route("api/[controller]")]
     public class StudentClassesAPIController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly IStudentClassRepository _studentClassRepository;
 
         /// <summary>
-        /// Constructor to inject database context.
+        /// Constructor to inject repository.
         /// </summary>
-        /// <param name="context">The EF Core data context</param>
-        public StudentClassesAPIController(DataContext context)
+        public StudentClassesAPIController(IStudentClassRepository studentClassRepository)
         {
-            _context = context;
+            _studentClassRepository = studentClassRepository;
         }
 
         /// <summary>
@@ -39,25 +39,7 @@ namespace SchoolManagement.Web.Controllers.API
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetStudentsByClass(int id)
         {
-            var classWithStudents = await _context.StudentClasses
-                .Include(sc => sc.Students) // Navigation from StudentClass to StudentProfile
-                    .ThenInclude(sp => sp.User) // Navigation from StudentProfile to StudentUser
-                .Where(sc => sc.Id == id)
-                .Select(sc => new
-                {
-                    ClassId = sc.Id,
-                    ClassName = sc.Name,
-                    AcademicYear = sc.AcademicYear,
-                    Students = sc.Students.Select(s => new
-                    {
-                        s.User.Id,
-                        s.User.FullName,
-                        s.User.Email,
-                        s.User.PhoneNumber,
-                        s.DateOfBirth
-                    })
-                })
-                .FirstOrDefaultAsync();
+            var classWithStudents = await _studentClassRepository.GetClassWithStudentsAsync(id);
 
             if (classWithStudents == null)
             {
@@ -67,6 +49,13 @@ namespace SchoolManagement.Web.Controllers.API
                     Message = "Class not found."
                 });
             }
+
+            return Ok(new Response
+            {
+                IsSuccess = true,
+                Message = "Class found successfully.",
+                Results = classWithStudents
+            });
 
             return Ok(new Response
             {

@@ -81,24 +81,44 @@
             pageSettings: { pageSize: 10 },
             height: "auto",
             columns: [
-                { field: 'Name', headerText: 'Name', width: 150 },
-                { field: 'AcademicYear', headerText: 'Academic Year', width: 150 },
-                { field: 'Shift', headerText: 'Shift', width: 120 },
-                { field: 'CourseName', headerText: 'Course', width: 180 },
+                { field: 'Name', headerText: 'Name', width: 120 },          
+                { field: 'AcademicYear', headerText: 'Year', width: 80 },
+                { field: 'Shift', headerText: 'Shift', width: 80 },        
+                { field: 'CourseName', headerText: 'Course', width: 140 }, 
                 {
                     field: 'StudentCount',
                     headerText: 'Students',
-                    width: 120,
+                    width: 80,
                     textAlign: 'Center',
-                    template: function(data) {
+                    template: function (data) {
                         return `<span class="badge bg-primary">${data.StudentCount}</span>`;
                     }
                 },
                 {
-                    headerText: 'Actions',
-                    width: 260,
+                    field: 'IsClosed',
+                    headerText: 'Status',
+                    width: 90,
                     textAlign: 'Center',
-                    template: function(data) {
+                    template: function (data) {
+                        if (data.IsClosed) {
+                            return `<span class="badge bg-danger">Closed</span>`;
+                        }
+                        return `<span class="badge bg-success">Open</span>`;
+                    }
+                },
+                {
+                    headerText: 'Actions',
+                    width: 350,
+                    textAlign: 'Center',
+                    template: function (data) {
+                        var manageButton = data.IsClosed
+                            ? `<button class="e-btn e-secondary me-1" disabled>
+                                   <i class="fas fa-cogs"></i> Manage
+                               </button>`
+                            : `<button class="e-btn e-primary me-1" onclick="location.href='/EmployeeDashboard/StudentClasses/Manage/${data.Id}'">
+                                   <i class="fas fa-cogs"></i> Manage
+                               </button>`;
+
                         return `
                             <button class="e-btn e-warning me-1" onclick="location.href='/EmployeeDashboard/StudentClasses/Edit/${data.Id}'">
                                 <i class="fas fa-pen"></i> Edit
@@ -106,9 +126,7 @@
                             <button class="e-btn e-primary me-1" onclick="location.href='/EmployeeDashboard/StudentClasses/Details/${data.Id}'">
                                 <i class="fas fa-eye"></i> Details
                             </button>
-                            <button class="e-btn e-primary me-1" onclick="location.href='/EmployeeDashboard/StudentClasses/Manage/${data.Id}'">
-                                <i class="fas fa-cogs"></i> Manage
-                            </button>
+                            ${manageButton}
                             <button class="e-btn e-danger" onclick="showDeleteModal('${data.Id}', '${data.Name}')">
                                 <i class="fas fa-trash"></i> Delete
                             </button>

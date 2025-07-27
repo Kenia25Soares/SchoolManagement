@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System;
@@ -16,6 +18,7 @@ public class UsersController : Controller
     private readonly IUserHelper _userHelper;
     private readonly IMailHelper _mailHelper;
     private readonly IBlobHelper _blobHelper;
+  
 
     public UsersController(
         IUserHelper userHelper,
@@ -65,7 +68,8 @@ public class UsersController : Controller
             }
         }
 
-        return View("/Views/AdminDashboard/Users/Index.cshtml", model);
+        //Views/AdminDashboard/Users/Index
+        return View(model);
     }
 
 
@@ -86,14 +90,14 @@ public class UsersController : Controller
 
         var roles = await _userHelper.GetUserRolesAsync(user);
         if (roles.Any())
-        {
             await _userHelper.RemoveUserFromRolesAsync(user, roles);
-        }
 
         var result = await _userHelper.DeleteUserAsync(user);
+
         TempData["SuccessMessage"] = result.Succeeded
             ? "User successfully removed."
             : "Error deleting user.";
+
         return RedirectToAction("Index");
     }
 
@@ -107,7 +111,8 @@ public class UsersController : Controller
     {
         await SetUserProfilePictureAsync();
         var model = new CreateUserViewModel { Roles = new List<string> { "Admin", "Employee" } };
-        return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+        //Views/AdminDashboard/Users/Create
+        return View(model);
     }
 
 
@@ -123,7 +128,8 @@ public class UsersController : Controller
         await SetUserProfilePictureAsync();
 
         if (!ModelState.IsValid)
-            return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+            //Views/AdminDashboard/Users/Create
+            return View(model);
 
         Guid blobId = Guid.Empty;
         if (model.ProfilePicture != null)
@@ -147,7 +153,8 @@ public class UsersController : Controller
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
-                return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+                //Views/AdminDashboard/Users/Create
+                return View(model);
             }
         }
 
@@ -162,7 +169,8 @@ public class UsersController : Controller
         if (!response.IsSuccess)
         {
             ModelState.AddModelError(string.Empty, "User created, but failed to send email.");
-            return View("/Views/AdminDashboard/Users/Create.cshtml", model);
+            //Views/AdminDashboard/Users/Create
+            return View(model);
         }
 
         TempData["SuccessMessage"] = "User successfully created! An email has been sent.";
@@ -200,7 +208,8 @@ public class UsersController : Controller
             Roles = new List<string> { "Admin", "Employee" }
         };
 
-        return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
+        //Views/AdminDashboard/Users/Edit
+        return View(model);
     }
 
 
@@ -216,13 +225,14 @@ public class UsersController : Controller
         await SetUserProfilePictureAsync();
 
         if (!ModelState.IsValid)
-            return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
+            //Views/AdminDashboard/Users/Edit
+            return View(model);
 
         var user = await _userHelper.GetUserByIdAsync(model.Id);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
 
         user.FullName = model.FullName;
@@ -244,11 +254,12 @@ public class UsersController : Controller
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, "Failed to update user.");
-            return View("/Views/AdminDashboard/Users/Edit.cshtml", model);
+            //Views/AdminDashboard/Users/Edit
+            return View(model);
         }
 
         TempData["SuccessMessage"] = "User successfully updated!";
-        return RedirectToAction("Index");
+        return RedirectToAction(nameof(Index));
     }
 
 
@@ -266,7 +277,7 @@ public class UsersController : Controller
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
 
         var roles = await _userHelper.GetUserRolesAsync(user);
@@ -281,6 +292,7 @@ public class UsersController : Controller
             Roles = new List<string> { "Admin", "Employee" }
         };
 
-        return View("/Views/AdminDashboard/Users/Details.cshtml", model);
+        //Views/AdminDashboard/Users/Details
+        return View(model);
     }
 }

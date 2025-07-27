@@ -41,5 +41,7 @@ namespace SchoolManagement.Web.Models
 
         [ValidateNever]
         public List<string> Students { get; set; } = new List<string>();
+
+        public bool IsClosed { get; set; }
     }
 }

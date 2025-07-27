@@ -50,6 +50,8 @@ namespace SchoolManagement.Web.Controllers
                 StudentId = user.Id,
                 StudentName = user.FullName
             };
+
+            //Views/StudentDashboard/Index
             return View(model);
         }
 

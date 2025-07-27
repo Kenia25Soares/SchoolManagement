@@ -44,8 +44,9 @@ namespace SchoolManagement.Web.Controllers
                 IsResolved = a.IsResolved
             }).ToList();
 
-            return View("Views/AdminDashboard/Alerts/Index.cshtml", model);
-            //return View(alerts);
+            return View(model);
+            //Views/AdminDashboard/Alerts/Index
+
         }
 
 

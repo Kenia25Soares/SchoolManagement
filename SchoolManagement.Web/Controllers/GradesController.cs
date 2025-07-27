@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
+using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 
 namespace SchoolManagement.Web.Controllers
@@ -11,17 +12,30 @@ namespace SchoolManagement.Web.Controllers
     [Route("EmployeeDashboard/Grades")]
     public class GradesController : Controller
     {
+        private readonly IUserHelper _userHelper;
         private readonly IGradesRepository _gradesRepository;
         private readonly IStudentClassRepository _studentClassRepository;
 
-        public GradesController(IGradesRepository gradesRepository,
+        public GradesController(IUserHelper userHelper, IGradesRepository gradesRepository,
             IStudentClassRepository studentClassRepository)
         {
+            _userHelper = userHelper;
             _gradesRepository = gradesRepository;
             _studentClassRepository = studentClassRepository;
         }
 
-        
+
+        /// <summary>
+        /// Sets the current user's profile picture in the view data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
+
+
         /// <summary>
         /// Displays a list of students, their average grades, and absence status for a selected class.
         /// </summary>
@@ -30,9 +44,11 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int? classId)
         {
+            await SetUserProfilePictureAsync();
+
             var classes = await _gradesRepository.GetClassSelectListAsync(classId);
 
-            if (!classId.HasValue && classes.Count > 0/*Any()*/)
+            if (!classId.HasValue && classes.Count > 0)
                 classId = int.Parse(classes.First().Value);
 
             var students = await _gradesRepository.GetStudentsByClassAsync(classId ?? 0);
@@ -82,9 +98,6 @@ namespace SchoolManagement.Web.Controllers
                     FullName = s.User.FullName,
                     Email = s.User?.Email ?? string.Empty,
                     ProfilePictureUrl = s.User?.ProfilePictureUrl ?? string.Empty,
-                    //AverageGrade = (s.User != null && averages.ContainsKey(s.User.Id))
-                    //    ? averages[s.User.Id]
-                    //    : (double?)null,
                     AverageGrade = s.User != null && averages.TryGetValue(s.User.Id, out var avg) ? avg : (double?)null,
                     FailedDueToAbsences = s.User != null &&
                         failedByAbsencesDict.ContainsKey(s.User.Id) &&
@@ -93,7 +106,8 @@ namespace SchoolManagement.Web.Controllers
                 IsClassClosed = isClassClosed
             };
 
-            return View("/Views/EmployeeDashboard/Grades/Index.cshtml", model);
+            //Views/EmployeeDashboard/Grades/Index
+            return View(model);
         }
 
 
@@ -119,13 +133,13 @@ namespace SchoolManagement.Web.Controllers
             {
                 StudentId = studentId,
                 Grades = [new()],
-                //Grades = new List<GradeInputModel> { new GradeInputModel() },
                 Subjects = subjects.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }),
                 GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name })
             };
 
             ViewBag.StudentName = student.User.FullName;
-            return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
+            //Views/EmployeeDashboard/Grades/AddGrades
+            return View(model);
         }
 
 
@@ -158,7 +172,8 @@ namespace SchoolManagement.Web.Controllers
                     model.GradeTypes = gradeTypes.Select(gt => new SelectListItem { Value = gt.Id.ToString(), Text = gt.Name });
 
                     ViewBag.StudentName = student.User.FullName;
-                    return View("/Views/EmployeeDashboard/Grades/AddGrades.cshtml", model);
+                    //Views/EmployeeDashboard/Grades/AddGrades
+                    return View(model);
                 }
             }
 
@@ -176,7 +191,7 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(grades);
-            //await _gradesRepository.SaveAllAsync();
+         
 
             TempData["SuccessMessage"] = "Grades added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
@@ -207,7 +222,6 @@ namespace SchoolManagement.Web.Controllers
 
             studentClass.IsClosed = true;
             await _studentClassRepository.UpdateAsync(studentClass);
-            //await _studentClassRepository.SaveAllAsync();
 
             TempData["SuccessMessage"] = "Class successfully closed.";
             return RedirectToAction(nameof(Index), new { classId });
@@ -232,22 +246,25 @@ namespace SchoolManagement.Web.Controllers
             var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
             var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
 
+            // Agrupar notas por disciplina 
             var groupedGrades = grades
                 .GroupBy(g => g.Subject)
                 .Select(g => new SubjectGradesViewModel
                 {
-                    SubjectName = g.Key?.Name ?? "Unkmown",
-                    GradesByType = g.GroupBy(x => x.GradeType).Select(gt => new GradeTypeGroupViewModel
-                    {
-                        GradeTypeName = gt.Key?.Name ??"N/A",
-                        Weight = gt.Key?.Weight?? 0,
-                        Grades = gt.Select(x => x.Grade ?? 0).ToList()
-                    }).ToList(),
+                    SubjectName = g.Key?.Name ?? "Unknown",
+                    GradesByType = g.GroupBy(x => x.GradeType)
+                .Where(gt => gt.Key != null) 
+                .Select(gt => new GradeTypeGroupViewModel
+                {
+                    GradeTypeName = gt.Key!.Name,  
+                    Weight = gt.Key.Weight,
+                    Grades = gt.Select(x => x.Grade ?? 0).ToList()
+                }).ToList(),
                     AllowedAbsences = g.Key?.AllowedAbsences ?? 0,
                     TotalAbsences = absences.Where(a => a.SubjectId == g.Key!.Id).Sum(a => a.Absences)
                 }).ToList();
 
-            foreach (var subject in groupedGrades)
+            foreach (var subject in groupedGrades) // Cálculo das mediias por disciplina
             {
                 double subjectWeightedSum = 0;
                 double subjectWeightTotal = 0;
@@ -266,10 +283,11 @@ namespace SchoolManagement.Web.Controllers
                 subject.FailedDueToAbsences = subject.TotalAbsences > subject.AllowedAbsences;
             }
 
+            // Cálculo para a média geral
             double totalWeightedSum = 0;
             double totalOverallWeight = 0;
 
-            foreach (var subject in groupedGrades)
+            foreach (var subject in groupedGrades) 
             {
                 foreach (var gt in subject.GradesByType)
                 {
@@ -295,7 +313,8 @@ namespace SchoolManagement.Web.Controllers
                 IsClassClosed = student.StudentClass?.IsClosed ?? false
             };
 
-            return View("/Views/EmployeeDashboard/Grades/Details.cshtml", model);
+            //Views/EmployeeDashboard/Grades/Details
+            return View(model);
         }
 
 
@@ -328,7 +347,8 @@ namespace SchoolManagement.Web.Controllers
             };
 
             ViewBag.StudentName = student.User.FullName;
-            return View("/Views/EmployeeDashboard/Grades/AddAbsences.cshtml", model);
+            //Views/EmployeeDashboard/Grades/AddAbsences
+            return View(model);
         }
 
 
@@ -368,7 +388,6 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(absences);
-           /* await _gradesRepository.SaveAllAsync()*/;
 
             TempData["SuccessMessage"] = "Absences added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
@@ -406,7 +425,8 @@ namespace SchoolManagement.Web.Controllers
                     .ToList()
             };
 
-            return View("/Views/EmployeeDashboard/Grades/ViewAbsences.cshtml", model);
+            //Views/EmployeeDashboard/Grades/ViewAbsences
+            return View(model);
         }
     }
 }

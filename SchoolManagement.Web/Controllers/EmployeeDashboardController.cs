@@ -13,20 +13,31 @@ namespace SchoolManagement.Web.Controllers
     [Authorize(Roles = "Employee")]
     public class EmployeeDashboardController : Controller
     {
-        private readonly IGenericRepository<StudentProfile> _studentProfileRepo;
-        private readonly IStudentClassRepository _studentClassRepo;
+
+        private readonly IStudentProfileRepository _studentProfileRepository;
+        private readonly IStudentClassRepository _studentClassRepository;
         private readonly IUserHelper _userHelper;
 
         public EmployeeDashboardController(
-            IGenericRepository<StudentProfile> studentProfileRepo,
-            IStudentClassRepository studentClassRepo,
+            IStudentProfileRepository studentProfileRepository,
+            IStudentClassRepository studentClassRepository,
             IUserHelper userHelper)
         {
-            _studentProfileRepo = studentProfileRepo;
-            _studentClassRepo = studentClassRepo;
+            _studentProfileRepository = studentProfileRepository;
+            _studentClassRepository = studentClassRepository;
             _userHelper = userHelper;
         }
 
+
+        /// <summary>
+        /// Sets the current user's profile picture in the view data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task SetUserProfilePictureAsync()
+        {
+            var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
+            ViewData["ProfilePictureUrl"] = user?.ProfilePictureUrl;
+        }
 
         /// <summary>
         /// Displays statistics on the employee dashboard, including total students and class status.
@@ -35,8 +46,10 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var students = await _studentProfileRepo.GetAll().ToListAsync();
-            var classes = await _studentClassRepo.GetAll().ToListAsync();
+            await SetUserProfilePictureAsync();
+
+            var students = await _studentProfileRepository.GetAll().ToListAsync();
+            var classes = await _studentClassRepository.GetAll().ToListAsync();
 
             var model = new EmployeeDashboardViewModel
             {
@@ -45,7 +58,8 @@ namespace SchoolManagement.Web.Controllers
                 ClosedClasses = classes.Count(c => c.IsClosed)
             };
 
-            return View("Views/EmployeeDashboard/Index.cshtml", model);
+            //Views/EmployeeDashboard/Index
+            return View(model);
         }
     }
 }
