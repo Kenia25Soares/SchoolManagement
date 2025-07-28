@@ -313,6 +313,16 @@ namespace SchoolManagement.Web.Controllers
                 IsClassClosed = student.StudentClass?.IsClosed ?? false
             };
 
+            if (groupedGrades.Any(g => g.TotalAbsences > g.AllowedAbsences))
+            {
+                var profile = await _gradesRepository.GetStudentProfileByUserIdAsync(student.User.Id);
+                if (profile != null && !profile.IsExcludedDueToAbsences)
+                {
+                    profile.IsExcludedDueToAbsences = true;
+                    await _gradesRepository.UpdateStudentProfileAsync(profile);
+                }
+            }
+
             //Views/EmployeeDashboard/Grades/Details
             return View(model);
         }
@@ -388,6 +398,23 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(absences);
+
+            // ver se o aluno ultrapassou o limite das faltas permitidas
+            var absencesAfterSave = await _gradesRepository.GetAbsencesByStudentAsync(model.StudentId);
+
+            var exceeded = absencesAfterSave
+                .GroupBy(a => a.Subject)
+                .Any(g => g.Sum(x => x.Absences) > g.Key.AllowedAbsences);
+
+            if (exceeded)
+            {
+                var profile = await _gradesRepository.GetStudentProfileByUserIdAsync(model.StudentId);
+                if (profile != null && !profile.IsExcludedDueToAbsences)
+                {
+                    profile.IsExcludedDueToAbsences = true;
+                    await _gradesRepository.UpdateStudentProfileAsync(profile);
+                }
+            }
 
             TempData["SuccessMessage"] = "Absences added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });

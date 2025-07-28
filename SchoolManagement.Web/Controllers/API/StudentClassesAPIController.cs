@@ -12,7 +12,7 @@ namespace SchoolManagement.Web.Controllers.API
     /// <summary>
     /// API controller for managing student classes and retrieving related students.
     /// </summary>
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Employee")]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Employee")]
     [ApiController]
     [Route("api/[controller]")]
     public class StudentClassesAPIController : ControllerBase

@@ -113,5 +113,19 @@ namespace SchoolManagement.Web.Data.Repositories
         {
             await CreateRangeAsync(absences); 
         }
+
+        public async Task<StudentProfile?> GetStudentProfileByUserIdAsync(string userId)
+        {
+            return await _context.StudentProfiles
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+        }
+
+        public async Task UpdateStudentProfileAsync(StudentProfile studentProfile)
+        {
+            _context.StudentProfiles.Update(studentProfile);
+            await _context.SaveChangesAsync();
+        }
+
+
     }
 }

@@ -21,6 +21,8 @@ namespace SchoolManagement.Web.Data.Repositories
         Task<StudentClass?> GetClassByIdAsync(int classId); 
         Task AddGradesAsync(IEnumerable<StudentGrade> grades);
         Task AddAbsencesAsync(IEnumerable<StudentGrade> absences);
+        Task<StudentProfile?> GetStudentProfileByUserIdAsync(string userId);
+        Task UpdateStudentProfileAsync(StudentProfile studentProfile);
 
     }
 }
