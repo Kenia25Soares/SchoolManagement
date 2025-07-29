@@ -7,7 +7,10 @@ namespace SchoolManagement.Web.Helpers
     public class BlobHelper : IBlobHelper
     {
         private readonly BlobServiceClient _blobClient;
-      
+
+        // Define o limite de tamanho das image 2MB
+        private const long MaxFileSize = 2 * 1024 * 1024; 
+
         public BlobHelper(IConfiguration configuration)
         {
             string keys = configuration["Blob:ConnectionString"];
@@ -16,6 +19,11 @@ namespace SchoolManagement.Web.Helpers
 
         public async Task<Guid> UploadBlobAsync(IFormFile file, string containerName)
         {
+            if (file.Length > MaxFileSize)
+            {
+                throw new InvalidOperationException($"The file exceeds the limit {MaxFileSize / 1024 / 1024} MB.");
+            }
+
             var containerClient = _blobClient.GetBlobContainerClient(containerName);
             await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 

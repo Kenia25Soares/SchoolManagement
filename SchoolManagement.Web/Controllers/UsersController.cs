@@ -133,7 +133,17 @@ public class UsersController : Controller
 
         Guid blobId = Guid.Empty;
         if (model.ProfilePicture != null)
-            blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+        {
+            try
+            {
+                blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ProfilePicture", ex.Message);
+                return View(model);
+            }
+        }
 
         var user = new ApplicationUser
         {
@@ -242,14 +252,24 @@ public class UsersController : Controller
 
         if (model.ProfilePicture != null)
         {
-            Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-            user.ProfilePictureUrl = blobId.ToString();
+            try
+            {
+                Guid blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                user.ProfilePictureUrl = blobId.ToString();
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ProfilePicture", ex.Message);
+                return View(model);
+            }
         }
 
+        // Atualiza as roles
         var currentRoles = await _userHelper.GetUserRolesAsync(user);
         await _userHelper.RemoveUserFromRolesAsync(user, currentRoles);
         await _userHelper.AddUserToRoleAsync(user, model.Role);
 
+        // Atualiza o user no banco de dados
         var result = await _userHelper.UpdateUserAsync(user);
         if (!result.Succeeded)
         {

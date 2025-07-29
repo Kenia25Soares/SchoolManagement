@@ -142,13 +142,22 @@ namespace SchoolManagement.Web.Controllers
                 return View(model);
             //Views/EmployeeDashboard/Students/Create
 
-            var profileBlobId = model.ProfilePicture != null
-                ? await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures")
-                : Guid.Empty;
+            Guid profileBlobId = Guid.Empty;
+            Guid officialBlobId = Guid.Empty;
 
-            var officialBlobId = model.OfficialPhoto != null
-                ? await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures")
-                : Guid.Empty;
+            try
+            {
+                if (model.ProfilePicture != null)
+                    profileBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+
+                if (model.OfficialPhoto != null)
+                    officialBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(model);
+            }
 
             var user = new ApplicationUser
             {
@@ -321,16 +330,25 @@ namespace SchoolManagement.Web.Controllers
                 student.StudentClassId = model.StudentClassId;
             }
 
-            if (model.ProfilePicture != null)
+            try
             {
-                var blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
-                student.User.ProfilePictureUrl = blobId.ToString();
-            }
+                if (model.ProfilePicture != null)
+                {
+                    var blobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, "projetspictures");
+                    student.User.ProfilePictureUrl = blobId.ToString();
+                }
 
-            if (model.OfficialPhoto != null)
+                if (model.OfficialPhoto != null)
+                {
+                    var blobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
+                    student.OfficialPhotoUrl = blobId.ToString();
+                }
+            }
+            catch (InvalidOperationException ex)
             {
-                var blobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, "projetspictures");
-                student.OfficialPhotoUrl = blobId.ToString();
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await LoadClassesAsync(model.StudentClassId);
+                return View(model);
             }
 
             await _studentProfileRepository.UpdateAsync(student);
