@@ -31,6 +31,15 @@ namespace SchoolManagement.Web.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Displays the About page with project details, including author, course,
+        /// version, and delivery date.
+        /// </summary>
+        /// <returns>The About view.</returns>
+        public IActionResult About()
+        {
+            return View();
+        }
 
         /// <summary>
         /// Displays a list of all available courses.
