@@ -22,12 +22,12 @@ namespace SchoolManagement.Web
 
             builder.Services.Configure<RazorViewEngineOptions>(options =>
             {
-                // Localização personalizada das views
+                // Localizaï¿½ï¿½o personalizada das views
                 options.ViewLocationFormats.Add("/Views/AdminDashboard/{1}/{0}.cshtml");
                 options.ViewLocationFormats.Add("/Views/EmployeeDashboard/{1}/{0}.cshtml");
                 options.ViewLocationFormats.Add("/Views/StudentDashboard/{1}/{0}.cshtml");
 
-                // Para as páginas de erro, como a 403.cshtml
+                // Para as pï¿½ginas de erro, como a 403.cshtml
                 options.ViewLocationFormats.Add("/Views/Errors/{0}.cshtml");
             });
 
@@ -49,7 +49,7 @@ namespace SchoolManagement.Web
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 6;
             })
-            .AddEntityFrameworkStores<DataContext>()  // Faz a separação entre o Identity e a base de dados
+            .AddEntityFrameworkStores<DataContext>()  // Faz a separaï¿½ï¿½o entre o Identity e a base de dados
             .AddDefaultTokenProviders();
 
 
@@ -78,7 +78,7 @@ namespace SchoolManagement.Web
                             context.Response.ContentType = "application/json";
                             var result = System.Text.Json.JsonSerializer.Serialize(new
                             {
-                                message = "Token inválido ou não fornecido."
+                                message = "Token invï¿½lido ou nï¿½o fornecido."
                             });
                             return context.Response.WriteAsync(result);
                         }
@@ -98,7 +98,7 @@ namespace SchoolManagement.Web
             builder.Services.AddRazorPages();
 
 
-            // Configuração do Swagger 
+            // Configuraï¿½ï¿½o do Swagger 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -109,7 +109,7 @@ namespace SchoolManagement.Web
                     Description = "API for accessing student classes and related data"
                 });
 
-                // Localização do XML gerado
+                // Localizaï¿½ï¿½o do XML gerado
                 var xmlFilename = "SchoolManagement.Web.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
                 if (File.Exists(xmlPath))
