@@ -394,6 +394,158 @@ namespace API.SchoolManagement.Controllers
         }
 
         /// <summary>
+        /// Update full profile (user + student data) and optional images in a single form
+        /// </summary>
+        /// <param name="model">Form data with fields and optional images</param>
+        /// <returns>Updated profile summary with full image URLs</returns>
+        [HttpPut("profile/full")]
+        [Authorize]
+        public async Task<ActionResult<object>> UpdateFullProfile([FromForm] API.SchoolManagement.Models.UpdateFullProfileRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { Message = "Invalid model state", Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+            }
+
+            try
+            {
+                var emailIdentity = User.Identity?.Name;
+                if (string.IsNullOrEmpty(emailIdentity))
+                {
+                    return Unauthorized(new { Success = false, Message = "User not authenticated" });
+                }
+
+                var user = await _userManager.FindByEmailAsync(emailIdentity);
+                if (user == null)
+                {
+                    return NotFound(new { Success = false, Message = "User not found" });
+                }
+
+                // Update basic user fields
+                user.FullName = model.FullName;
+                if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
+                {
+                    user.PhoneNumber = model.PhoneNumber;
+                }
+
+                // Optional email change (validate uniqueness)
+                if (!string.IsNullOrWhiteSpace(model.Email) && !string.Equals(model.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existing = await _userManager.FindByEmailAsync(model.Email);
+                    if (existing != null)
+                    {
+                        return BadRequest(new { Success = false, Message = "Email already in use." });
+                    }
+
+                    var setEmail = await _userManager.SetEmailAsync(user, model.Email);
+                    if (!setEmail.Succeeded)
+                    {
+                        return BadRequest(new { Success = false, Message = "Failed to update email.", Errors = setEmail.Errors.Select(e => e.Description) });
+                    }
+
+                    var setUserName = await _userManager.SetUserNameAsync(user, model.Email);
+                    if (!setUserName.Succeeded)
+                    {
+                        return BadRequest(new { Success = false, Message = "Failed to update username.", Errors = setUserName.Errors.Select(e => e.Description) });
+                    }
+                }
+
+                // Load or create student profile
+                var studentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (studentProfile == null)
+                {
+                    studentProfile = new StudentProfile
+                    {
+                        UserId = user.Id,
+                        IsExcludedDueToAbsences = false
+                    };
+                    _context.StudentProfiles.Add(studentProfile);
+                }
+
+                // Update student fields
+                if (model.DateOfBirth.HasValue)
+                {
+                    studentProfile.DateOfBirth = model.DateOfBirth.Value;
+                }
+                if (!string.IsNullOrWhiteSpace(model.Address))
+                {
+                    studentProfile.Address = model.Address;
+                }
+
+                // Blob config
+                var blobBaseUrl = _configuration["Blob:BaseUrl"] ?? "https://blobainek.blob.core.windows.net";
+                var blobContainer = _configuration["Blob:Container"] ?? "projetspictures";
+
+                // Validate and upload images if provided
+                bool IsValidImage(IFormFile f) => f != null && (f.ContentType == "image/jpeg" || f.ContentType == "image/png");
+
+                if (model.ProfilePicture != null)
+                {
+                    if (!IsValidImage(model.ProfilePicture))
+                    {
+                        return BadRequest(new { Success = false, Message = "Invalid profile picture format. Only JPEG/PNG allowed." });
+                    }
+
+                    var profileBlobId = await _blobHelper.UploadBlobAsync(model.ProfilePicture, blobContainer);
+                    user.ProfilePictureUrl = profileBlobId.ToString();
+                }
+
+                if (model.OfficialPhoto != null)
+                {
+                    if (!IsValidImage(model.OfficialPhoto))
+                    {
+                        return BadRequest(new { Success = false, Message = "Invalid official photo format. Only JPEG/PNG allowed." });
+                    }
+
+                    var officialBlobId = await _blobHelper.UploadBlobAsync(model.OfficialPhoto, blobContainer);
+                    studentProfile.OfficialPhotoUrl = officialBlobId.ToString();
+                }
+
+                // Persist
+                var userResult = await _userManager.UpdateAsync(user);
+                if (!userResult.Succeeded)
+                {
+                    return BadRequest(new { Success = false, Message = "Failed to update user", Errors = userResult.Errors.Select(e => e.Description) });
+                }
+                await _context.SaveChangesAsync();
+
+                var fullProfileUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) ? $"{blobBaseUrl}/{blobContainer}/{user.ProfilePictureUrl}" : null;
+                var fullOfficialUrl = !string.IsNullOrEmpty(studentProfile.OfficialPhotoUrl) ? $"{blobBaseUrl}/{blobContainer}/{studentProfile.OfficialPhotoUrl}" : null;
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "Profile updated successfully",
+                    User = new
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        FullName = user.FullName,
+                        PhoneNumber = user.PhoneNumber,
+                        ProfilePictureUrl = user.ProfilePictureUrl,
+                        ProfilePictureFullUrl = fullProfileUrl
+                    },
+                    Student = new
+                    {
+                        DateOfBirth = studentProfile.DateOfBirth,
+                        Address = studentProfile.Address,
+                        OfficialPhotoUrl = studentProfile.OfficialPhotoUrl,
+                        OfficialPhotoFullUrl = fullOfficialUrl
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = "Error updating full profile",
+                    Error = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
         /// Recover password endpoint (Web)
         /// </summary>
         /// <param name="model">Email for password recovery</param>
