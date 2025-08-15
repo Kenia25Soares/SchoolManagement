@@ -178,6 +178,7 @@ namespace SchoolManagement.Web
             builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
             builder.Services.AddScoped<IGradesRepository, GradesRepository>();
             builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
+builder.Services.AddScoped<ISubjectEnrollmentRequestRepository, SubjectEnrollmentRequestRepository>();
            
 
             var app = builder.Build();

@@ -1,0 +1,181 @@
+@model EnrollmentRequestsIndexViewModel
+
+@{
+    ViewData["Title"] = "Enrollment Requests";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mt-4 mb-4">
+        <h1 class="mb-0">Enrollment Requests</h1>
+    </div>
+
+    <p>Manage student enrollment requests for additional subjects.</p>
+
+    <!-- Status Filter Cards -->
+    <div class="row mt-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm @(Model.SelectedStatus == null ? "border-primary" : "")">
+                <div class="position-absolute top-0 end-0 p-2">
+                    <span class="badge bg-secondary">@(Model.PendingCount + Model.ApprovedCount + Model.RejectedCount)</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">All Requests</h6>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card shadow-sm @(Model.SelectedStatus == SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Pending ? "border-warning" : "")">
+                <div class="position-absolute top-0 end-0 p-2">
+                    <span class="badge bg-warning text-dark">@Model.PendingCount</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">Pending</h6>
+                    <a href="@Url.Action("Index", new { status = SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Pending })" class="btn btn-outline-warning btn-sm">View Pending</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card shadow-sm @(Model.SelectedStatus == SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Approved ? "border-success" : "")">
+                <div class="position-absolute top-0 end-0 p-2">
+                    <span class="badge bg-success">@Model.ApprovedCount</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">Approved</h6>
+                    <a href="@Url.Action("Index", new { status = SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Approved })" class="btn btn-outline-success btn-sm">View Approved</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card shadow-sm @(Model.SelectedStatus == SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Rejected ? "border-danger" : "")">
+                <div class="position-absolute top-0 end-0 p-2">
+                    <span class="badge bg-danger">@Model.RejectedCount</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">Rejected</h6>
+                    <a href="@Url.Action("Index", new { status = SchoolManagement.Web.Data.Enums.EnrollmentRequestStatus.Rejected })" class="btn btn-outline-danger btn-sm">View Rejected</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requests Grid -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        @if (Model.SelectedStatus.HasValue)
+                        {
+                            <span>@Model.SelectedStatus.Value.ToString() Requests</span>
+                        }
+                        else
+                        {
+                            <span>All Enrollment Requests</span>
+                        }
+                    </h5>
+
+                    @if (!Model.Requests.Any())
+                    {
+                        <div class="alert alert-info text-center">
+                            @if (Model.SelectedStatus.HasValue)
+                            {
+                                <span>No @Model.SelectedStatus.Value.ToString().ToLower() requests found.</span>
+                            }
+                            else
+                            {
+                                <span>No enrollment requests found.</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div id="EnrollmentRequestsGrid"></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var enrollmentRequests = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Requests.Select(r => new {
+            Id = r.Id,
+            StudentName = r.Student.FullName,
+            StudentEmail = r.Student.Email,
+            SubjectName = r.Subject.Name,
+            Description = r.Description.Length > 100 ? r.Description.Substring(0, 100) + "..." : r.Description,
+            Status = r.Status.ToString(),
+            StatusValue = (int)r.Status,
+            RequestDate = r.RequestDate.ToString("dd/MM/yyyy HH:mm"),
+            ProcessedByName = r.ProcessedBy?.FullName,
+            ProcessedDate = r.ProcessedDate?.ToString("dd/MM/yyyy HH:mm")
+        })));
+
+        var grid = new ej.grids.Grid({
+            dataSource: enrollmentRequests,
+            allowPaging: true,
+            allowSorting: true,
+            allowFiltering: true,
+            filterSettings: { type: 'CheckBox' },
+            pageSettings: { pageSize: 10 },
+            columns: [
+                { field: 'Id', headerText: 'ID', width: 80, textAlign: 'Center' },
+                { field: 'StudentName', headerText: 'Student', width: 150 },
+                { field: 'StudentEmail', headerText: 'Email', width: 180 },
+                { field: 'SubjectName', headerText: 'Subject', width: 150 },
+                { field: 'Description', headerText: 'Description', width: 200 },
+                {
+                    field: 'Status',
+                    headerText: 'Status',
+                    width: 120,
+                    template: function(data) {
+                        const status = data.StatusValue;
+                        if (status === 0) // Pending
+                            return `<span class="badge bg-warning text-dark">Pending</span>`;
+                        if (status === 1) // Approved
+                            return `<span class="badge bg-success">Approved</span>`;
+                        if (status === 2) // Rejected
+                            return `<span class="badge bg-danger">Rejected</span>`;
+                        return data.Status;
+                    }
+                },
+                { field: 'RequestDate', headerText: 'Request Date', width: 150 },
+                { field: 'ProcessedByName', headerText: 'Processed By', width: 150 },
+                {
+                    headerText: 'Actions',
+                    template: function(data) {
+                        if (data.StatusValue === 0) { // Pending
+                            return `
+                                <div class="btn-group" role="group">
+                                    <form method="post" action="/EnrollmentRequests/Approve/${data.Id}" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve this enrollment request?')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form method="post" action="/EnrollmentRequests/Reject/${data.Id}" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reject this enrollment request?')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>`;
+                        } else {
+                            return `<span class="text-muted">—</span>`;
+                        }
+                    },
+                    width: 180,
+                    textAlign: 'Center'
+                }
+            ]
+        });
+
+        grid.appendTo('#EnrollmentRequestsGrid');
+    </script>
+}

@@ -105,6 +105,7 @@ builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
 builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
+builder.Services.AddScoped<ISubjectEnrollmentRequestRepository, SubjectEnrollmentRequestRepository>();
 
 var app = builder.Build();
 

@@ -19,6 +19,7 @@ namespace SchoolManagement.Web.Data
 
         public DbSet<GradeType> GradeTypes { get; set; }
         public DbSet<StudentProfile> StudentProfiles { get; set; }
+        public DbSet<SubjectEnrollmentRequest> SubjectEnrollmentRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -53,6 +54,25 @@ namespace SchoolManagement.Web.Data
                 .WithMany()
                 .HasForeignKey(sg => sg.CourseId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // SubjectEnrollmentRequest relationships
+            builder.Entity<SubjectEnrollmentRequest>()
+                .HasOne(ser => ser.Student)
+                .WithMany()
+                .HasForeignKey(ser => ser.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SubjectEnrollmentRequest>()
+                .HasOne(ser => ser.Subject)
+                .WithMany()
+                .HasForeignKey(ser => ser.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SubjectEnrollmentRequest>()
+                .HasOne(ser => ser.ProcessedBy)
+                .WithMany()
+                .HasForeignKey(ser => ser.ProcessedById)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<Alert>()
                 .HasOne(a => a.CreatedBy)

@@ -1,0 +1,69 @@
+/* Enrollment Requests Index Styles */
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.card.border-primary {
+    border-color: #0d6efd !important;
+    border-width: 2px;
+}
+
+.card.border-warning {
+    border-color: #ffc107 !important;
+    border-width: 2px;
+}
+
+.card.border-success {
+    border-color: #198754 !important;
+    border-width: 2px;
+}
+
+.card.border-danger {
+    border-color: #dc3545 !important;
+    border-width: 2px;
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Grid styling */
+#EnrollmentRequestsGrid .e-grid .e-content {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Button styling in grid */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .btn-group .btn {
+        margin-right: 0;
+        margin-bottom: 2px;
+    }
+}
