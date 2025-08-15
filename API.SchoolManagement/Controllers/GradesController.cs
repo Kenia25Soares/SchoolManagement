@@ -360,6 +360,280 @@ namespace API.SchoolManagement.Controllers
         }
 
         /// <summary>
+        /// Get all subjects with grades and attendance summary for mobile app
+        /// </summary>
+        /// <param name="studentId">The student ID</param>
+        /// <returns>List of subjects with grade summaries optimized for mobile</returns>
+        [HttpGet("{studentId}/mobile/subjects")]
+        public async Task<ActionResult<StudentSubjectsListResponse>> GetStudentSubjectsForMobile(string studentId)
+        {
+            try
+            {
+                // Validate that the authenticated user can only access their own data
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserId != studentId)
+                {
+                    return Unauthorized(new StudentSubjectsListResponse
+                    {
+                        Success = false,
+                        Message = "You can only access your own data"
+                    });
+                }
+
+                // Get student with class info
+                var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+                if (student == null)
+                {
+                    _logger.LogWarning("Student not found: {StudentId}", studentId);
+                    return NotFound(new StudentSubjectsListResponse
+                    {
+                        Success = false,
+                        Message = "Student not found"
+                    });
+                }
+
+                _logger.LogInformation("Student found: {StudentId}, HasClass: {HasClass}", studentId, student.StudentClass != null);
+
+                if (student.StudentClass == null)
+                {
+                    _logger.LogWarning("Student {StudentId} not enrolled in any class", studentId);
+                    return BadRequest(new StudentSubjectsListResponse
+                    {
+                        Success = false,
+                        Message = "Student not enrolled in any class"
+                    });
+                }
+
+                // Get subjects for the student's course
+                var subjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
+                _logger.LogInformation("Found {SubjectCount} subjects for course {CourseId}", subjects.Count, student.StudentClass.CourseId);
+                
+                // Get all grades and absences for the student
+                var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
+                var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
+                _logger.LogInformation("Found {GradeCount} grades and {AbsenceCount} absence records for student {StudentId}", 
+                    grades.Count, absences.Count, studentId);
+
+                var subjectSummaries = new List<StudentSubjectSummary>();
+
+                foreach (var subject in subjects)
+                {
+                    // Get grades for this subject
+                    var subjectGrades = grades.Where(g => g.SubjectId == subject.Id).ToList();
+                    var subjectAbsences = absences.Where(a => a.SubjectId == subject.Id).Sum(a => a.Absences);
+
+                    _logger.LogInformation("Processing subject {SubjectName} (ID: {SubjectId}): {GradeCount} grades, {AbsenceCount} absences", 
+                        subject.Name, subject.Id, subjectGrades.Count, subjectAbsences);
+
+                    // Calculate weighted average
+                    double weightedAverage = 0;
+                    double totalWeight = 0;
+
+                    foreach (var grade in subjectGrades.Where(g => g.Grade.HasValue && g.GradeType != null))
+                    {
+                        var weight = grade.GradeType.Weight;
+                        if (weight > 0)
+                        {
+                            weightedAverage += grade.Grade.Value * weight;
+                            totalWeight += weight;
+                            _logger.LogInformation("Added grade {Grade} with weight {Weight} for subject {SubjectName}", 
+                                grade.Grade.Value, weight, subject.Name);
+                        }
+                    }
+
+                    if (totalWeight > 0)
+                    {
+                        weightedAverage /= totalWeight;
+                    }
+
+                    // Determine status
+                    bool failedDueToAbsences = subjectAbsences > subject.AllowedAbsences;
+                    double passingGrade = 10.0; // Default passing grade
+                    var statusEnum = DetermineStatusEnum(weightedAverage, subjectAbsences, subject.AllowedAbsences, passingGrade);
+                    var statusString = ConvertStatusToString(statusEnum);
+
+                    _logger.LogInformation("Subject {SubjectName}: WeightedAvg={WeightedAverage}, Absences={Absences}/{Allowed}, Status={Status}", 
+                        subject.Name, Math.Round(weightedAverage, 2), subjectAbsences, subject.AllowedAbsences, statusString);
+
+                    subjectSummaries.Add(new StudentSubjectSummary
+                    {
+                        SubjectId = subject.Id.ToString(),
+                        SubjectName = subject.Name,
+                        SubjectCode = subject.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN",
+                        WeightedAverage = totalWeight > 0 ? Math.Round(weightedAverage, 2) : null,
+                        TotalAbsences = subjectAbsences,
+                        AllowedAbsences = subject.AllowedAbsences,
+                        FailedDueToAbsences = failedDueToAbsences,
+                        Status = statusString
+                    });
+                }
+
+                return Ok(new StudentSubjectsListResponse
+                {
+                    Success = true,
+                    Message = "Subjects retrieved successfully",
+                    Results = subjectSummaries
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving subjects for mobile for student {StudentId}", studentId);
+                return StatusCode(500, new StudentSubjectsListResponse
+                {
+                    Success = false,
+                    Message = "Internal server error"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get detailed grades and absences for a specific subject optimized for mobile
+        /// </summary>
+        /// <param name="studentId">The student ID</param>
+        /// <param name="subjectId">The subject ID</param>
+        /// <returns>Detailed subject information including grades, absences, and status</returns>
+        [HttpGet("{studentId}/mobile/subject/{subjectId}")]
+        public async Task<ActionResult<StudentSubjectGradeResponse>> GetSubjectGradeForMobile(string studentId, int subjectId)
+        {
+            try
+            {
+                // Validate that the authenticated user can only access their own data
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserId != studentId)
+                {
+                    return Unauthorized(new StudentSubjectGradeResponse
+                    {
+                        Success = false,
+                        Message = "You can only access your own data"
+                    });
+                }
+
+                // Get student with class info
+                var student = await _gradesRepository.GetStudentWithClassAsync(studentId);
+                if (student == null)
+                {
+                    return NotFound(new StudentSubjectGradeResponse
+                    {
+                        Success = false,
+                        Message = "Student not found"
+                    });
+                }
+
+                if (student.StudentClass == null)
+                {
+                    return BadRequest(new StudentSubjectGradeResponse
+                    {
+                        Success = false,
+                        Message = "Student not enrolled in any class"
+                    });
+                }
+
+                // Get all subjects for the student's course to validate the subject
+                var allSubjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
+                var subject = allSubjects.FirstOrDefault(s => s.Id == subjectId);
+
+                if (subject == null)
+                {
+                    return NotFound(new StudentSubjectGradeResponse
+                    {
+                        Success = false,
+                        Message = "Subject not found or not available for this student"
+                    });
+                }
+
+                // Get grades for this specific subject
+                var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
+                var subjectGrades = grades.Where(g => g.SubjectId == subject.Id).ToList();
+
+                // Get absences for this subject
+                var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
+                var subjectAbsences = absences.Where(a => a.SubjectId == subject.Id).ToList();
+
+                // Calculate weighted average and prepare grade details
+                double weightedAverage = 0;
+                double totalWeight = 0;
+                var gradeDetails = new List<GradeDetail>();
+
+                foreach (var grade in subjectGrades.Where(g => g.Grade.HasValue && g.GradeType != null))
+                {
+                    var weight = grade.GradeType.Weight;
+                    if (weight > 0)
+                    {
+                        weightedAverage += grade.Grade.Value * weight;
+                        totalWeight += weight;
+
+                        gradeDetails.Add(new GradeDetail
+                        {
+                            Description = grade.GradeType.Name,
+                            Grade = grade.Grade.Value,
+                            Weight = weight,
+                            Date = grade.CreatedAt
+                        });
+                    }
+                }
+
+                if (totalWeight > 0)
+                {
+                    weightedAverage /= totalWeight;
+                }
+
+                // Process absences
+                var absenceDetails = new List<AbsenceDetail>();
+                int totalAbsences = subjectAbsences.Sum(a => a.Absences);
+
+                // Create individual absence records
+                foreach (var absence in subjectAbsences)
+                {
+                    for (int i = 0; i < absence.Absences; i++)
+                    {
+                        absenceDetails.Add(new AbsenceDetail
+                        {
+                            Date = absence.CreatedAt,
+                            Justification = string.Empty, // Add justification field if needed
+                            IsJustified = false // Add justification logic if needed
+                        });
+                    }
+                }
+
+                // Determine status
+                double passingGrade = 10.0; // Default passing grade
+                var statusEnum = DetermineStatusEnum(weightedAverage, totalAbsences, subject.AllowedAbsences, passingGrade);
+                var statusString = ConvertStatusToString(statusEnum);
+                bool failedDueToAbsences = totalAbsences > subject.AllowedAbsences;
+
+                return Ok(new StudentSubjectGradeResponse
+                {
+                    Success = true,
+                    Message = "Subject grade retrieved successfully",
+                    Result = new StudentSubjectGradeData
+                    {
+                        StudentId = studentId,
+                        StudentName = student.User.FullName,
+                        SubjectId = subject.Id.ToString(),
+                        SubjectName = subject.Name,
+                        SubjectCode = subject.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN",
+                        WeightedAverage = Math.Round(weightedAverage, 2),
+                        TotalAbsences = totalAbsences,
+                        AllowedAbsences = subject.AllowedAbsences,
+                        FailedDueToAbsences = failedDueToAbsences,
+                        Status = statusString,
+                        GradeDetails = gradeDetails.OrderByDescending(g => g.Date).ToList(),
+                        AbsenceDetails = absenceDetails.OrderByDescending(a => a.Date).ToList()
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving subject grade for mobile for student {StudentId}, subject {SubjectId}", studentId, subjectId);
+                return StatusCode(500, new StudentSubjectGradeResponse
+                {
+                    Success = false,
+                    Message = "Internal server error"
+                });
+            }
+        }
+
+        /// <summary>
         /// Determine student status based on grades and absences
         /// </summary>
         /// <param name="average">Weighted average grade</param>
@@ -381,5 +655,52 @@ namespace API.SchoolManagement.Controllers
 
             return "Failed";
         }
+
+        /// <summary>
+        /// Determine student status enum based on grades and absences
+        /// </summary>
+        /// <param name="average">Weighted average grade</param>
+        /// <param name="totalAbsences">Total number of absences</param>
+        /// <param name="allowedAbsences">Maximum allowed absences</param>
+        /// <param name="passingGrade">Minimum grade to pass</param>
+        /// <returns>StudentStatus enum</returns>
+        private StudentStatus DetermineStatusEnum(double average, int totalAbsences, int allowedAbsences, double passingGrade)
+        {
+            if (totalAbsences > allowedAbsences)
+            {
+                return StudentStatus.ExcludedByAbsences;
+            }
+
+            if (average >= passingGrade)
+            {
+                return StudentStatus.Approved;
+            }
+
+            if (average > 0) // Has grades but below passing grade
+            {
+                return StudentStatus.Failed;
+            }
+
+            return StudentStatus.InProgress; // No grades yet
+        }
+
+        /// <summary>
+        /// Convert StudentStatus enum to string
+        /// </summary>
+        /// <param name="status">StudentStatus enum</param>
+        /// <returns>Status as string</returns>
+        private string ConvertStatusToString(StudentStatus status)
+        {
+            return status switch
+            {
+                StudentStatus.Approved => "Approved",
+                StudentStatus.Failed => "Failed",
+                StudentStatus.ExcludedByAbsences => "ExcludedByAbsences",
+                StudentStatus.InProgress => "InProgress",
+                _ => "Unknown"
+            };
+        }
+
+
     }
 }
