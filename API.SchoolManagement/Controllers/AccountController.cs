@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,7 +24,7 @@ namespace API.SchoolManagement.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IBlobHelper _blobHelper;
         private readonly IMailHelper _mailHelper;
-        private readonly DataContext _context;
+        private readonly IStudentProfileRepository _studentProfileRepository;
 
         // Simple in-memory storage for verification codes (in production, use Redis or database)
         private static readonly Dictionary<string, (string Code, DateTime Expiry)> _verificationCodes = new();
@@ -34,14 +34,14 @@ namespace API.SchoolManagement.Controllers
             SignInManager<ApplicationUser> signInManager,
             IBlobHelper blobHelper,
             IMailHelper mailHelper,
-            DataContext context,
+            IStudentProfileRepository studentProfileRepository,
             IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _blobHelper = blobHelper;
             _mailHelper = mailHelper;
-            _context = context;
+            _studentProfileRepository = studentProfileRepository;
             _configuration = configuration;
         }
 
@@ -451,7 +451,7 @@ namespace API.SchoolManagement.Controllers
                 }
 
                 // Load or create student profile
-                var studentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                var studentProfile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
                 if (studentProfile == null)
                 {
                     studentProfile = new StudentProfile
@@ -459,7 +459,7 @@ namespace API.SchoolManagement.Controllers
                         UserId = user.Id,
                         IsExcludedDueToAbsences = false
                     };
-                    _context.StudentProfiles.Add(studentProfile);
+                    await _studentProfileRepository.CreateAsync(studentProfile);
                 }
 
                 // Update student fields
@@ -507,7 +507,7 @@ namespace API.SchoolManagement.Controllers
                 {
                     return BadRequest(new { Success = false, Message = "Failed to update user", Errors = userResult.Errors.Select(e => e.Description) });
                 }
-                await _context.SaveChangesAsync();
+                await _studentProfileRepository.UpdateAsync(studentProfile);
 
                 var fullProfileUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) ? $"{blobBaseUrl}/{blobContainer}/{user.ProfilePictureUrl}" : null;
                 var fullOfficialUrl = !string.IsNullOrEmpty(studentProfile.OfficialPhotoUrl) ? $"{blobBaseUrl}/{blobContainer}/{studentProfile.OfficialPhotoUrl}" : null;
@@ -877,9 +877,7 @@ namespace API.SchoolManagement.Controllers
                 }
 
                 // Get student profile data
-                var studentProfile = await _context.StudentProfiles
-                    .Include(p => p.StudentClass)
-                    .FirstOrDefaultAsync(p => p.UserId == user.Id);
+                var studentProfile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
 
                 return Ok(new
                 {
@@ -939,9 +937,7 @@ namespace API.SchoolManagement.Controllers
                 }
 
                 // Get student profile data
-                var studentProfile = await _context.StudentProfiles
-                    .Include(p => p.StudentClass)
-                    .FirstOrDefaultAsync(p => p.UserId == user.Id);
+                var studentProfile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
 
                 // Generate full URLs for images
                 var fullProfilePictureUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) 
