@@ -74,6 +74,31 @@ namespace SchoolManagement.Web.Data
                 .HasForeignKey(ser => ser.ProcessedById)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Alert relationships
+            builder.Entity<Alert>()
+                .HasOne(a => a.Student)
+                .WithMany()
+                .HasForeignKey(a => a.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Alert>()
+                .HasOne(a => a.Subject)
+                .WithMany()
+                .HasForeignKey(a => a.SubjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Alert>()
+                .HasOne(a => a.StudentClass)
+                .WithMany()
+                .HasForeignKey(a => a.StudentClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Alert>()
+                .HasOne(a => a.StudentGrade)
+                .WithMany()
+                .HasForeignKey(a => a.StudentGradeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             builder.Entity<Alert>()
                 .HasOne(a => a.CreatedBy)
                 .WithMany()

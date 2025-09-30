@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Models;
+using SchoolManagement.Web.Data.Enums;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,18 +31,17 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            //var alerts = _alertRepository.GetAll()
-            var alerts = await _alertRepository.GetAllWithCreatorAsync();
+            var alerts = await _alertRepository.GetAllAsync();
 
             var model = alerts.Select(a => new AlertViewModel
             {
                 Id = a.Id,
                 Title = a.Title,
-                Description = a.Description,
-                Priority = a.Priority,
-                CreatedBy = a.CreatedBy?.FullName ?? "Unknown",
+                Description = a.Message,
+                Priority = AlertPriority.Medium, // Default priority since AlertType doesn't have priority
+                CreatedBy = a.CreatedBy?.FullName ?? "System",
                 CreatedAt = a.CreatedAt,
-                IsResolved = a.IsResolved
+                IsResolved = a.IsRead
             }).ToList();
 
             return View(model);
@@ -51,9 +51,9 @@ namespace SchoolManagement.Web.Controllers
 
 
         /// <summary>
-        /// Marks a specific alert as resolved.
+        /// Marks a specific alert as read.
         /// </summary>
-        /// <param name="id">The ID of the alert to resolve.</param>
+        /// <param name="id">The ID of the alert to mark as read.</param>
         /// <returns>Redirects to the admin dashboard with a success or error message.</returns>
         [HttpPost("Resolve/{id}")]
         public async Task<IActionResult> Resolve(int id)
@@ -65,10 +65,11 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction("Index", "AdminDashboard");
             }
 
-            alert.IsResolved = true;
+            alert.IsRead = true;
+            alert.ReadAt = DateTime.UtcNow;
             await _alertRepository.UpdateAsync(alert);
 
-            TempData["SuccessMessage"] = "Alert successfully marked as resolved.";
+            TempData["SuccessMessage"] = "Alert successfully marked as read.";
             return RedirectToAction("Index", "AdminDashboard");
         }
     }

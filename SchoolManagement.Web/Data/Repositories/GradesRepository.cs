@@ -126,6 +126,24 @@ namespace SchoolManagement.Web.Data.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<GradeType?> GetGradeTypeByIdAsync(int gradeTypeId)
+        {
+            return await _context.GradeTypes.FindAsync(gradeTypeId);
+        }
+
+        public async Task<Subject?> GetSubjectByIdAsync(int subjectId)
+        {
+            return await _context.Subjects.FindAsync(subjectId);
+        }
+
+        public async Task<List<StudentProfile>> GetStudentsByClassIdAsync(int classId)
+        {
+            return await _context.StudentProfiles
+                .Include(p => p.User)
+                .Where(p => p.StudentClassId == classId)
+                .ToListAsync();
+        }
+
 
     }
 }

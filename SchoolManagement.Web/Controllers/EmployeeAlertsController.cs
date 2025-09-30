@@ -4,6 +4,7 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using SchoolManagement.Web.Data.Enums;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -27,8 +28,7 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Create")]
         public IActionResult Create()
         {
-            //return View();
-            return View("/Views/EmployeeDashboard/Alerts/Create.cshtml");
+            return View();
         }
 
 
@@ -44,8 +44,7 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Please correct the form and try again.";
-                return View("/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
-                //    return View(model);
+                return View(model);
             }
 
                 var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name??  string.Empty);
@@ -58,8 +57,8 @@ namespace SchoolManagement.Web.Controllers
             var alert = new Alert
             {
                 Title = model.Title,
-                Description = model.Description,
-                Priority = model.Priority,
+                Message = model.Description,
+                Type = AlertType.GeneralNotification,
                 CreatedById = user.Id,
                 CreatedAt = DateTime.UtcNow
             };

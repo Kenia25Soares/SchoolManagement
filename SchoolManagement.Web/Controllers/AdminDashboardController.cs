@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using SchoolManagement.Web.Data.Enums;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -46,16 +47,16 @@ namespace SchoolManagement.Web.Controllers
         {
             await SetUserProfilePictureAsync();
 
-            var alertsData = await _alertRepository.GetAllWithCreatorAsync();
+            var alertsData = await _alertRepository.GetAllAsync();
 
             var alerts = alertsData.Select(a => new AlertViewModel
             {
                 Id = a.Id,
                 Title = a.Title,
-                Description = a.Description,
-                Priority = a.Priority,
-                IsResolved = a.IsResolved,
-                CreatedBy = a.CreatedBy?.FullName ?? "Unknown" 
+                Description = a.Message,
+                Priority = AlertPriority.Medium, // Default priority
+                IsResolved = a.IsRead,
+                CreatedBy = a.CreatedBy?.FullName ?? "System" 
             }).ToList();
 
             var stats = new AdminDashboardViewModel

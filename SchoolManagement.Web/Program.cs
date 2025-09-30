@@ -9,6 +9,7 @@ using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
+using SchoolManagement.Web.Services;
 using Syncfusion.Licensing;
 using System.Text;
 
@@ -49,7 +50,7 @@ namespace SchoolManagement.Web
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 6;
             })
-            .AddEntityFrameworkStores<DataContext>()  // Faz a separa��o entre o Identity e a base de dados
+            .AddEntityFrameworkStores<DataContext>()  // Faz a separaçãoo entre o Identity e a base de dados
             .AddDefaultTokenProviders();
 
 
@@ -109,7 +110,7 @@ namespace SchoolManagement.Web
                     Description = "API for accessing student classes and related data"
                 });
 
-                // Localiza��o do XML gerado
+                // Localizado do XML gerado
                 var xmlFilename = "SchoolManagement.Web.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
                 if (File.Exists(xmlPath))
@@ -170,6 +171,9 @@ namespace SchoolManagement.Web
             builder.Services.AddScoped<ICourseHelper, CourseHelper>();
             builder.Services.AddScoped<IStudentGradeHelper, StudentGradeHelper>();
             builder.Services.AddScoped<IStudentAbsenceHelper, StudentAbsenceHelper>();
+            
+            // Services
+            builder.Services.AddScoped<IAlertService,AlertService>();
             // Repositories
             builder.Services.AddScoped<ICourseRepository, CourseRepository>();
             builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();

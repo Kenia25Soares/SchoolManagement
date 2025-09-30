@@ -5,6 +5,7 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using SchoolManagement.Web.Services;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -16,17 +17,20 @@ namespace SchoolManagement.Web.Controllers
         private readonly IStudentClassHelper _studentClassHelper;
         private readonly IStudentClassRepository _studentClassRepository;
         private readonly IStudentProfileRepository _studentProfileRepository;
+        private readonly IAlertService _alertService;
 
         public StudentClassesController(
             IUserHelper userHelper,
             IStudentClassHelper studentClassHelper,
             IStudentClassRepository studentClassRepository,
-            IStudentProfileRepository studentProfileRepository)
+            IStudentProfileRepository studentProfileRepository,
+            IAlertService alertService)
         {
             _userHelper = userHelper;
             _studentClassHelper = studentClassHelper;
             _studentClassRepository = studentClassRepository;
             _studentProfileRepository = studentProfileRepository;
+            _alertService = alertService;
         }
 
         /// <summary>
@@ -79,7 +83,7 @@ namespace SchoolManagement.Web.Controllers
             {
                 model.Courses = await _studentClassHelper.GetCoursesSelectListAsync(model.CourseId);
                 TempData["ErrorMessage"] = "Invalid input. Please correct the form.";
-                //Views/EmployeeDashboard/StudentClasses/Create
+               
                 return View(model);
             }
 
@@ -250,10 +254,35 @@ namespace SchoolManagement.Web.Controllers
             if (profile == null)
                 return NotFound("Student profile not found.");
 
-            profile.StudentClassId = request.StudentClassId;
+            var previousClassId = profile.StudentClassId;
+            profile.StudentClassId = request.StudentClassId ?? 0;
 
             await _studentClassRepository.UpdateStudentProfileAsync(profile);
 
+            // Get class details for alert
+            var studentClass = await _studentClassRepository.GetByIdAsync(request.StudentClassId ?? 0);
+            if (studentClass != null)
+            {
+                // Create alert for being added to new class
+                await _alertService.CreateAddedToClassAlertAsync(
+                    request.StudentId, 
+                    request.StudentClassId ?? 0, 
+                    studentClass.Name
+                );
+
+                // If student was removed from previous class, create alert for that too
+                if (previousClassId.HasValue)
+                {
+                    var previousClass = await _studentClassRepository.GetByIdAsync(previousClassId.Value);
+                    if (previousClass != null)
+                    {
+                        await _alertService.CreateRemovedFromClassAlertAsync(
+                            request.StudentId, 
+                            previousClass.Name
+                        );
+                    }
+                }
+            }
 
             return Ok(new { message = "Student assigned successfully." });
         }

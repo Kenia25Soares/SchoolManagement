@@ -1,28 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Web.Data;
 using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Enums;
 
-namespace SchoolManagement.Web.Data.Repositories
+namespace API.SchoolManagement.Data.Repositories
 {
-    public class AlertRepository : GenericRepository<Alert>, IAlertRepository
+    public class AlertRepository : IAlertRepository
     {
         private readonly DataContext _context;
 
-        public AlertRepository(DataContext context) : base(context)
+        public AlertRepository(DataContext context)
         {
             _context = context;
-        }
-
-        public async Task<List<Alert>> GetAllAsync()
-        {
-            return await _context.Alerts
-                .Include(a => a.Student)
-                .Include(a => a.Subject)
-                .Include(a => a.StudentClass)
-                .Include(a => a.StudentGrade)
-                .Include(a => a.CreatedBy)
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
         }
 
         public async Task<List<Alert>> GetStudentAlertsAsync(string studentId, bool includeRead = true)
@@ -112,10 +101,10 @@ namespace SchoolManagement.Web.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> AlertExistsAsync(string studentId, AlertType type, int? subjectId = null, int? gradeId = null)
+        public async Task<bool> AlertExistsAsync(string studentId, int type, int? subjectId = null, int? gradeId = null)
         {
             var query = _context.Alerts
-                .Where(a => a.StudentId == studentId && a.Type == type);
+                .Where(a => a.StudentId == studentId && (int)a.Type == type);
 
             if (subjectId.HasValue)
             {

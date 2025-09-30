@@ -30,28 +30,20 @@ builder.Services.AddCors(options =>
 try
 {
 	var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-	Console.WriteLine($"Connection String: {connectionString}");
-
+	
 	if (string.IsNullOrEmpty(connectionString))
 	{
 		throw new InvalidOperationException("Connection string 'DefaultConnection' not found in configuration.");
 	}
 
-	builder.Services.AddDbContext<SchoolManagement.Web.Data.DataContext>(options =>
+	builder.Services.AddDbContext<DataContext>(options =>
 		options.UseSqlServer(connectionString));
-
-	Console.WriteLine("Entity Framework configured successfully with SQL Server");
 }
 catch (Exception ex)
 {
-	Console.WriteLine($"Error configuring Entity Framework: {ex.Message}");
-	Console.WriteLine("Falling back to InMemory database...");
-
 	// Fallback to in-memory database for testing
-	builder.Services.AddDbContext<SchoolManagement.Web.Data.DataContext>(options =>
+	builder.Services.AddDbContext<DataContext>(options =>
 		options.UseInMemoryDatabase("TestDatabase"));
-
-	Console.WriteLine("Entity Framework configured with InMemory database");
 }
 
 // Configure Identity
@@ -63,19 +55,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 	options.Password.RequireNonAlphanumeric = false;
 	options.Password.RequireUppercase = false;
 })
-.AddEntityFrameworkStores<SchoolManagement.Web.Data.DataContext>()
+.AddEntityFrameworkStores<DataContext>()
 .AddDefaultTokenProviders();
 
 // JWT Authentication
-var jwtKey = builder.Configuration["JWT:Key"];
-var jwtIssuer = builder.Configuration["JWT:Issuer"];
-
-if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer))
-{
-	Console.WriteLine("Warning: JWT configuration is missing. Using default values.");
-	jwtKey = "uma-chave-secreta-bem-forte-1234567890";
-	jwtIssuer = "SchoolManagementAPI";
-}
+var jwtKey = builder.Configuration["JWT:Key"] ?? "uma-chave-secreta-bem-forte-1234567890";
+var jwtIssuer = builder.Configuration["JWT:Issuer"] ?? "SchoolManagementAPI";
 
 builder.Services.AddAuthentication(options =>
 {
@@ -99,21 +84,18 @@ builder.Services.AddAuthentication(options =>
 // Register services from Web project
 builder.Services.AddScoped<IBlobHelper, BlobHelper>();
 builder.Services.AddScoped<IMailHelper, MailHelper>();
-builder.Services.AddScoped<SchoolManagement.Web.Data.Repositories.IGradesRepository, SchoolManagement.Web.Data.Repositories.GradesRepository>();
+builder.Services.AddScoped<IGradesRepository, GradesRepository>();
 // Additional repositories for public catalog endpoints
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
 builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
 builder.Services.AddScoped<ISubjectEnrollmentRequestRepository, SubjectEnrollmentRequestRepository>();
+builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-	// Swagger removed to prevent 500 error
-}
 
 app.UseHttpsRedirection();
 

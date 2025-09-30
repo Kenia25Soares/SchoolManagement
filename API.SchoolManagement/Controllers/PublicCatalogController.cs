@@ -7,7 +7,7 @@ using SchoolManagement.Web.Data.Repositories;
 namespace API.SchoolManagement.Controllers
 {
     [ApiController]
-    [Route("api/public")] // anonymous catalog endpoints
+    [Route("api/public")] // anonymous catalog 
     public class PublicCatalogController : ControllerBase
     {
         private readonly ICourseRepository _courseRepository;

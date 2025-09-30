@@ -11,7 +11,6 @@ using SchoolManagement.Web.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using ApiModels = API.SchoolManagement.Models;
 
 
 namespace API.SchoolManagement.Controllers
@@ -26,7 +25,6 @@ namespace API.SchoolManagement.Controllers
         private readonly IMailHelper _mailHelper;
         private readonly IStudentProfileRepository _studentProfileRepository;
 
-        // Simple in-memory storage for verification codes (in production, use Redis or database)
         private static readonly Dictionary<string, (string Code, DateTime Expiry)> _verificationCodes = new();
 
         public AccountController(
@@ -200,19 +198,19 @@ namespace API.SchoolManagement.Controllers
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            // Verifique se o usu�rio tem o papel "Estudante"
+            // Verifique se o user tem o papel "Estudante"
             if (!roles.Contains("Student"))
             {
                 return Forbid("Access denied. Only students are allowed to use the mobile app.");
             }
 
-            // Gere um token JWT v�lido
+            // Gere um token JWT válido
             var claims = new[]
             {
         new Claim(ClaimTypes.Name, user.Email),
         new Claim(ClaimTypes.NameIdentifier, user.Id),
         new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, "Student") // Importante para policies futuras
+        new Claim(ClaimTypes.Role, "Student")
     };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
@@ -239,55 +237,13 @@ namespace API.SchoolManagement.Controllers
                     FullName = user.FullName,
                     PhoneNumber = user.PhoneNumber,
                     ProfilePictureUrl = user.ProfilePictureUrl,
-                    ProfilePictureFullUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) 
+                    ProfilePictureFullUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl)
                         ? $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}"
                         : null,
                     Roles = roles
                 }
             });
-            //if (!ModelState.IsValid)
-            //{
-            //    return BadRequest(new { Message = "Invalid model state", Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
-            //}
 
-            //try
-            //{
-            //    var result = await _signInManager.PasswordSignInAsync(request.email, request.password, request.rememberMe, false);
-            //    if (result.Succeeded)
-            //    {
-            //        var user = await _userManager.FindByEmailAsync(request.email);
-            //        var roles = await _userManager.GetRolesAsync(user);
-
-            //        // Generate a simple token for mobile (you can implement JWT here later)
-            //        var token = Guid.NewGuid().ToString();
-
-            //        return Ok(new
-            //        {
-            //            Success = true,
-            //            Message = "Login successful",
-            //            Token = token,
-            //            User = new
-            //            {
-            //                Id = user.Id,
-            //                Email = user.Email,
-            //                FullName = user.FullName,
-            //                PhoneNumber = user.PhoneNumber,
-            //                Roles = roles
-            //            }
-            //        });
-            //    }
-
-            //    return Unauthorized(new { Success = false, Message = "Invalid login attempt" });
-            //}
-            //catch (Exception ex)
-            //{
-            //    return StatusCode(500, new
-            //    {
-            //        Success = false,
-            //        Message = "Error during login",
-            //        Error = ex.Message
-            //    });
-            //}
         }
 
         /// <summary>
@@ -327,7 +283,7 @@ namespace API.SchoolManagement.Controllers
                         FullName = user.FullName,
                         PhoneNumber = user.PhoneNumber,
                         ProfilePictureUrl = user.ProfilePictureUrl,
-                        ProfilePictureFullUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) 
+                        ProfilePictureFullUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl)
                             ? $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}"
                             : null,
                         Roles = roles
@@ -428,7 +384,6 @@ namespace API.SchoolManagement.Controllers
                     user.PhoneNumber = model.PhoneNumber;
                 }
 
-                // Optional email change (validate uniqueness)
                 if (!string.IsNullOrWhiteSpace(model.Email) && !string.Equals(model.Email, user.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     var existing = await _userManager.FindByEmailAsync(model.Email);
@@ -567,7 +522,6 @@ namespace API.SchoolManagement.Controllers
                 }
 
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                // Generate a proper reset link for the Web application using configuration
                 var webAppBaseUrl = _configuration["WebApp:BaseUrl"] ?? "https://localhost:7176";
                 var resetLink = $"{webAppBaseUrl}/Account/ResetPassword?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
 
@@ -618,10 +572,10 @@ namespace API.SchoolManagement.Controllers
                 // Generate a 6-digit verification code
                 var code = new Random().Next(100000, 999999).ToString();
                 var expiry = DateTime.UtcNow.AddMinutes(10);
-                
+
                 // Store the code with expiry
                 _verificationCodes[model.Email] = (code, expiry);
-                
+
                 var response = _mailHelper.SendEmail(user.Email, "Verification Code", $@"
                     <h2>Password Reset Verification</h2>
                     <p>Your verification code is: <strong>{code}</strong></p>
@@ -821,14 +775,11 @@ namespace API.SchoolManagement.Controllers
                     return Ok(new { Success = true, Message = "Password changed successfully." });
                 }
 
-                // Generate a reset token and reset password
-                //var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                //var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
-                
                 if (result.Succeeded)
                 {
-                    return Ok(new { 
-                        Success = true, 
+                    return Ok(new
+                    {
+                        Success = true,
                         Message = "Password updated successfully! You can now use your new password to login.",
                         Details = "Your password has been changed successfully. Please remember to use the new password for future logins."
                     });
@@ -869,7 +820,7 @@ namespace API.SchoolManagement.Controllers
                     return NotFound(new { Message = "User not found" });
 
                 var roles = await _userManager.GetRolesAsync(user);
-                
+
                 // Check if user is a student
                 if (!roles.Contains("Student"))
                 {
@@ -929,18 +880,18 @@ namespace API.SchoolManagement.Controllers
                     return NotFound(new { Message = "User not found" });
 
                 var roles = await _userManager.GetRolesAsync(user);
-                
+
                 // Check if user is a student
                 if (!roles.Contains("Student"))
                 {
                     return Forbid("Access denied. Only students can access this endpoint.");
                 }
 
-                // Get student profile data
+                // Get student profile 
                 var studentProfile = await _studentProfileRepository.GetByUserIdAsync(user.Id);
 
                 // Generate full URLs for images
-                var fullProfilePictureUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl) 
+                var fullProfilePictureUrl = !string.IsNullOrEmpty(user.ProfilePictureUrl)
                     ? $"https://blobainek.blob.core.windows.net/projetspictures/{user.ProfilePictureUrl}"
                     : null;
 

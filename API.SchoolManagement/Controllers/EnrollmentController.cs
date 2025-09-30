@@ -134,7 +134,7 @@ namespace API.SchoolManagement.Controllers
                     StudentId = model.StudentId,
                     SubjectId = model.SubjectId,
                     Description = model.Description,
-                    Status = 0, // Pending (EnrollmentRequestStatus.Pending)
+                    Status = 0, 
                     RequestDate = DateTime.UtcNow
                 };
 

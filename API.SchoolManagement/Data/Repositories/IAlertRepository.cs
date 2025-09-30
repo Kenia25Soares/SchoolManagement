@@ -1,11 +1,10 @@
-﻿using SchoolManagement.Web.Data.Entities;
+using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Enums;
 
-namespace SchoolManagement.Web.Data.Repositories
+namespace API.SchoolManagement.Data.Repositories
 {
-    public interface IAlertRepository : IGenericRepository<Alert>
+    public interface IAlertRepository
     {
-        Task<List<Alert>> GetAllAsync();
         Task<List<Alert>> GetStudentAlertsAsync(string studentId, bool includeRead = true);
         Task<List<Alert>> GetUnreadStudentAlertsAsync(string studentId);
         Task<int> GetUnreadCountAsync(string studentId);
@@ -13,6 +12,6 @@ namespace SchoolManagement.Web.Data.Repositories
         Task MarkAsReadAsync(int alertId);
         Task MarkMultipleAsReadAsync(List<int> alertIds);
         Task<List<Alert>> GetRecentAlertsAsync(string studentId, int count = 10);
-        Task<bool> AlertExistsAsync(string studentId, AlertType type, int? subjectId = null, int? gradeId = null);
+        Task<bool> AlertExistsAsync(string studentId, int type, int? subjectId = null, int? gradeId = null);
     }
 }

@@ -5,6 +5,7 @@ using SchoolManagement.Web.Data.Entities;
 using SchoolManagement.Web.Data.Repositories;
 using SchoolManagement.Web.Helpers;
 using SchoolManagement.Web.Models;
+using SchoolManagement.Web.Services;
 
 namespace SchoolManagement.Web.Controllers
 {
@@ -15,13 +16,15 @@ namespace SchoolManagement.Web.Controllers
         private readonly IUserHelper _userHelper;
         private readonly IGradesRepository _gradesRepository;
         private readonly IStudentClassRepository _studentClassRepository;
+        private readonly IAlertService _alertService;
 
         public GradesController(IUserHelper userHelper, IGradesRepository gradesRepository,
-            IStudentClassRepository studentClassRepository)
+            IStudentClassRepository studentClassRepository, IAlertService alertService)
         {
             _userHelper = userHelper;
             _gradesRepository = gradesRepository;
             _studentClassRepository = studentClassRepository;
+            _alertService = alertService;
         }
 
 
@@ -159,7 +162,7 @@ namespace SchoolManagement.Web.Controllers
                 return RedirectToAction(nameof(Index), new { classId = student?.StudentClassId });
             }
 
-            // Validação das notas
+            // ValidaÃ§Ã£o das notas
             foreach (var g in model.Grades)
             {
                 if (g.Grade.HasValue && g.Grade.Value > 20)
@@ -191,7 +194,31 @@ namespace SchoolManagement.Web.Controllers
                 });
 
             await _gradesRepository.AddGradesAsync(grades);
-         
+
+            // Get the saved grades with their generated IDs
+            var savedGrades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(model.StudentId);
+            var newlyAddedGrades = savedGrades.Where(g => 
+                model.Grades.Any(mg => 
+                    mg.SubjectId == g.SubjectId && 
+                    mg.GradeTypeId == g.GradeTypeId && 
+                    mg.Grade == g.Grade
+                )
+            ).ToList();
+
+            // Create alerts for each added grade
+            foreach (var grade in newlyAddedGrades)
+            {
+                var gradeType = await _gradesRepository.GetGradeTypeByIdAsync(grade.GradeTypeId.Value);
+                var subject = await _gradesRepository.GetSubjectByIdAsync(grade.SubjectId);
+                
+                await _alertService.CreateGradePostedAlertAsync(
+                    grade.StudentId, 
+                    grade.SubjectId, 
+                    grade.Id, 
+                    grade.Grade, 
+                    gradeType?.Name ?? "Grade"
+                );
+            }
 
             TempData["SuccessMessage"] = "Grades added successfully!";
             return RedirectToAction(nameof(Index), new { classId = student.StudentClassId });
@@ -222,6 +249,15 @@ namespace SchoolManagement.Web.Controllers
 
             studentClass.IsClosed = true;
             await _studentClassRepository.UpdateAsync(studentClass);
+
+            // Get all students in the class and create alerts
+            var studentsInClass = await _gradesRepository.GetStudentsByClassIdAsync(classId);
+            var studentIds = studentsInClass.Select(s => s.UserId).ToList();
+            
+            if (studentIds.Any())
+            {
+                await _alertService.CreateClassClosedAlertAsync(studentIds, classId, studentClass.Name);
+            }
 
             TempData["SuccessMessage"] = "Class successfully closed.";
             return RedirectToAction(nameof(Index), new { classId });
@@ -264,7 +300,7 @@ namespace SchoolManagement.Web.Controllers
                     TotalAbsences = absences.Where(a => a.SubjectId == g.Key!.Id).Sum(a => a.Absences)
                 }).ToList();
 
-            foreach (var subject in groupedGrades) // Cálculo das mediias por disciplina
+            foreach (var subject in groupedGrades) // CÃ¡lculo das mediias por disciplina
             {
                 double subjectWeightedSum = 0;
                 double subjectWeightTotal = 0;
@@ -283,7 +319,7 @@ namespace SchoolManagement.Web.Controllers
                 subject.FailedDueToAbsences = subject.TotalAbsences > subject.AllowedAbsences;
             }
 
-            // Cálculo para a média geral
+            // CÃ¡lculo para a mÃ©dia geral
             double totalWeightedSum = 0;
             double totalOverallWeight = 0;
 
@@ -399,20 +435,58 @@ namespace SchoolManagement.Web.Controllers
 
             await _gradesRepository.AddGradesAsync(absences);
 
+            // Get the saved absences with their generated IDs
+            var savedAbsences = await _gradesRepository.GetAbsencesByStudentAsync(model.StudentId);
+            var newlyAddedAbsences = savedAbsences.Where(a => 
+                model.Absences.Any(ma => 
+                    ma.SubjectId == a.SubjectId && 
+                    ma.Absences == a.Absences
+                )
+            ).ToList();
+
+            // Create alerts for attendance records
+            foreach (var absence in newlyAddedAbsences)
+            {
+                var subject = await _gradesRepository.GetSubjectByIdAsync(absence.SubjectId);
+                await _alertService.CreateGradePostedAlertAsync(
+                    absence.StudentId, 
+                    absence.SubjectId, 
+                    absence.Id, 
+                    null, // No grade value for absences
+                    "Attendance"
+                );
+            }
+
             // ver se o aluno ultrapassou o limite das faltas permitidas
             var absencesAfterSave = await _gradesRepository.GetAbsencesByStudentAsync(model.StudentId);
 
-            var exceeded = absencesAfterSave
+            var subjectsExceeded = absencesAfterSave
                 .GroupBy(a => a.Subject)
-                .Any(g => g.Sum(x => x.Absences) > g.Key.AllowedAbsences);
+                .Where(g => g.Sum(x => x.Absences) > g.Key.AllowedAbsences)
+                .ToList();
 
-            if (exceeded)
+            if (subjectsExceeded.Any())
             {
                 var profile = await _gradesRepository.GetStudentProfileByUserIdAsync(model.StudentId);
                 if (profile != null && !profile.IsExcludedDueToAbsences)
                 {
                     profile.IsExcludedDueToAbsences = true;
                     await _gradesRepository.UpdateStudentProfileAsync(profile);
+
+                    // Create alerts for each subject where student exceeded absences
+                    foreach (var subjectGroup in subjectsExceeded)
+                    {
+                        var totalAbsences = subjectGroup.Sum(x => x.Absences);
+                        var allowedAbsences = subjectGroup.Key.AllowedAbsences;
+                        
+                        await _alertService.CreateExcludedByAbsencesAlertAsync(
+                            model.StudentId,
+                            subjectGroup.Key.Id,
+                            subjectGroup.Key.Name,
+                            totalAbsences,
+                            allowedAbsences
+                        );
+                    }
                 }
             }
 

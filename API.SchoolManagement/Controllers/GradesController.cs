@@ -59,13 +59,13 @@ namespace API.SchoolManagement.Controllers
                 var grades = await _gradesRepository.GetGradesWithSubjectsAndTypesAsync(studentId);
                 var absences = await _gradesRepository.GetAbsencesByStudentAsync(studentId);
 
-                // Group grades by subject (same logic as your web controller)
+                // Group grades by subject
                 var groupedGrades = grades
                     .GroupBy(g => g.Subject)
                     .Select(g => new
                     {
                         SubjectName = g.Key?.Name ?? "Unknown",
-                        SubjectCode = g.Key?.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN", // Use name as code
+                        SubjectCode = g.Key?.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN", 
                         GradesByType = g.GroupBy(x => x.GradeType)
                             .Where(gt => gt.Key != null)
                             .Select(gt => new
@@ -76,8 +76,8 @@ namespace API.SchoolManagement.Controllers
                             }).ToList(),
                         AllowedAbsences = g.Key?.AllowedAbsences ?? 0,
                         TotalAbsences = absences.Where(a => a.SubjectId == g.Key!.Id).Sum(a => a.Absences),
-                        WeightedAverage = 0.0, // Will be calculated below
-                        FailedDueToAbsences = false // Will be calculated below
+                        WeightedAverage = 0.0, 
+                        FailedDueToAbsences = false 
                     }).ToList();
 
                 // Calculate weighted averages for each subject
@@ -196,9 +196,9 @@ namespace API.SchoolManagement.Controllers
 
                 var subjectsList = subjects.Select(s => new
                 {
-                    SubjectCode = s.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN", // Use name as code
+                    SubjectCode = s.Name?.Replace(" ", "").ToUpper() ?? "UNKNOWN", 
                     SubjectName = s.Name,
-                    TeacherName = "Unknown" // You might need to add teacher info to your repository
+                    TeacherName = "Unknown" 
                 }).ToList();
 
                 return Ok(new
@@ -255,7 +255,6 @@ namespace API.SchoolManagement.Controllers
                 // Get all subjects for the student's course
                 var allSubjects = await _gradesRepository.GetSubjectsByCourseAsync(student.StudentClass.CourseId);
 
-                // Find the subject by name (since we don't have Code field)
                 var subject = allSubjects.FirstOrDefault(s =>
                     s.Name.Equals(subjectCode, StringComparison.OrdinalIgnoreCase) ||
                     s.Name.Replace(" ", "").ToUpper().Equals(subjectCode, StringComparison.OrdinalIgnoreCase));
@@ -313,14 +312,13 @@ namespace API.SchoolManagement.Controllers
                 // Since absences are stored as counts, we'll create individual absence records
                 foreach (var absence in subjectAbsences)
                 {
-                    // Create individual absence records (you might need to adjust this based on your data structure)
                     for (int i = 0; i < absence.Absences; i++)
                     {
                         absenceDetails.Add(new
                         {
-                            Date = absence.CreatedAt, // You might need to store actual absence dates
-                            Justification = "", // Add justification field if needed
-                            IsJustified = false // Add justification logic if needed
+                            Date = absence.CreatedAt, 
+                            Justification = "", 
+                            IsJustified = false 
                         });
                     }
                 }
@@ -448,7 +446,7 @@ namespace API.SchoolManagement.Controllers
 
                     // Determine status
                     bool failedDueToAbsences = subjectAbsences > subject.AllowedAbsences;
-                    double passingGrade = 10.0; // Default passing grade
+                    double passingGrade = 10.0; 
                     var statusEnum = DetermineStatusEnum(weightedAverage, subjectAbsences, subject.AllowedAbsences, passingGrade);
                     var statusString = ConvertStatusToString(statusEnum);
 
@@ -497,7 +495,7 @@ namespace API.SchoolManagement.Controllers
         {
             try
             {
-                // Validate that the authenticated user can only access their own data
+  
                 var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (currentUserId != studentId)
                 {
@@ -589,13 +587,12 @@ namespace API.SchoolManagement.Controllers
                         absenceDetails.Add(new AbsenceDetail
                         {
                             Date = absence.CreatedAt,
-                            Justification = string.Empty, // Add justification field if needed
-                            IsJustified = false // Add justification logic if needed
+                            Justification = string.Empty,
+                            IsJustified = false 
                         });
                     }
                 }
 
-                // Determine status
                 double passingGrade = 10.0; // Default passing grade
                 var statusEnum = DetermineStatusEnum(weightedAverage, totalAbsences, subject.AllowedAbsences, passingGrade);
                 var statusString = ConvertStatusToString(statusEnum);
