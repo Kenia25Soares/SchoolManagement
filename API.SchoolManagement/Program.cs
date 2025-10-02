@@ -91,7 +91,7 @@ builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudentClassRepository, StudentClassRepository>();
 builder.Services.AddScoped<IStudentProfileRepository, StudentProfileRepository>();
 builder.Services.AddScoped<ISubjectEnrollmentRequestRepository, SubjectEnrollmentRequestRepository>();
-builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+builder.Services.AddScoped<API.SchoolManagement.Data.Repositories.IAlertRepository, API.SchoolManagement.Data.Repositories.AlertRepository>();
 
 var app = builder.Build();
 

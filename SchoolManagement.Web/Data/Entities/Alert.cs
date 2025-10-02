@@ -8,9 +8,8 @@ namespace SchoolManagement.Web.Data.Entities
     {
         public int Id { get; set; }
 
-        [Required]
-        public string StudentId { get; set; } = null!;
-        public ApplicationUser Student { get; set; } = null!;
+        public string? StudentId { get; set; }
+        public ApplicationUser? Student { get; set; }
 
         [Required]
         public AlertType Type { get; set; }

@@ -9,7 +9,6 @@ using SchoolManagement.Web.Data.Enums;
 namespace SchoolManagement.Web.Controllers
 {
     [Authorize(Roles = "Employee")]
-    [Route("EmployeeDashboard/Alerts")]
     public class EmployeeAlertsController : Controller
     {
         private readonly IAlertRepository _alertRepository;
@@ -28,7 +27,8 @@ namespace SchoolManagement.Web.Controllers
         [HttpGet("Create")]
         public IActionResult Create()
         {
-            return View();
+            var model = new CreateAlertViewModel();
+            return View("~/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
         }
 
 
@@ -44,10 +44,10 @@ namespace SchoolManagement.Web.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Please correct the form and try again.";
-                return View(model);
+                return View("~/Views/EmployeeDashboard/Alerts/Create.cshtml", model);
             }
 
-                var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name??  string.Empty);
+                var user = await _userHelper.GetUserByEmailAsync(User.Identity?.Name ?? string.Empty);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Unable to identify the logged-in user.";
